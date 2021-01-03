@@ -82,6 +82,9 @@ class MyGame(arcade.Window):
         
         if arcade.key.ENTER == symbol:
             self.paused = not self.paused
+
+        if arcade.key.N == symbol:
+            self.setup()
         
         if arcade.key.W == symbol:
             self.ship_acceleration = ACCELERATION_ROCKET
