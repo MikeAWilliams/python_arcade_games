@@ -16,6 +16,7 @@ SHIP_FILE_HEIGTH = 1510
 SHIP_SCALE = 0.1
 SHIP_OFF_PATH = "../assets/rocket_off.png"
 SHIP_ON_PATH = "../assets/rocket_on.png"
+SHIP_CRASHED_PATH = "../assets/rocket_crash.png"
 
 ACCELERATION_GRAVITY = -100
 ACCELERATION_ROCKET = 50
@@ -108,8 +109,14 @@ class MyGame(arcade.Window):
             if self.ship_y_velocity < SHIP_CRASH_VELOCITY:
                 self.game_over_message = "GAME OVER\nYou crashed at velocity\n" + str(round(self.ship_y_velocity,1))
                 self.game_over = True
+                # don't draw the good ships any more
                 self.ship_on.remove_from_sprite_lists()
                 self.ship_off.remove_from_sprite_lists()
+                #draw the crashed ship
+                self.ship_crashed = arcade.Sprite(SHIP_CRASHED_PATH, SHIP_SCALE)
+                self.ship_crashed.center_x = SCREEN_WIDTH / 2
+                self.ship_crashed.bottom = self.ship_y
+                self.ship_list.append(self.ship_crashed)
 
             self.ship_y_velocity = 0
             self.ship_y = EARTH_HEIGHT
