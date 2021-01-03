@@ -14,8 +14,8 @@ GAME_OVER_FONT_SIZE = 50
 SHIP_FILE_WIDTH = 840
 SHIP_FILE_HEIGTH = 1510
 SHIP_SCALE = 0.1
-SHIP_OFF_PATH = "../assets/rocket_off.png"
-SHIP_ON_PATH = "../assets/rocket_on.png"
+SHIP_PATH = "../assets/rocket_off.png"
+SHIP_FIRE_PATH = "../assets/rocket_engine_fire.png" 
 SHIP_CRASHED_PATH = "../assets/rocket_crash.png"
 
 ACCELERATION_GRAVITY = -100
@@ -42,21 +42,18 @@ class MyGame(arcade.Window):
         self.game_over_message = ""
 
         # create the ship off sprite
-        self.ship_off = arcade.Sprite(SHIP_OFF_PATH, SHIP_SCALE)
-        self.ship_off.center_x = SCREEN_WIDTH / 2
-        self.ship_off.bottom = self.ship_y
-        self.ship_off.alpha = 255
+        self.ship = arcade.Sprite(SHIP_PATH, SHIP_SCALE)
+        self.ship.center_x = SCREEN_WIDTH / 2
+        self.ship.bottom = self.ship_y
 
         # create the ship on sprite
-        self.ship_on = arcade.Sprite(SHIP_ON_PATH, SHIP_SCALE)
-        self.ship_on.center_x = SCREEN_WIDTH / 2
-        self.ship_on.bottom = self.ship_y
-        self.ship_on.alpha = 0
+        self.ship_fire = arcade.Sprite(SHIP_FIRE_PATH, SHIP_SCALE)
+        self.ship_fire.center_x = SCREEN_WIDTH / 2
+        self.ship_fire.top = self.ship_y
 
         # keep the ship sprites in a sprite list which is faster later
         self.ship_list = arcade.SpriteList()
-        self.ship_list.append(self.ship_on)
-        self.ship_list.append(self.ship_off)
+        self.ship_list.append(self.ship)
 
 
     def on_draw(self):
@@ -79,24 +76,26 @@ class MyGame(arcade.Window):
     def on_key_press(self, symbol, modifiers):
         if arcade.key.ESCAPE == symbol:
             arcade.close_window()
-        
-        if arcade.key.ENTER == symbol:
-            self.paused = not self.paused
 
         if arcade.key.N == symbol:
             self.setup()
-        
+
+        # all the controls that are valid during game over need to be above this
+        if self.game_over:
+            return
+
+        if arcade.key.ENTER == symbol:
+            self.paused = not self.paused
+
         if arcade.key.W == symbol:
             self.ship_acceleration = ACCELERATION_ROCKET
-            self.ship_on.alpha = 255
-            self.ship_off.alpha = 0
+            self.ship_list.append(self.ship_fire)
             self.ship_engine_on = True
 
     def on_key_release(self, symbol, modifiers):
         if arcade.key.W == symbol:
             self.ship_acceleration = ACCELERATION_GRAVITY
-            self.ship_on.alpha = 0
-            self.ship_off.alpha = 255
+            self.ship_fire.remove_from_sprite_lists()
             self.ship_engine_on = False
 
 
@@ -113,8 +112,8 @@ class MyGame(arcade.Window):
                 self.game_over_message = "GAME OVER\nYou crashed at velocity\n" + str(round(self.ship_y_velocity,1))
                 self.game_over = True
                 # don't draw the good ships any more
-                self.ship_on.remove_from_sprite_lists()
-                self.ship_off.remove_from_sprite_lists()
+                self.ship.remove_from_sprite_lists()
+                self.ship_fire.remove_from_sprite_lists()
                 #draw the crashed ship
                 self.ship_crashed = arcade.Sprite(SHIP_CRASHED_PATH, SHIP_SCALE)
                 self.ship_crashed.center_x = SCREEN_WIDTH / 2
@@ -130,8 +129,8 @@ class MyGame(arcade.Window):
         self.ship_y_velocity += self.ship_acceleration * delta_time
         self.ship_y += self.ship_y_velocity * delta_time
 
-        self.ship_on.bottom = self.ship_y
-        self.ship_off.bottom = self.ship_y
+        self.ship.bottom = self.ship_y
+        self.ship_fire.top = self.ship_y
         self.ship_list.update()
 
 
