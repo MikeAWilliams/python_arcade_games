@@ -108,6 +108,8 @@ class MyGame(arcade.Window):
             if self.ship_y_velocity < SHIP_CRASH_VELOCITY:
                 self.game_over_message = "GAME OVER\nYou crashed at velocity\n" + str(round(self.ship_y_velocity,1))
                 self.game_over = True
+                self.ship_on.remove_from_sprite_lists()
+                self.ship_off.remove_from_sprite_lists()
 
             self.ship_y_velocity = 0
             self.ship_y = EARTH_HEIGHT
