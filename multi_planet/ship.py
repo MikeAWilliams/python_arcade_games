@@ -24,8 +24,8 @@ class Ship():
     def setup(self):
         # ship state
         self.position = self.init_position.copy()
-        self.velocity = 0
-        self.acceleration = ACCELERATION_GRAVITY
+        self.velocity = vector.Vector2D(0, 0) 
+        self.acceleration = vector.Vector2D(0, ACCELERATION_GRAVITY)
         self.ship_engine_on = False
 
         # create the ship off sprite
@@ -45,13 +45,13 @@ class Ship():
     
     def on_key_press(self, symbol, modifiers):
         if arcade.key.W == symbol:
-            self.acceleration = ACCELERATION_ROCKET
+            self.acceleration.y = ACCELERATION_ROCKET
             self.ship_list.append(self.ship_fire)
             self.ship_engine_on = True
 
     def on_key_release(self, symbol, modifiers):
         if arcade.key.W == symbol:
-            self.acceleration = ACCELERATION_GRAVITY
+            self.acceleration.y = ACCELERATION_GRAVITY
             self.ship_fire.remove_from_sprite_lists()
             self.ship_engine_on = False
     
@@ -68,13 +68,13 @@ class Ship():
         self.on_land()
 
     def on_land(self):
-        self.velocity = 0
+        self.velocity = vector.Vector2D(0, 0)
 
     def on_update(self, delta_time: float):
         # check for on the ground
         #move the ship
-        self.velocity += self.acceleration * delta_time
-        self.position.y += self.velocity * delta_time
+        self.velocity = vector.Add(self.velocity, vector.Multipy(self.acceleration, delta_time))
+        self.position = vector.Add(self.position, vector.Multipy(self.velocity, delta_time))
 
         self.ship.bottom = self.position.y
         self.ship_fire.top = self.position.y

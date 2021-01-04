@@ -70,8 +70,8 @@ class GravityGame(arcade.Window):
 
     def detect_colisions(self):
         if EARTH_HEIGHT >= self.ship.position.y:
-            if self.ship.velocity < ship.SHIP_CRASH_VELOCITY:
-                self.game_over_message = "GAME OVER\nYou crashed at velocity\n" + str(round(self.ship.velocity,1))
+            if self.ship.velocity.y < ship.SHIP_CRASH_VELOCITY:
+                self.game_over_message = "GAME OVER\nYou crashed at velocity\n" + str(round(self.ship.velocity.y,1))
                 self.ship.on_crash()
                 self.game_over = True
             else:
