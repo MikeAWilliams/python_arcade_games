@@ -1,6 +1,8 @@
 import arcade
 import os
+
 import vector
+import ship
 
 # Constants
 SCREEN_TITLE = "Gravity Game"
@@ -10,49 +12,23 @@ LAND_WIDTH = 426
 EARTH_HEIGHT = 100
 GAME_OVER_FONT_SIZE = 50
 
-SHIP_FILE_WIDTH = 840
-SHIP_FILE_HEIGTH = 1510
-SHIP_SCALE = 0.1
-SHIP_PATH = "../assets/rocket_off.png"
-SHIP_FIRE_PATH = "../assets/rocket_engine_fire.png" 
-SHIP_CRASHED_PATH = "../assets/rocket_crash.png"
 
-ACCELERATION_GRAVITY = -100
-ACCELERATION_ROCKET = 50
 
-SHIP_CRASH_VELOCITY = -200
 
 class GravityGame(arcade.Window):
     def __init__(self, width, height):
         super().__init__(width, height, SCREEN_TITLE)
         arcade.set_background_color(arcade.color.WHITE)
+        self.ship = ship.Ship(width/2, height, EARTH_HEIGHT)
 
 
     def setup(self):
-        # ship state
-        self.ship_y = self.height - SHIP_FILE_HEIGTH * SHIP_SCALE
-        self.ship_y_velocity = 0
-        self.ship_acceleration = ACCELERATION_GRAVITY
-        self.ship_engine_on = False
-
         #game state
         self.paused = False
         self.game_over = False
         self.game_over_message = ""
 
-        # create the ship off sprite
-        self.ship = arcade.Sprite(SHIP_PATH, SHIP_SCALE)
-        self.ship.center_x = self.width / 2
-        self.ship.bottom = self.ship_y
-
-        # create the ship on sprite
-        self.ship_fire = arcade.Sprite(SHIP_FIRE_PATH, SHIP_SCALE)
-        self.ship_fire.center_x = self.width / 2
-        self.ship_fire.top = self.ship_y
-
-        # keep the ship sprites in a sprite list which is faster later
-        self.ship_list = arcade.SpriteList()
-        self.ship_list.append(self.ship)
+        self.ship.setup()
 
 
     def on_draw(self):
@@ -69,7 +45,8 @@ class GravityGame(arcade.Window):
         earth_x_cursor += LAND_WIDTH
         arcade.draw_xywh_rectangle_filled(earth_x_cursor, 0, OCEAN_WIDTH, EARTH_HEIGHT, arcade.color.BLUE)
 
-        self.ship_list.draw()
+        self.ship.draw()
+
         arcade.finish_render()
 
     def on_key_press(self, symbol, modifiers):
@@ -86,16 +63,21 @@ class GravityGame(arcade.Window):
         if arcade.key.ENTER == symbol:
             self.paused = not self.paused
 
-        if arcade.key.W == symbol:
-            self.ship_acceleration = ACCELERATION_ROCKET
-            self.ship_list.append(self.ship_fire)
-            self.ship_engine_on = True
-
+        self.ship.on_key_press(symbol, modifiers)
+    
     def on_key_release(self, symbol, modifiers):
-        if arcade.key.W == symbol:
-            self.ship_acceleration = ACCELERATION_GRAVITY
-            self.ship_fire.remove_from_sprite_lists()
-            self.ship_engine_on = False
+        self.ship.on_key_release(symbol, modifiers)
+
+    def detect_colisions(self):
+        if EARTH_HEIGHT >= self.ship.ship_y:
+            if self.ship.ship_y_velocity < ship.SHIP_CRASH_VELOCITY:
+                self.game_over_message = "GAME OVER\nYou crashed at velocity\n" + str(round(self.ship.ship_y_velocity,1))
+                self.ship.on_crash()
+                self.game_over = True
+            else:
+                self.ship.on_land()
+            return True
+        return False
 
 
     def on_update(self, delta_time: float):
@@ -105,32 +87,10 @@ class GravityGame(arcade.Window):
         if self.paused:
             return
 
-        # check for on the ground
-        if EARTH_HEIGHT >= self.ship_y:
-            if self.ship_y_velocity < SHIP_CRASH_VELOCITY:
-                self.game_over_message = "GAME OVER\nYou crashed at velocity\n" + str(round(self.ship_y_velocity,1))
-                self.game_over = True
-                # don't draw the good ships any more
-                self.ship.remove_from_sprite_lists()
-                self.ship_fire.remove_from_sprite_lists()
-                #draw the crashed ship
-                self.ship_crashed = arcade.Sprite(SHIP_CRASHED_PATH, SHIP_SCALE)
-                self.ship_crashed.center_x = SCREEN_WIDTH / 2
-                self.ship_crashed.bottom = self.ship_y
-                self.ship_list.append(self.ship_crashed)
+        self.detect_colisions()
 
-            self.ship_y_velocity = 0
-            self.ship_y = EARTH_HEIGHT
-            if not self.ship_engine_on:
-                return
-
-        #move the ship
-        self.ship_y_velocity += self.ship_acceleration * delta_time
-        self.ship_y += self.ship_y_velocity * delta_time
-
-        self.ship.bottom = self.ship_y
-        self.ship_fire.top = self.ship_y
-        self.ship_list.update()
+        if not self.game_over:
+            self.ship.on_update(delta_time)
 
 
 
