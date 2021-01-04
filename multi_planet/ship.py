@@ -1,16 +1,18 @@
 import arcade
+import math
 
 import vector
 
 SHIP_FILE_WIDTH = 840
 SHIP_FILE_HEIGTH = 1510
-SHIP_PATH = "../assets/rocket_off.png"
-SHIP_FIRE_PATH = "../assets/rocket_engine_fire.png" 
+SHIP_PATH = "../assets/rocket_white_fire.png"
+SHIP_FIRE_PATH = "../assets/rocket_red_fire.png" 
 SHIP_CRASHED_PATH = "../assets/rocket_crash.png"
 
-ACCELERATION_GRAVITY = -100
+ACCELERATION_GRAVITY = -10
 ACCELERATION_ROCKET = 50
 SHIP_CRASH_VELOCITY = -200
+ANGULAR_SPEED = 2 * math.pi / 300
 
 class Ship():
     def __init__(self, init_x, init_y):
@@ -27,8 +29,11 @@ class Ship():
         self.velocity = vector.Vector2D(0, 0) 
         self.acceleration = vector.Vector2D(0, ACCELERATION_GRAVITY)
         self.ship_engine_on = False
+        self.radians = 0
+        self.radian_speed = 0
 
         # create the ship off sprite
+        self.ship.radians = 0
         self.ship.center_x = self.position.x 
         self.ship.bottom = self.position.y
 
@@ -45,15 +50,31 @@ class Ship():
     
     def on_key_press(self, symbol, modifiers):
         if arcade.key.W == symbol:
-            self.acceleration.y = ACCELERATION_ROCKET
+            self.acceleration = vector.Vector2D(-math.sin(self.radians), math.cos(self.radians))
+            self.acceleration = vector.Multipy(self.acceleration, ACCELERATION_ROCKET)
+            self.acceleration.y += ACCELERATION_GRAVITY
             self.ship_list.append(self.ship_fire)
+            self.ship.remove_from_sprite_lists()
             self.ship_engine_on = True
+        
+        if arcade.key.A == symbol:
+            self.radian_speed = ANGULAR_SPEED
+
+        if arcade.key.D == symbol:
+            self.radian_speed = -ANGULAR_SPEED
 
     def on_key_release(self, symbol, modifiers):
         if arcade.key.W == symbol:
-            self.acceleration.y = ACCELERATION_GRAVITY
+            self.acceleration = vector.Vector2D(0, ACCELERATION_GRAVITY)
             self.ship_fire.remove_from_sprite_lists()
+            self.ship_list.append(self.ship)
             self.ship_engine_on = False
+
+        if arcade.key.A == symbol:
+            self.radian_speed = 0
+
+        if arcade.key.D == symbol:
+            self.radian_speed = 0
     
     def on_crash(self):
         # don't draw the good ships any more
@@ -71,13 +92,18 @@ class Ship():
         self.velocity = vector.Vector2D(0, 0)
 
     def on_update(self, delta_time: float):
-        # check for on the ground
         #move the ship
         self.velocity = vector.Add(self.velocity, vector.Multipy(self.acceleration, delta_time))
         self.position = vector.Add(self.position, vector.Multipy(self.velocity, delta_time))
 
-        self.ship.bottom = self.position.y
-        self.ship_fire.top = self.position.y
+        self.radians += self.radian_speed
+
+        self.ship.radians = self.radians
+        self.ship.center_x = self.position.x
+        self.ship.center_y = self.position.y
+        self.ship_fire.radians = self.radians
+        self.ship_fire.center_x = self.position.x
+        self.ship_fire.center_y = self.position.y
         self.ship_list.update()
 
 
