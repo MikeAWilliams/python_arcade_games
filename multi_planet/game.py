@@ -19,7 +19,7 @@ class GravityGame(arcade.Window):
     def __init__(self, width, height):
         super().__init__(width, height, SCREEN_TITLE)
         arcade.set_background_color(arcade.color.WHITE)
-        self.ship = ship.Ship(width/2, height, EARTH_HEIGHT)
+        self.ship = ship.Ship(width/2, height)
 
 
     def setup(self):
@@ -69,9 +69,9 @@ class GravityGame(arcade.Window):
         self.ship.on_key_release(symbol, modifiers)
 
     def detect_colisions(self):
-        if EARTH_HEIGHT >= self.ship.ship_y:
-            if self.ship.ship_y_velocity < ship.SHIP_CRASH_VELOCITY:
-                self.game_over_message = "GAME OVER\nYou crashed at velocity\n" + str(round(self.ship.ship_y_velocity,1))
+        if EARTH_HEIGHT >= self.ship.position.y:
+            if self.ship.velocity < ship.SHIP_CRASH_VELOCITY:
+                self.game_over_message = "GAME OVER\nYou crashed at velocity\n" + str(round(self.ship.velocity,1))
                 self.ship.on_crash()
                 self.game_over = True
             else:
