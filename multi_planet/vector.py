@@ -1,3 +1,5 @@
+import math
+
 class Vector2D:
     def __init__(self, x, y):
         self.x = x
@@ -5,6 +7,14 @@ class Vector2D:
 
     def copy(self):
         return Vector2D(self.x, self.y)
+    
+    def length(self):
+        return math.sqrt(self.x * self.x + self.y * self.y)
+
+    def make_unit(self):
+        len = self.length()
+        self.x /= len
+        self.y /= len
 
 
 def Add(first, second):

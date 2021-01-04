@@ -9,8 +9,7 @@ SHIP_PATH = "../assets/rocket_white_fire.png"
 SHIP_FIRE_PATH = "../assets/rocket_red_fire.png" 
 SHIP_CRASHED_PATH = "../assets/rocket_crash.png"
 
-ACCELERATION_GRAVITY = -10
-ACCELERATION_ROCKET = 50
+ACCELERATION_ROCKET = 300
 SHIP_CRASH_VELOCITY = -200
 ANGULAR_SPEED = 2 * math.pi / 300
 
@@ -27,7 +26,8 @@ class Ship():
         # ship state
         self.position = self.init_position.copy()
         self.velocity = vector.Vector2D(0, 0) 
-        self.acceleration = vector.Vector2D(0, ACCELERATION_GRAVITY)
+        self.gravity_acceleration = vector.Vector2D(0, 0)
+        self.rocket_acceleration = vector.Vector2D(0, 0)
         self.ship_engine_on = False
         self.radians = 0
         self.radian_speed = 0
@@ -50,9 +50,8 @@ class Ship():
     
     def on_key_press(self, symbol, modifiers):
         if arcade.key.W == symbol:
-            self.acceleration = vector.Vector2D(-math.sin(self.radians), math.cos(self.radians))
-            self.acceleration = vector.Multipy(self.acceleration, ACCELERATION_ROCKET)
-            self.acceleration.y += ACCELERATION_GRAVITY
+            self.rocket_acceleration = vector.Vector2D(-math.sin(self.radians), math.cos(self.radians))
+            self.rocket_acceleration = vector.Multipy(self.rocket_acceleration, ACCELERATION_ROCKET)
             self.ship_list.append(self.ship_fire)
             self.ship.remove_from_sprite_lists()
             self.ship_engine_on = True
@@ -65,7 +64,7 @@ class Ship():
 
     def on_key_release(self, symbol, modifiers):
         if arcade.key.W == symbol:
-            self.acceleration = vector.Vector2D(0, ACCELERATION_GRAVITY)
+            self.rocket_acceleration = vector.Vector2D(0, 0)
             self.ship_fire.remove_from_sprite_lists()
             self.ship_list.append(self.ship)
             self.ship_engine_on = False
@@ -91,9 +90,10 @@ class Ship():
     def on_land(self):
         self.velocity = vector.Vector2D(0, 0)
 
-    def on_update(self, delta_time: float):
-        #move the ship
-        self.velocity = vector.Add(self.velocity, vector.Multipy(self.acceleration, delta_time))
+    def on_update(self, delta_time: float, force):
+        acceleration = vector.Add(force, self.rocket_acceleration)
+
+        self.velocity = vector.Add(self.velocity, vector.Multipy(acceleration, delta_time))
         self.position = vector.Add(self.position, vector.Multipy(self.velocity, delta_time))
 
         self.radians += self.radian_speed

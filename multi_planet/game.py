@@ -9,7 +9,7 @@ SCREEN_TITLE = "Gravity Game"
 
 OCEAN_WIDTH = 427
 LAND_WIDTH = 426
-EARTH_HEIGHT = 100
+ACCELERATION_GRAVITY = 1000000
 GAME_OVER_FONT_SIZE = 50
 
 
@@ -20,6 +20,18 @@ class GravityGame(arcade.Window):
         super().__init__(width, height, SCREEN_TITLE)
         arcade.set_background_color(arcade.color.WHITE)
         self.ship = ship.Ship(width/2, height)
+        self.asteroids = arcade.SpriteList()
+        
+        self.asteroid_centers = []
+        self.asteroid_centers.append(vector.Vector2D(self.width / 4, self.height / 2))
+        self.asteroid_centers.append(vector.Vector2D(self.width - self.width / 4, self.height / 2))
+
+        for center in self.asteroid_centers:
+            asteroid = arcade.Sprite("../assets/asteroid.png", 0.2)
+            asteroid.center_x = center.x
+            asteroid.center_y = center.y
+            self.asteroids.append(asteroid)
+
 
 
     def setup(self):
@@ -37,14 +49,7 @@ class GravityGame(arcade.Window):
         if self.game_over:
             arcade.draw_text(self.game_over_message, self.width/2, self.height/2, arcade.color.BLACK, GAME_OVER_FONT_SIZE, align="center", anchor_x="center", anchor_y="center")
 
-        # draw the ground as two blue rectangles with a green in the  middle
-        earth_x_cursor = 0
-        arcade.draw_xywh_rectangle_filled(earth_x_cursor, 0, OCEAN_WIDTH, EARTH_HEIGHT, arcade.color.BLUE)
-        earth_x_cursor += OCEAN_WIDTH
-        arcade.draw_xywh_rectangle_filled(earth_x_cursor, 0, LAND_WIDTH, EARTH_HEIGHT, arcade.color.GREEN)
-        earth_x_cursor += LAND_WIDTH
-        arcade.draw_xywh_rectangle_filled(earth_x_cursor, 0, OCEAN_WIDTH, EARTH_HEIGHT, arcade.color.BLUE)
-
+        self.asteroids.draw()
         self.ship.draw()
 
         arcade.finish_render()
@@ -69,16 +74,23 @@ class GravityGame(arcade.Window):
         self.ship.on_key_release(symbol, modifiers)
 
     def detect_colisions(self):
-        if EARTH_HEIGHT >= self.ship.position.y:
-            if self.ship.velocity.y < ship.SHIP_CRASH_VELOCITY:
-                self.game_over_message = "GAME OVER\nYou crashed at velocity\n" + str(round(self.ship.velocity.y,1))
-                self.ship.on_crash()
-                self.game_over = True
-            else:
-                self.ship.on_land()
-            return True
         return False
 
+    def compute_asteriod_ship_gravity(self):
+        result = vector.Vector2D(0, 0)
+        for center in self.asteroid_centers:
+            direction = vector.Add(result, vector.Subtract(center, self.ship.position))
+            length = direction.length()
+            # prevent division by small numebers from blowing stuff up
+            if length > 50:
+                direction.make_unit()
+            else:
+                length = 50
+                direction = vector.Multipy(direction, 1.0 / length)
+
+            result = vector.Add(result, vector.Multipy(direction, ACCELERATION_GRAVITY / (length * length)))
+
+        return result
 
     def on_update(self, delta_time: float):
         if self.game_over:
@@ -90,7 +102,7 @@ class GravityGame(arcade.Window):
         self.detect_colisions()
 
         if not self.game_over:
-            self.ship.on_update(delta_time)
+            self.ship.on_update(delta_time, self.compute_asteriod_ship_gravity())
 
 
 
