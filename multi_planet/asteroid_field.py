@@ -28,26 +28,32 @@ def MapMassToScale(mass):
         mass = ASTEROID_MASS_LOWER_OUTLIER
     return np.interp(mass, [ASTEROID_MASS_LOWER_OUTLIER, ASTEROID_MASS_UPPER_OUTLIER], [ASTEROID_MIN_SCALE, ASTEROID_MAX_SCALE])
 
+def create_random_asteroid(width, height):
+    data = AsteroidData(vector.Vector2D(random.randint(1, width), \
+        random.randint(1, height)), \
+            np.random.normal(ASTEROID_MASS_MEAN, ASTEROID_MASS_STD))
+    sprite = arcade.Sprite(ASTEROID_FILE_PATH, MapMassToScale(data.mass))
+    sprite.center_x = data.center.x
+    sprite.center_y = data.center.y
+    sprite.radians = random.uniform(0, 2 * math.pi)
+    return data, sprite
+
 class AsteroidField():
     def __init__(self, width, height, count):
         self.asteroids = arcade.SpriteList()
-        self.generate_random_asteroids(width, height, count)
-        self.create_sprites() 
+        self.generate_random_non_intersecting_asteroids(width, height, count)
         
-    def create_sprites(self):
-        for dp in self.asteroid_data:
-            asteroid = arcade.Sprite(ASTEROID_FILE_PATH, MapMassToScale(dp.mass))
-            asteroid.center_x = dp.center.x
-            asteroid.center_y = dp.center.y
-            asteroid.radians = random.uniform(0, 2 * math.pi)
-            self.asteroids.append(asteroid)
 
-    def generate_random_asteroids(self, width, height, count):
+    def generate_random_non_intersecting_asteroids(self, width, height, count):
         self.asteroid_data = []
         for _ in range(count):
-            self.asteroid_data.append( \
-                AsteroidData(vector.Vector2D(random.randint(1, width), random.randint(1, height)), \
-                    np.random.normal(ASTEROID_MASS_MEAN, ASTEROID_MASS_STD)))
+            collision_list = [3]
+            while len(collision_list) > 0:
+                data, sprite = create_random_asteroid(width, height)
+                collision_list = arcade.check_for_collision_with_list(sprite, self.asteroids)
+
+            self.asteroids.append(sprite)
+            self.asteroid_data.append(data)
 
     def get_collision_sprites(self):
         return self.asteroids

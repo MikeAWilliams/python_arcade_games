@@ -22,9 +22,12 @@ class GravityGame(arcade.Window):
     def __init__(self, width, height):
         super().__init__(width, height, SCREEN_TITLE)
         arcade.set_background_color(arcade.color.WHITE)
-        self.ship = ship.Ship(width, height)
         self.asteroids = asteroid_field.AsteroidField(self.width, self.height, NUMBER_OF_ASTEROIDS)
-        self.exit = bh.BlackHole(width, height)
+        self.exit = bh.BlackHole(width, height, self.asteroids.get_collision_sprites())
+        collision_list = self.asteroids.get_collision_sprites()
+        collision_list.append(self.exit.get_collision_sprite())
+        self.ship = ship.Ship(width, height, collision_list)
+        self.exit.get_collision_sprite().remove_from_sprite_lists()
 
     def setup(self):
         #game state

@@ -15,15 +15,34 @@ SHIP_CRASH_VELOCITY = -200
 ANGULAR_SPEED = 2 * math.pi / 300
 
 class Ship():
-    def __init__(self, width, height):
+    def __init__(self, width, height, sprite_list):
         self.width = width
         self.height = height
         self.scale = 0.05
-        self.init_position = vector.Vector2D(random.randint(1, width), random.randint(1, height))
-        self.position = self.init_position.copy()
+        self.initilize_ship_non_intersecting(sprite_list)
 
+    def initilize_ship_non_intersecting(self, sprite_list):
+        collisions = [2]
+        while len(collisions) > 0:
+            self.generate_random_ship()
+            collisions = arcade.check_for_collision_with_list(self.ship_fire, sprite_list)
+
+    def generate_random_ship(self):
         self.ship = arcade.Sprite(SHIP_PATH, self.scale)
         self.ship_fire = arcade.Sprite(SHIP_FIRE_PATH, self.scale)
+
+        minX = int(self.ship_fire.width / 2)
+        maxX = int(self.width - self.ship_fire.width / 2)
+        minY = int(self.ship_fire.height / 2)
+        maxY = int(self.height - self.ship_fire.height / 2)
+
+        self.init_position = vector.Vector2D(random.randint(minX, maxX), random.randint(minY, maxY))
+        self.position = self.init_position.copy()
+        self.ship_fire.center_x = self.position.x
+        self.ship_fire.center_y = self.position.y
+        self.ship.center_x = self.position.x
+        self.ship.center_y = self.position.y
+
     
     def setup(self):
         # ship state
