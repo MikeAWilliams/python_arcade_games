@@ -49,6 +49,9 @@ class AsteroidField():
                 AsteroidData(vector.Vector2D(random.randint(1, width), random.randint(1, height)), \
                     np.random.normal(ASTEROID_MASS_MEAN, ASTEROID_MASS_STD)))
 
+    def get_collision_sprites(self):
+        return self.asteroids
+
     def draw(self):
         self.asteroids.draw()
 

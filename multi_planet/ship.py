@@ -47,6 +47,9 @@ class Ship():
         # keep the ship sprites in a sprite list which is faster later
         self.ship_list = arcade.SpriteList()
         self.ship_list.append(self.ship)
+    
+    def get_collision_sprite(self):
+        return self.ship
 
     def draw(self):
         self.ship_list.draw()

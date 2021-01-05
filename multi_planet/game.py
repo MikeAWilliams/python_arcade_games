@@ -5,6 +5,7 @@ import random
 import vector
 import ship
 import asteroid_field
+import black_hole as bh
 
 # Constants
 SCREEN_TITLE = "Gravity Game"
@@ -23,7 +24,7 @@ class GravityGame(arcade.Window):
         arcade.set_background_color(arcade.color.WHITE)
         self.ship = ship.Ship(width, height)
         self.asteroids = asteroid_field.AsteroidField(self.width, self.height, NUMBER_OF_ASTEROIDS)
-        
+        self.exit = bh.BlackHole(width, height)
 
     def setup(self):
         #game state
@@ -42,6 +43,7 @@ class GravityGame(arcade.Window):
 
         self.asteroids.draw()
         self.ship.draw()
+        self.exit.draw()
 
         arcade.finish_render()
 
@@ -65,7 +67,14 @@ class GravityGame(arcade.Window):
         self.ship.on_key_release(symbol, modifiers)
 
     def detect_colisions(self):
-        return False
+        if arcade.check_for_collision(self.ship.get_collision_sprite(), self.exit.get_collision_sprite()):
+            self.game_over_message = "YOU WIN!"
+            self.game_over = True
+        
+        asteroids_hit = arcade.check_for_collision_with_list(self.ship.get_collision_sprite(), self.asteroids.get_collision_sprites())
+        if len(asteroids_hit) > 0:
+            self.game_over_message = "You hit an asteroid"
+            self.game_over = True
 
 
     def on_update(self, delta_time: float):
