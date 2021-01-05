@@ -3,13 +3,13 @@ import os
 
 import vector
 import ship
+import asteroid_field
 
 # Constants
 SCREEN_TITLE = "Gravity Game"
 
 OCEAN_WIDTH = 427
 LAND_WIDTH = 426
-ACCELERATION_GRAVITY = 1000000
 GAME_OVER_FONT_SIZE = 50
 
 
@@ -20,19 +20,8 @@ class GravityGame(arcade.Window):
         super().__init__(width, height, SCREEN_TITLE)
         arcade.set_background_color(arcade.color.WHITE)
         self.ship = ship.Ship(width/2, height)
-        self.asteroids = arcade.SpriteList()
+        self.asteroids = asteroid_field.AsteroidField(self.width, self.height)
         
-        self.asteroid_centers = []
-        self.asteroid_centers.append(vector.Vector2D(self.width / 4, self.height / 2))
-        self.asteroid_centers.append(vector.Vector2D(self.width - self.width / 4, self.height / 2))
-
-        for center in self.asteroid_centers:
-            asteroid = arcade.Sprite("../assets/asteroid.png", 0.2)
-            asteroid.center_x = center.x
-            asteroid.center_y = center.y
-            self.asteroids.append(asteroid)
-
-
 
     def setup(self):
         #game state
@@ -76,21 +65,6 @@ class GravityGame(arcade.Window):
     def detect_colisions(self):
         return False
 
-    def compute_asteriod_ship_gravity(self):
-        result = vector.Vector2D(0, 0)
-        for center in self.asteroid_centers:
-            direction = vector.Add(result, vector.Subtract(center, self.ship.position))
-            length = direction.length()
-            # prevent division by small numebers from blowing stuff up
-            if length > 50:
-                direction.make_unit()
-            else:
-                length = 50
-                direction = vector.Multipy(direction, 1.0 / length)
-
-            result = vector.Add(result, vector.Multipy(direction, ACCELERATION_GRAVITY / (length * length)))
-
-        return result
 
     def on_update(self, delta_time: float):
         if self.game_over:
@@ -102,7 +76,7 @@ class GravityGame(arcade.Window):
         self.detect_colisions()
 
         if not self.game_over:
-            self.ship.on_update(delta_time, self.compute_asteriod_ship_gravity())
+            self.ship.on_update(delta_time, self.asteroids.compute_asteriod_to_point_gravity(self.ship.position))
 
 
 
