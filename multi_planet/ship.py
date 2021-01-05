@@ -1,5 +1,6 @@
 import arcade
 import math
+import random
 
 import vector
 
@@ -14,10 +15,12 @@ SHIP_CRASH_VELOCITY = -200
 ANGULAR_SPEED = 2 * math.pi / 300
 
 class Ship():
-    def __init__(self, init_x, init_y):
+    def __init__(self, width, height):
+        self.width = width
+        self.height = height
         self.scale = 0.05
-        self.init_position = vector.Vector2D(init_x, init_y)
-        self.position = self.init_position
+        self.init_position = vector.Vector2D(random.randint(1, width), random.randint(1, height))
+        self.position = self.init_position.copy()
 
         self.ship = arcade.Sprite(SHIP_PATH, self.scale)
         self.ship_fire = arcade.Sprite(SHIP_FIRE_PATH, self.scale)
@@ -89,11 +92,22 @@ class Ship():
 
     def on_land(self):
         self.velocity = vector.Vector2D(0, 0)
+    
+    def bounce(self):
+        if self.position.x >= self.width and self.velocity.x > 0:
+            self.velocity.x *= -1
+        if self.position.x <= 0 and self.velocity.x < 0:
+            self.velocity.x *= -1
+        if self.position.y >= self.height and self.velocity.y > 0:
+            self.velocity.y *= -1
+        if self.position.y <= 0 and self.velocity.y < 0:
+            self.velocity.y *= -1
 
     def on_update(self, delta_time: float, force):
         acceleration = vector.Add(force, self.rocket_acceleration)
 
         self.velocity = vector.Add(self.velocity, vector.Multipy(acceleration, delta_time))
+        self.bounce()
         self.position = vector.Add(self.position, vector.Multipy(self.velocity, delta_time))
 
         self.radians += self.radian_speed

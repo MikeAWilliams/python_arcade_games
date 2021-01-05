@@ -15,6 +15,9 @@ class Vector2D:
         len = self.length()
         self.x /= len
         self.y /= len
+    
+    def print(self, name):
+        print("{0} ({1}, {2})".format(name, self.x, self.y))
 
 
 def Add(first, second):
