@@ -1,5 +1,6 @@
 import arcade
 import os
+import random
 
 import vector
 import ship
@@ -20,7 +21,7 @@ class GravityGame(arcade.Window):
     def __init__(self, width, height):
         super().__init__(width, height, SCREEN_TITLE)
         arcade.set_background_color(arcade.color.WHITE)
-        self.ship = ship.Ship(width/2, height)
+        self.ship = ship.Ship(random.randint(1, width), random.randint(1, height))
         self.asteroids = asteroid_field.AsteroidField(self.width, self.height, NUMBER_OF_ASTEROIDS)
         
 
