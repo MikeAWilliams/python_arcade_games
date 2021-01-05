@@ -15,7 +15,7 @@ ANGULAR_SPEED = 2 * math.pi / 300
 
 class Ship():
     def __init__(self, init_x, init_y):
-        self.scale = 0.1
+        self.scale = 0.05
         self.init_position = vector.Vector2D(init_x, init_y)
         self.position = self.init_position
 

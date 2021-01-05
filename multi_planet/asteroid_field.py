@@ -1,5 +1,6 @@
 import arcade
 import random
+import math
 
 import vector
 
@@ -14,9 +15,10 @@ class AsteroidField():
         
     def create_sprites(self):
         for center in self.asteroid_centers:
-            asteroid = arcade.Sprite(ASTEROID_FILE_PATH, 0.2)
+            asteroid = arcade.Sprite(ASTEROID_FILE_PATH, 0.05)
             asteroid.center_x = center.x
             asteroid.center_y = center.y
+            asteroid.radians = random.uniform(0, 2 * math.pi)
             self.asteroids.append(asteroid)
 
     def generate_random_asteroids(self, width, height, count):
