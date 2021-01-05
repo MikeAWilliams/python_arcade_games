@@ -11,6 +11,7 @@ SCREEN_TITLE = "Gravity Game"
 OCEAN_WIDTH = 427
 LAND_WIDTH = 426
 GAME_OVER_FONT_SIZE = 50
+NUMBER_OF_ASTEROIDS = 6
 
 
 
@@ -20,7 +21,7 @@ class GravityGame(arcade.Window):
         super().__init__(width, height, SCREEN_TITLE)
         arcade.set_background_color(arcade.color.WHITE)
         self.ship = ship.Ship(width/2, height)
-        self.asteroids = asteroid_field.AsteroidField(self.width, self.height)
+        self.asteroids = asteroid_field.AsteroidField(self.width, self.height, NUMBER_OF_ASTEROIDS)
         
 
     def setup(self):

@@ -1,4 +1,5 @@
 import arcade
+import random
 
 import vector
 
@@ -6,18 +7,22 @@ ASTEROID_FILE_PATH = "../assets/asteroid.png"
 ACCELERATION_GRAVITY = 1000000
 
 class AsteroidField():
-    def __init__(self, width, height):
+    def __init__(self, width, height, count):
         self.asteroids = arcade.SpriteList()
-        self.asteroid_centers = []
-        self.asteroid_centers.append(vector.Vector2D(width / 4, height / 2))
-        self.asteroid_centers.append(vector.Vector2D(width - width / 4, height / 2))
-
+        self.generate_random_asteroids(width, height, count)
+        self.create_sprites() 
+        
+    def create_sprites(self):
         for center in self.asteroid_centers:
             asteroid = arcade.Sprite(ASTEROID_FILE_PATH, 0.2)
             asteroid.center_x = center.x
             asteroid.center_y = center.y
             self.asteroids.append(asteroid)
 
+    def generate_random_asteroids(self, width, height, count):
+        self.asteroid_centers = []
+        for _ in range(count):
+            self.asteroid_centers.append(vector.Vector2D(random.randint(1, width), random.randint(1, height)))
 
     def draw(self):
         self.asteroids.draw()
