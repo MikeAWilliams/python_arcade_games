@@ -3,20 +3,22 @@ import os
 import random
 
 import grid
+import player
 
 # Constants
 SCREEN_TITLE = "Gravity Game"
 
 GAME_OVER_FONT_SIZE = 50
 
-
-
+GRID_COLUMNS = 10
+GRID_ROWS = 5
 
 class WompusGame(arcade.Window):
     def __init__(self, width, height):
         super().__init__(width, height, SCREEN_TITLE)
         arcade.set_background_color(arcade.color.WHITE)
-        self.grid = grid.Grid(self.width, self.height)
+        self.grid = grid.Grid(width, height, GRID_COLUMNS, GRID_ROWS)
+        self.player = player.Player(self.grid.column_width, self.grid.row_height)
 
     def setup(self):
         #game state
@@ -31,6 +33,7 @@ class WompusGame(arcade.Window):
             arcade.draw_text(self.game_over_message, self.width/2, self.height/2, arcade.color.BLACK, GAME_OVER_FONT_SIZE, align="center", anchor_x="center", anchor_y="center")
 
         self.grid.Draw()
+        self.player.Draw()
 
     def on_key_press(self, symbol, modifiers):
         if arcade.key.ESCAPE == symbol:
