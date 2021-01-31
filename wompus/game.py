@@ -20,6 +20,16 @@ class Position():
     def Intersecrts(self, other):
         return self.I == other.I and self.J == other.J
 
+    def Adjacent(self, other):
+        iDist = abs(self.I - other.I)
+        jDist = abs(self.J - other.J)
+        if iDist == 1 and jDist == 0:
+            return True
+        if jDist == 1 and iDist == 0:
+            return True
+        return False
+
+
 def GetRandomUnocupiedPosition(ocupied):
     while True:
         position = Position(random.randint(0, GRID_COLUMNS - 1), random.randint(0, GRID_ROWS - 1))
@@ -42,7 +52,6 @@ class WompusGame(arcade.Window):
         self.playerPosition = Position(0, 0)
 
     def setup(self):
-        #game state
         self.game_over = False
         self.game_over_message = ""
         self.playerPosition = GetRandomUnocupiedPosition([])
@@ -56,6 +65,13 @@ class WompusGame(arcade.Window):
 
         if self.game_over:
             arcade.draw_text(self.game_over_message, self.width/2, self.height/2, arcade.color.BLACK, GAME_OVER_FONT_SIZE, align="center", anchor_x="center", anchor_y="center")
+
+        if self.playerPosition.Adjacent(self.wompusPosition):
+            arcade.draw_text("You smell the wompus", self.width/2, self.height/2, arcade.color.BLACK, GAME_OVER_FONT_SIZE, align="center", anchor_x="center", anchor_y="center")
+        
+        if self.playerPosition.Adjacent(self.exitPosition):
+            arcade.draw_text("You feel a slight breaze", self.width/2, self.height/2, arcade.color.BLACK, GAME_OVER_FONT_SIZE, align="center", anchor_x="center", anchor_y="center")
+
 
         self.grid.Draw()
         self.player.Draw()
