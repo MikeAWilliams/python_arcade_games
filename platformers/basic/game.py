@@ -79,6 +79,39 @@ class MyGame(arcade.Window):
             coin = arcade.Sprite(":resources:images/items/coinGold.png", COIN_SCALING)
             coin.position = coordinate
             self.coin_list.append(coin)
+        
+        for x in range(64, 900, 64):
+            coin = arcade.Sprite(":resources:images/items/coinGold.png", COIN_SCALING)
+            coin.center_x = x
+            coin.center_y = 564
+            self.coin_list.append(coin)
+
+        
+        # side to side platforms
+        mover = arcade.Sprite(":resources:images/tiles/brickBrown.png", TILE_SCALING)
+        mover.center_y = 500
+        mover.center_x = 600
+        mover.boundary_left = 400
+        mover.boundary_right = 800
+        mover.change_x = -2 * TILE_SCALING
+        self.world_list.append(mover)
+
+        mover = arcade.Sprite(":resources:images/tiles/brickBrown.png", TILE_SCALING)
+        mover.center_y = 500
+        mover.center_x = 200
+        mover.boundary_left = 0
+        mover.boundary_right = 400
+        mover.change_x = 2 * TILE_SCALING
+        self.world_list.append(mover)
+
+        #up down platform
+        mover = arcade.Sprite(":resources:images/tiles/brickBrown.png", TILE_SCALING)
+        mover.center_y = 500
+        mover.center_x = 850
+        mover.boundary_top = 600
+        mover.boundary_bottom = 96
+        mover.change_y = -2 * TILE_SCALING
+        self.world_list.append(mover)
 
         self.score = 0
         self.game_over = False
