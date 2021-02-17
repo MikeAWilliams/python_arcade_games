@@ -13,18 +13,26 @@ PLAYER_MOVEMENT_SPEED = 5
 PLAYER_JUMP_SPEED = 10
 GRAVITY_CONSTANT = 0.5
 
+LEFT_VIEWPORT_MARGIN = 250
+RIGHT_VIEWPORT_MARGIN = 250
+BOTTOM_VIEWPORT_MARGIN = 50
+TOP_VIEWPORT_MARGIN = 100
+
 class MyGame(arcade.Window):
     def __init__(self):
         super().__init__(SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_TITLE)
 
         self.world_list = None
         self.player_list = None
-        #self.coin_list = None
+        self.coin_list = None
         #self.hazard_list = None
 
         self.player_sprite = None
 
         self.physics_engine = None
+
+        self.view_bottom = 0
+        self.view_left = 0
 
         arcade.set_background_color(arcade.csscolor.CORNFLOWER_BLUE)
 
@@ -100,6 +108,41 @@ class MyGame(arcade.Window):
         #if len(harard_hits) > 0:
             #self.game_over = True
 
+        self.update_viewport()
+    
+    def update_viewport(self):
+        changed = False
+
+        left_boundary = self.view_left + LEFT_VIEWPORT_MARGIN
+        if self.player_sprite.left < left_boundary:
+            self.view_left -= left_boundary - self.player_sprite.left
+            changed = True
+
+        right_boundary = self.view_left + SCREEN_WIDTH - RIGHT_VIEWPORT_MARGIN
+        if self.player_sprite.right > right_boundary:
+            self.view_left += self.player_sprite.right - right_boundary
+            changed = True
+
+        top_boundary = self.view_bottom + SCREEN_HEIGHT - TOP_VIEWPORT_MARGIN
+        if self.player_sprite.top > top_boundary:
+            self.view_bottom += self.player_sprite.top - top_boundary
+            changed = True
+
+        bottom_boundary = self.view_bottom + BOTTOM_VIEWPORT_MARGIN
+        if self.player_sprite.bottom < bottom_boundary:
+            self.view_bottom -= bottom_boundary - self.player_sprite.bottom
+            changed = True
+
+        if changed:
+            self.view_bottom = int(self.view_bottom)
+            self.view_left = int(self.view_left)
+
+            arcade.set_viewport(self.view_left,
+                                SCREEN_WIDTH + self.view_left,
+                                self.view_bottom,
+                                SCREEN_HEIGHT + self.view_bottom)    
+
+
 
     def on_draw(self):
         arcade.start_render()
@@ -109,7 +152,7 @@ class MyGame(arcade.Window):
         self.coin_list.draw()
 
         score_text = f"Score: {self.score}"
-        arcade.draw_text(score_text, 10, 10, arcade.csscolor.WHITE, 18)
+        arcade.draw_text(score_text, self.view_left + 10, self.view_bottom + 10, arcade.csscolor.WHITE, 18)
 
         if self.game_over:
             arcade.draw_text("GAME OVER", 10, 30, arcade.csscolor.WHITE, 18)
