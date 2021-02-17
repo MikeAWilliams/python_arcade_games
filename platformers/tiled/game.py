@@ -27,7 +27,7 @@ class MyGame(arcade.Window):
         self.world_list = None
         self.player_list = None
         self.coin_list = None
-        #self.hazard_list = None
+        self.hazard_list = None
 
         self.player_sprite = None
 
@@ -42,7 +42,7 @@ class MyGame(arcade.Window):
         self.map_number = map_number
         self.player_list = arcade.SpriteList()
         self.world_list = arcade.SpriteList(use_spatial_hash=True)
-        #self.hazard_list = arcade.SpriteList(use_spatial_hash=True)
+        self.hazard_list = arcade.SpriteList(use_spatial_hash=True)
         self.coin_list = arcade.SpriteList()
 
         image_source = "./player.png"
@@ -64,10 +64,16 @@ class MyGame(arcade.Window):
                                                       scaling=TILE_SCALING,
                                                       use_spatial_hash=True)
 
+        self.hazard_list = arcade.tilemap.process_layer(map_object=my_map,
+                                                      layer_name='hazards',
+                                                      scaling=TILE_SCALING,
+                                                      use_spatial_hash=True)
+
         player_location = arcade.tilemap.process_layer(map_object=my_map,
                                                       layer_name='player',
                                                       scaling=TILE_SCALING,
                                                       use_spatial_hash=True)
+
         self.player_sprite.left = player_location[0].left
         self.player_sprite.bottom = player_location[0].bottom
 
@@ -118,9 +124,9 @@ class MyGame(arcade.Window):
                 self.game_over = True
                 self.player_won = True
 
-        #harard_hits = arcade.check_for_collision_with_list(self.player_sprite, self.hazard_list)
-        #if len(harard_hits) > 0:
-            #self.game_over = True
+        harard_hits = arcade.check_for_collision_with_list(self.player_sprite, self.hazard_list)
+        if len(harard_hits) > 0:
+            self.setup(self.map_number)
 
         self.update_viewport()
     
@@ -161,7 +167,7 @@ class MyGame(arcade.Window):
     def on_draw(self):
         arcade.start_render()
         self.world_list.draw()
-        #self.hazard_list.draw()
+        self.hazard_list.draw()
         self.player_list.draw()
         self.coin_list.draw()
 
