@@ -47,6 +47,8 @@ class MyGame(arcade.Window):
         self.player_sprite.center_x = 64
         self.player_sprite.center_y = 128
         self.player_list.append(self.player_sprite)
+        self.player_sprite_right_texture = arcade.load_texture(image_source)
+        self.player_sprite_left_texture = arcade.load_texture(image_source, flipped_horizontally=True)
 
         my_map = arcade.tilemap.read_tmx("./map1.tmx")
         self.world_list = arcade.tilemap.process_layer(map_object=my_map,
@@ -68,6 +70,8 @@ class MyGame(arcade.Window):
 
         self.score = 0
         self.game_over = False
+        self.view_bottom = 0
+        self.view_left = 0
 
         self.physics_engine = arcade.PhysicsEnginePlatformer(self.player_sprite, self.world_list, GRAVITY_CONSTANT)
     	
@@ -85,8 +89,10 @@ class MyGame(arcade.Window):
             self.player_sprite.change_y = PLAYER_JUMP_SPEED
         elif key == arcade.key.A:
             self.player_sprite.change_x = -PLAYER_MOVEMENT_SPEED
+            self.player_sprite.texture = self.player_sprite_left_texture
         elif key == arcade.key.D:
             self.player_sprite.change_x = PLAYER_MOVEMENT_SPEED
+            self.player_sprite.texture = self.player_sprite_right_texture
     
     def on_key_release(self, key, modifiers):
         if key == arcade.key.A:
