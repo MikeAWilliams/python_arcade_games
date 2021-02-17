@@ -10,13 +10,15 @@ TILE_SCALING = 2.0
 COIN_SCALING = 2.0
 
 PLAYER_MOVEMENT_SPEED = 5
-PLAYER_JUMP_SPEED = 10
+PLAYER_JUMP_SPEED = 15
 GRAVITY_CONSTANT = 0.5
 
 LEFT_VIEWPORT_MARGIN = 250
 RIGHT_VIEWPORT_MARGIN = 250
 BOTTOM_VIEWPORT_MARGIN = 50
 TOP_VIEWPORT_MARGIN = 100
+
+MAXIMUM_MAP_NUMBER = 3
 
 class MyGame(arcade.Window):
     def __init__(self):
@@ -36,7 +38,8 @@ class MyGame(arcade.Window):
 
         arcade.set_background_color(arcade.csscolor.CORNFLOWER_BLUE)
 
-    def setup(self):
+    def setup(self, map_number = 1):
+        self.map_number = map_number
         self.player_list = arcade.SpriteList()
         self.world_list = arcade.SpriteList(use_spatial_hash=True)
         #self.hazard_list = arcade.SpriteList(use_spatial_hash=True)
@@ -50,7 +53,7 @@ class MyGame(arcade.Window):
         self.player_sprite_right_texture = arcade.load_texture(image_source)
         self.player_sprite_left_texture = arcade.load_texture(image_source, flipped_horizontally=True)
 
-        my_map = arcade.tilemap.read_tmx("./map1.tmx")
+        my_map = arcade.tilemap.read_tmx("./map"+str(map_number)+".tmx")
         self.world_list = arcade.tilemap.process_layer(map_object=my_map,
                                                       layer_name='ground',
                                                       scaling=TILE_SCALING,
@@ -68,8 +71,8 @@ class MyGame(arcade.Window):
         self.player_sprite.left = player_location[0].left
         self.player_sprite.bottom = player_location[0].bottom
 
-        self.score = 0
         self.game_over = False
+        self.player_won = False
         self.view_bottom = 0
         self.view_left = 0
 
@@ -108,7 +111,12 @@ class MyGame(arcade.Window):
         coin_hit_list = arcade.check_for_collision_with_list(self.player_sprite, self.coin_list)
         for coin in coin_hit_list:
             coin.remove_from_sprite_lists()
-            self.score += 1
+        if 0 == len(self.coin_list):
+            if self.map_number < MAXIMUM_MAP_NUMBER:
+                self.setup(self.map_number + 1)
+            else:
+                self.game_over = True
+                self.player_won = True
 
         #harard_hits = arcade.check_for_collision_with_list(self.player_sprite, self.hazard_list)
         #if len(harard_hits) > 0:
@@ -157,11 +165,14 @@ class MyGame(arcade.Window):
         self.player_list.draw()
         self.coin_list.draw()
 
-        score_text = f"Score: {self.score}"
+        score_text = f"Coins Remaining: {len(self.coin_list)}"
         arcade.draw_text(score_text, self.view_left + 10, self.view_bottom + 10, arcade.csscolor.WHITE, 18)
 
         if self.game_over:
-            arcade.draw_text("GAME OVER", 10, 30, arcade.csscolor.WHITE, 18)
+            if self.player_won:
+                arcade.draw_text("YOU WON!", self.view_left + 10, self.view_bottom + 30, arcade.csscolor.WHITE, 18)
+            else:
+                arcade.draw_text("GAME OVER", self.view_left + 10, self.view_bottom + 30, arcade.csscolor.WHITE, 18)
 
 
 
