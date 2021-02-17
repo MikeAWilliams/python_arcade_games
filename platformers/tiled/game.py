@@ -59,6 +59,10 @@ class MyGame(arcade.Window):
                                                       scaling=TILE_SCALING,
                                                       use_spatial_hash=True)
 
+        moving_platforms_list = arcade.tilemap.process_layer(my_map, "movers", TILE_SCALING)
+        for sprite in moving_platforms_list:
+            self.world_list.append(sprite)
+
         self.coin_list = arcade.tilemap.process_layer(map_object=my_map,
                                                       layer_name='coins',
                                                       scaling=TILE_SCALING,
