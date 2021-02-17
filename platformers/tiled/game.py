@@ -40,7 +40,7 @@ class MyGame(arcade.Window):
         self.player_sprite.center_y = 128
         self.player_list.append(self.player_sprite)
 
-        my_map = arcade.tilemap.read_tmx("./map.tmx")
+        my_map = arcade.tilemap.read_tmx("./map1.tmx")
         self.world_list = arcade.tilemap.process_layer(map_object=my_map,
                                                       layer_name='ground',
                                                       scaling=TILE_SCALING,
