@@ -88,15 +88,18 @@ class MinesweeperGame(arcade.Window):
         
         # this is just for using the mouse to change the imatge, delete this later
         self.last_image = 1
-    
+
+    def GetMineIndex(self, x, y):
+        i = math.floor(x / SPRITE_FINAL_SIZE)
+        j = math.floor(y / SPRITE_FINAL_SIZE)
+        index = i * GRID_COLUMNS + j
+        #print("i {0}, j {1}, index {2}".format(i, j, index))
+        return index
+
+
     def on_mouse_press(self, x, y, button, key_modifiers):
         if button == arcade.MOUSE_BUTTON_LEFT:
-            # what cell did they click on?
-            i = math.floor(x / SPRITE_FINAL_SIZE)
-            j = math.floor(y / SPRITE_FINAL_SIZE)
-            index = i * GRID_COLUMNS + j
-            print("i {0}, j {1}, index {2}".format(i, j, index))
-
+            index = self.GetMineIndex(x,y)
             # just for PoC of different drawing remove this later
             # cylcle the image to draw
             self.last_image = self.last_image + 1
