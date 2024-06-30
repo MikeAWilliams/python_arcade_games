@@ -1,5 +1,6 @@
 import png
 
+
 def binary_list_to_int_list(binary_list):
     result = []
     for row in binary_list:
@@ -17,15 +18,42 @@ def read_png(file_name):
         binary_list = list(tup[2])
         return binary_list_to_int_list(binary_list)
 
+
 def int_list_to_string_list(int_list):
     result = []
     for letter_list in int_list:
-        letter_binary_string = ''
+        letter_binary_string = ""
         for binary_digit in letter_list:
             letter_binary_string = letter_binary_string + str(binary_digit)
         result.append(letter_binary_string)
     return result
 
+
+def binary_string_to_int(binary_string):
+    position = 7
+    result = 0
+    for bit in binary_string:
+        if bit == "1":
+            result = result + 2**position
+        position = position - 1
+    return result
+
+def string_list_to_ascii(string_list):
+    result = []
+    for letter_as_binary_string in string_list:
+        result.append(binary_string_to_int(letter_as_binary_string))
+    return result
+
+def ascii_list_to_string(ascii_list):
+    result = ''
+    for ascii_letter in ascii_list:
+        result = result + chr(ascii_letter)
+    return result
+
 png_int_list = read_png("code.png")
 string_list = int_list_to_string_list(png_int_list)
 print(string_list)
+ascii_list = string_list_to_ascii(string_list)
+print(ascii_list)
+message = ascii_list_to_string(ascii_list)
+print(message)
