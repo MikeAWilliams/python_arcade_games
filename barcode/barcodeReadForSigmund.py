@@ -29,16 +29,6 @@ def int_list_to_string_list(int_list):
     return result
 
 
-def binary_string_to_int(binary_string):
-    position = 7
-    result = 0
-    for bit in binary_string:
-        if bit == "1":
-            result = result + 2**position
-        position = position - 1
-    return result
-
-
 def string_list_to_ascii(string_list):
     result = []
     for letter_as_binary_string in string_list:
@@ -46,10 +36,17 @@ def string_list_to_ascii(string_list):
     return result
 
 
+# The code above this works fine. you can just ignore it if you like.
+# However, the code below needs to be filled in to get a result
+
+
+def binary_string_to_int(binary_string):
+    result = 0
+    return result
+
+
 def ascii_list_to_string(ascii_list):
     result = ""
-    for ascii_letter in ascii_list:
-        result = result + chr(ascii_letter)
     return result
 
 
