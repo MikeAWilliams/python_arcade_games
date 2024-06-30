@@ -1,4 +1,5 @@
 import png
+import sys
 
 
 def write_png(data, file_name):
@@ -33,7 +34,10 @@ def string_to_binary_array(string_message):
     return result
 
 
-message = "Hello Sigmund! If you can decode this you are so smart!"
+if len(sys.argv) != 2:
+    print('Usage python barcodeWriter.py "the secret message"')
+    exit()
+message = sys.argv[1]
 binary = string_to_binary_array(message)
 
 write_png(binary, "code.png")
