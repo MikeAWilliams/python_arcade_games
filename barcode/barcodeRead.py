@@ -19,5 +19,5 @@ def read_png(file_name):
         return binary_list_to_int_list(binary_list)
 
 
-png_contents = read_png("code.png")
-print(png_contents)
+png_int_list = read_png("code.png")
+print(png_int_list)
