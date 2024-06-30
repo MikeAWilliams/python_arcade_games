@@ -1,5 +1,4 @@
 import png
-from bitstring import BitArray
 
 def binary_list_to_int_list(binary_list):
     result = []
@@ -18,16 +17,15 @@ def read_png(file_name):
         binary_list = list(tup[2])
         return binary_list_to_int_list(binary_list)
 
+def int_list_to_string_list(int_list):
+    result = []
+    for letter_list in int_list:
+        letter_binary_string = ''
+        for binary_digit in letter_list:
+            letter_binary_string = letter_binary_string + str(binary_digit)
+        result.append(letter_binary_string)
+    return result
 
 png_int_list = read_png("code.png")
-print(png_int_list)
-
-result = ''
-for letter_list in png_int_list:
-    letter_binary_string = ''
-    for binary_digit in letter_list:
-        letter_binary_string = letter_binary_string + str(binary_digit)
-    print(letter_binary_string)
-    int_for_char = BitArray(bin=letter_binary_string).int
-    result = result + chr(int_for_char)
-print(result)
+string_list = int_list_to_string_list(png_int_list)
+print(string_list)
