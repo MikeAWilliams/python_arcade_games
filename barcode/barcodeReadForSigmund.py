@@ -61,6 +61,8 @@ def string_list_to_ascii(string_list):
 # 128 + 64 + 32 + 16 + 8 + 4 + 2 + 1 = 255
 # but the number 01111111 is
 # 0 + 64 + 32 + 16 + 8 + 4 + 2 + 1 = 127
+# an example of this in a webpage is https://www.rapidtables.com/convert/number/binary-to-decimal.html?x=01000111
+# that converts 01000111 into 71
 def binary_string_to_int(binary_string):
     result = 0
     return result
@@ -69,6 +71,7 @@ def binary_string_to_int(binary_string):
 # this needs to convert a number betwen 0-255 into a letter
 # the input is a list of numbers and the result should be the message
 # the python function that converts a value 0-255 into a letter is chr(the_int)
+# with the example above 01000111 = 71 = G
 def ascii_list_to_string(ascii_list):
     result = ""
     return result
