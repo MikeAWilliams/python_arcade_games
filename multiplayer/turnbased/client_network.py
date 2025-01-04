@@ -12,15 +12,18 @@ class Network:
         try:
             self.client.connect(self.addr)
             data_from_server = self.client.recv(2048).decode()
-            print(data_from_server)
+            print("connection reply ", data_from_server)
         except Exception as err:
             print(f"Exception in network::connect {err=}, {type(err)=}")
             raise
 
-    def send(self, data):
+    # send and recieve a string
+    def send_string(self, data: str):
         try:
-            self.client.send(pickle.dumps(data))
-            return pickle.loads(self.client.recv(2048))
+            # self.client.send(pickle.dumps(data))
+            self.client.send(str.encode(data))
+            # return pickle.loads(self.client.recv(2048))
+            return self.client.recv(2048).decode()
         except socket.error as err:
             print(f"Exception in network::send {err=}, {type(err)=}")
             raise

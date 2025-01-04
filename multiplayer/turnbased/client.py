@@ -5,6 +5,9 @@ import argparse
 
 def main(host: str, port: int) -> int:
     coms = Network(host, port)
+    while True:
+        print("sending ping")
+        print("got back ", coms.send_string("ping"))
 
 
 if __name__ == "__main__":

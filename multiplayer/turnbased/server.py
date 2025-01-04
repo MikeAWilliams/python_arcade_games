@@ -12,12 +12,16 @@ def threaded_client(conn, player: int):
     while True:
         try:
             # data = pickle.loads(conn.recv(2048))
+            data = conn.recv(2048)
 
             if not data:
                 print("Disconnected")
                 break
 
-            conn.sendall(pickle.dumps(reply))
+            # conn.sendall(pickle.dumps(reply))
+            print("data recieved ", data.decode())
+            print("sending pong")
+            conn.sendall(str.encode("pong"))
         except:
             break
 
