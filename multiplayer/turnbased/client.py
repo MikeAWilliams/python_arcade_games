@@ -1,13 +1,18 @@
 import sys
 from client_network import Network
+from shared_data import *
 import argparse
 
 
 def main(host: str, port: int) -> int:
     coms = Network(host, port)
+    initial_state = coms.connect()
+    print("initial state message ", initial_state.GetMessage())
     while True:
-        print("sending ping")
-        print("got back ", coms.send_string("ping"))
+        response = coms.send(InputType1())
+        print("response to 1 ", response.GetMessage())
+        response = coms.send(InputType2())
+        print("response to 2 ", response.GetMessage())
 
 
 if __name__ == "__main__":

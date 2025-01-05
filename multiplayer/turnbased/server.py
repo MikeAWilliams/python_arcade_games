@@ -3,25 +3,37 @@ from _thread import *
 import pickle
 import argparse
 import sys
+from shared_data import *
 
 
-def threaded_client(conn, player: int):
-    # conn.send(pickle.dumps(players[player]))
-    conn.send(str.encode("hello from the server"))
-    reply = ""
+class PlayerState:
+    pass
+
+
+class GameState:
+    def __init__(self):
+        # keep track of two players
+        self.player_state = [PlayerState(), PlayerState()]
+
+
+def threaded_client(conn, state: GameState, player: int):
+    initial_state = InitialState("hello from the server")
+    conn.send(pickle.dumps(initial_state))
     while True:
         try:
-            # data = pickle.loads(conn.recv(2048))
-            data = conn.recv(2048)
+            data = pickle.loads(conn.recv(2048))
 
             if not data:
                 print("Disconnected")
                 break
 
-            # conn.sendall(pickle.dumps(reply))
-            print("data recieved ", data.decode())
-            print("sending pong")
-            conn.sendall(str.encode("pong"))
+            # Use this to respond to different kinds of input
+            match data:
+                case InputType1():
+                    conn.sendall(pickle.dumps(ClientGameState("got a 1")))
+                case InputType2():
+                    conn.sendall(pickle.dumps(ClientGameState("got a 2")))
+
         except:
             break
 
@@ -42,13 +54,14 @@ def main(host: str, port: int, timeout: int) -> int:
     mySocket.listen(2)
     print("Waiting for a players to connect")
 
+    game_state = GameState()
     currentPlayer = 0
-    while currentPlayer < 2:
+    while currentPlayer < 1:
         # needs a timeout. blocks forever and ingores ctrl+c
         conn, addr = mySocket.accept()
         print("Connected to:", addr)
 
-        start_new_thread(threaded_client, (conn, currentPlayer))
+        start_new_thread(threaded_client, (conn, game_state, currentPlayer))
         currentPlayer += 1
 
     # keep the program allive after we got two connections accept ctrl+c
