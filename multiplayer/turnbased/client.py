@@ -4,10 +4,23 @@ from shared_data import *
 import argparse
 
 
+def handle_connection_data(data) -> InitialState:
+    match data:
+        case InitialState() as state:
+            return state
+        case Error() as error:
+            print("got an error ", error.GetMessage())
+            raise Exception(error.GetMessage())
+        case _:
+            print("recieved an unknown type")
+            raise Exception("an unknown error occured on initial connection")
+
+
 def main(host: str, port: int) -> int:
     coms = Network(host, port)
-    initial_state = coms.connect()
+    initial_state = handle_connection_data(coms.connect())
     print("initial state message ", initial_state.GetMessage())
+
     while True:
         response = coms.send(InputType1())
         print("response to 1 ", response.GetMessage())
