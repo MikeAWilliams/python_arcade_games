@@ -5,6 +5,7 @@ import argparse
 import sys
 from shared_data import *
 from enum import Enum
+import random
 
 
 class ServerPhase(Enum):
@@ -13,6 +14,8 @@ class ServerPhase(Enum):
     PICKED = 2
     GUESSING = 3
     WAITING = 4
+    WON = 5
+    LOST = 6
 
 
 class PlayerState:
@@ -33,6 +36,21 @@ class PlayerState:
         self.number = number
         self.phase = ServerPhase.PICKED
 
+    def get_number(self):
+        return self.number
+
+    def set_your_turn(self):
+        self.phase = ServerPhase.GUESSING
+
+    def set_waiting(self):
+        self.phase = ServerPhase.WAITING
+
+    def set_won(self):
+        self.phase = ServerPhase.WON
+
+    def set_lost(self):
+        self.phase = ServerPhase.LOST
+
 
 class GameState:
     def __init__(self):
@@ -41,6 +59,157 @@ class GameState:
 
     def get_player_state(self, index: int) -> PlayerState:
         return self.player_state[index]
+
+    def get_other_player_state(self, current_index: int) -> PlayerState:
+        if current_index == 0:
+            return self.player_state[1]
+        return self.player_state[0]
+
+
+def send_to_player_based_on_NumberPickData(
+    player: int, player_state: PlayerState, other_player_state: PlayerState
+) -> bool:
+    # there is race condition here. Both players may be in this block of code at the same time
+    match (other_player_state.get_phase()):
+        case ServerPhase.WAITING_FOR_CONN:
+            print("sending conn message for player ", player)
+            player_state.get_conn().send(
+                pickle.dumps(
+                    ClientGameState(
+                        ClientPhase.WAITING_FOR_SERVER,
+                        "Your number is set. Waiting for the other player to connect",
+                    )
+                )
+            )
+        case ServerPhase.PICKING:
+            print("sending picking message for player ", player)
+            player_state.get_conn().send(
+                pickle.dumps(
+                    ClientGameState(
+                        ClientPhase.WAITING_FOR_SERVER,
+                        "Your number is set. Waiting for the other player to pick",
+                    )
+                )
+            )
+        case ServerPhase.PICKED:
+            # both players have picked
+            print("sending picked message for player ", player)
+            player_state.get_conn().send(
+                pickle.dumps(
+                    ClientGameState(
+                        ClientPhase.WAITING_FOR_SERVER,
+                        "Your number is set. Ohter player picked before you",
+                    )
+                )
+            )
+            # return true to tell caller to move both players to the next step
+            return True
+        case _:
+            print("blowing up for player ", player)
+            raise Exception(
+                "Other player is in unexpected state ".format(
+                    other_player_state.get_phase()
+                )
+            )
+    return False
+
+
+def move_both_players_out_of_waiting_for_pick(current_state: GameState) -> GameState:
+    # pick a random player to go first
+    turn_index = random.choice([0, 1])
+    print("picked player {} to go first".format(turn_index))
+    turn_player = current_state.get_player_state(turn_index)
+    other_player = current_state.get_other_player_state(turn_index)
+    if (
+        turn_player.get_phase() != ServerPhase.PICKED
+        and other_player.get_phase() != ServerPhase.PICKED
+    ):
+        raise Exception(
+            "Unexpected state when picking a first player turn_index: {} turn_player.phase: {}, ohter_player.phase {}".format(
+                turn_index, turn_player.get_phase(), other_player.get_phase()
+            )
+        )
+    turn_player.set_your_turn()
+    other_player.set_waiting()
+
+    turn_player.get_conn().send(
+        pickle.dumps(
+            ClientGameState(ClientPhase.GUESSING, "Its your turn. Guess a number.")
+        )
+    )
+    other_player.get_conn().send(
+        pickle.dumps(
+            ClientGameState(
+                ClientPhase.WAITING_FOR_SERVER, "Its the other players turn."
+            )
+        )
+    )
+
+
+def change_turn_or_win(
+    current_player: PlayerState, other_player: PlayerState, current_player_won: bool
+):
+    if current_player_won:
+        current_player.set_won()
+        other_player.set_lost()
+        current_player.get_conn().send(
+            pickle.dumps(
+                ClientGameState(ClientPhase.YOU_WIN, "Congradulations you win!")
+            )
+        )
+        other_player.get_conn().send(
+            pickle.dumps(ClientGameState(ClientPhase.YOU_LOOSE, "You loose!"))
+        )
+    else:
+        current_player.set_waiting()
+        other_player.set_your_turn()
+        current_player.get_conn().send(
+            pickle.dumps(
+                ClientGameState(
+                    ClientPhase.WAITING_FOR_SERVER, "Its the other players turn."
+                )
+            )
+        )
+        other_player.get_conn().send(
+            pickle.dumps(
+                ClientGameState(ClientPhase.GUESSING, "Its your turn. Guess a number.")
+            )
+        )
+
+
+def process_GuessData(
+    current_state: GameState, input: NumberPickData, player: int
+) -> GameState | Error:
+    player_state = current_state.get_player_state(player)
+    if player_state.get_phase() != ServerPhase.GUESSING:
+        return Error("Got NumberPickData when player was not guessing")
+
+    number = input.GetNumber()
+    if number < 1 or number > 100:
+        return Error("{} is not in the range 1 to 100".format(number))
+
+    other_player_state = current_state.get_other_player_state(player)
+    other_number = other_player_state.get_number()
+    current_player_won = False
+    if number < other_number:
+        player_state.get_conn().send(pickle.dumps(Message("Your guess is to low")))
+        other_player_state.get_conn().send(
+            pickle.dumps(Message("They guessed {} which is to low".format(number)))
+        )
+    elif number > other_number:
+        player_state.get_conn().send(pickle.dumps(Message("Your guess is to high")))
+        other_player_state.get_conn().send(
+            pickle.dumps(Message("They guessed {} which is to high".format(number)))
+        )
+    else:
+        player_state.get_conn().send(pickle.dumps(Message("You guessed their number")))
+        other_player_state.get_conn().send(
+            pickle.dumps(Message("They guessed {} which is your number".format(number)))
+        )
+        current_player_won = True
+
+    change_turn_or_win(player_state, other_player_state, current_player_won)
+    return current_state
 
 
 def process_NumberPickData(
@@ -55,9 +224,13 @@ def process_NumberPickData(
         return Error("{} is not in the range 1 to 100".format(number))
 
     player_state.set_number(number)
-    player_state.get_conn().send(
-        pickle.dumps(Message("Your number is set. Waiting for the other player"))
+    other_player_state = current_state.get_other_player_state(player)
+    both_picked = send_to_player_based_on_NumberPickData(
+        player, player_state, other_player_state
     )
+    if both_picked:
+        current_state = move_both_players_out_of_waiting_for_pick(current_state)
+
     return current_state
 
 
@@ -67,6 +240,8 @@ def process_input(
     match input:
         case NumberPickData() as data:
             return process_NumberPickData(current_state, data, player)
+        case GuessData() as data:
+            return process_GuessData(current_state, data, player)
         case _:
             print("recieved an unknown type")
             return Error("server recieved an unknown type")
@@ -116,7 +291,7 @@ def main(host: str, port: int, timeout: int) -> int:
 
     game_state = GameState()
     currentPlayer = 0
-    while currentPlayer < 1:
+    while currentPlayer < 2:
         # needs a timeout. blocks forever and ingores ctrl+c
         conn, addr = mySocket.accept()
         print("Connected to:", addr)

@@ -16,7 +16,7 @@ class Network:
             print(f"Exception in network::connect {err=}, {type(err)=}")
             raise
 
-    # send and recieve a string
+    # send and recieve an object
     def send(self, data):
         try:
             self.client.send(pickle.dumps(data))
@@ -27,3 +27,7 @@ class Network:
         except Exception as err:
             print(f"Exception in network::send {err=}, {type(err)=}")
             raise
+
+    # block until we get something from the server, return it
+    def recieve(self):
+        return pickle.loads(self.client.recv(2048))

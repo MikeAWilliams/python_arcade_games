@@ -21,8 +21,13 @@ class NumberPickData:
     def __init__(self, number: int):
         self.number = number
 
-    def GetPlayerNumber(self) -> int:
-        return self.player_number
+    def GetNumber(self) -> int:
+        return self.number
+
+
+class GuessData:
+    def __init__(self, number: int):
+        self.number = number
 
     def GetNumber(self) -> int:
         return self.number
@@ -34,8 +39,10 @@ class InputType2:
 
 class ClientPhase(Enum):
     PICKING = 0
-    WAITING_FOR_OTHER_CONNECT = 1
-    WAITING_FOR_OTHER_PICK = 2
+    WAITING_FOR_SERVER = 1
+    GUESSING = 2
+    YOU_WIN = 3
+    YOU_LOOSE = 4
 
 
 class ClientGameState:
