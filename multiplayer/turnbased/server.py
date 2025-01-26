@@ -249,10 +249,11 @@ def process_input(
 
 def threaded_client(conn, state: GameState, player: int):
     state.get_player_state(player).set_conn(conn)
-    initial_state = ClientGameState(
-        ClientPhase.PICKING, "Pick a number between 1 and 100"
+    conn.send(
+        pickle.dumps(
+            ClientGameState(ClientPhase.PICKING, "Pick a number between 1 and 100")
+        )
     )
-    conn.send(pickle.dumps(initial_state))
     while True:
         try:
             input = pickle.loads(conn.recv(2048))
