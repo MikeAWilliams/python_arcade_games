@@ -3,7 +3,7 @@ import pickle
 from shared_data import *
 
 
-class Network:
+class ClientNetwork:
     def __init__(self, host: str, port: int):
         self.client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.addr = (host, port)

@@ -1,12 +1,12 @@
 import socket
 from _thread import *
-import pickle
 import argparse
 import sys
 from shared_data import *
 from enum import Enum
 import random
 from typing import List
+import server_network
 
 
 class ServerPhase(Enum):
@@ -93,34 +93,31 @@ def send_to_player_based_on_NumberPickData(
     match (other_player_state.get_phase()):
         case ServerPhase.WAITING_FOR_CONNECTION:
             print("sending conn message for player ", player)
-            player_state.get_connection().send(
-                pickle.dumps(
-                    ClientGameState(
-                        ClientPhase.WAITING_FOR_SERVER,
-                        "Your number is set. Waiting for the other player to connect",
-                    )
-                )
+            server_network.send(
+                player_state.get_connection(),
+                ClientGameState(
+                    ClientPhase.WAITING_FOR_SERVER,
+                    "Your number is set. Waiting for the other player to connect",
+                ),
             )
         case ServerPhase.PICKING:
             print("sending picking message for player ", player)
-            player_state.get_connection().send(
-                pickle.dumps(
-                    ClientGameState(
-                        ClientPhase.WAITING_FOR_SERVER,
-                        "Your number is set. Waiting for the other player to pick",
-                    )
-                )
+            server_network.send(
+                player_state.get_connection(),
+                ClientGameState(
+                    ClientPhase.WAITING_FOR_SERVER,
+                    "Your number is set. Waiting for the other player to pick",
+                ),
             )
         case ServerPhase.PICKED:
             # both players have picked
             print("sending picked message for player ", player)
-            player_state.get_connection().send(
-                pickle.dumps(
-                    ClientGameState(
-                        ClientPhase.WAITING_FOR_SERVER,
-                        "Your number is set. Ohter player picked before you",
-                    )
-                )
+            server_network.send(
+                player_state.get_connection(),
+                ClientGameState(
+                    ClientPhase.WAITING_FOR_SERVER,
+                    "Your number is set. Ohter player picked before you",
+                ),
             )
             # return true to tell caller to move both players to the next step
             return True
@@ -152,21 +149,17 @@ def move_both_players_out_of_waiting_for_pick(state: GameState):
     turn_player.set_your_turn()
     other_player.set_waiting()
 
-    turn_player.get_connection().send(
-        pickle.dumps(
-            ClientGameState(
-                ClientPhase.GUESSING,
-                "Its your turn. Guess a number.",
-                turn_player.get_number(),
-            )
-        )
+    server_network.send(
+        turn_player.get_connection(),
+        ClientGameState(
+            ClientPhase.GUESSING,
+            "Its your turn. Guess a number.",
+            turn_player.get_number(),
+        ),
     )
-    other_player.get_connection().send(
-        pickle.dumps(
-            ClientGameState(
-                ClientPhase.WAITING_FOR_SERVER, "Its the other players turn."
-            )
-        )
+    server_network.send(
+        other_player.get_connection(),
+        ClientGameState(ClientPhase.WAITING_FOR_SERVER, "Its the other players turn."),
     )
 
 
@@ -179,56 +172,50 @@ def change_turn_or_win(
     if transition.cp_won:
         current_player.set_won()
         other_player.set_lost()
-        current_player.get_connection().send(
-            pickle.dumps(
-                ClientGameState(
-                    ClientPhase.YOU_WIN,
-                    "{}\n{}".format(transition.cp_message, "Congradulations you win!"),
-                    current_player.get_number(),
-                    current_player.get_guesses(),
-                    other_player.get_guesses(),
-                )
-            )
+        server_network.send(
+            current_player.get_connection(),
+            ClientGameState(
+                ClientPhase.YOU_WIN,
+                "{}\n{}".format(transition.cp_message, "Congradulations you win!"),
+                current_player.get_number(),
+                current_player.get_guesses(),
+                other_player.get_guesses(),
+            ),
         )
-        other_player.get_connection().send(
-            pickle.dumps(
-                ClientGameState(
-                    ClientPhase.YOU_LOOSE,
-                    "{}\n{}".format(transition.op_message, "You loose!"),
-                    other_player.get_number(),
-                    other_player.get_guesses(),
-                    current_player.get_guesses(),
-                )
-            )
+        server_network.send(
+            other_player.get_connection(),
+            ClientGameState(
+                ClientPhase.YOU_LOOSE,
+                "{}\n{}".format(transition.op_message, "You loose!"),
+                other_player.get_number(),
+                other_player.get_guesses(),
+                current_player.get_guesses(),
+            ),
         )
     else:
         current_player.set_waiting()
         other_player.set_your_turn()
-        current_player.get_connection().send(
-            pickle.dumps(
-                ClientGameState(
-                    ClientPhase.WAITING_FOR_SERVER,
-                    "{}\n{}".format(
-                        transition.cp_message, "Its the other players turn."
-                    ),
-                    current_player.get_number(),
-                    current_player.get_guesses(),
-                    other_player.get_guesses(),
-                )
-            )
+        server_network.send(
+            current_player.get_connection(),
+            ClientGameState(
+                ClientPhase.WAITING_FOR_SERVER,
+                "{}\n{}".format(transition.cp_message, "Its the other players turn."),
+                current_player.get_number(),
+                current_player.get_guesses(),
+                other_player.get_guesses(),
+            ),
         )
-        other_player.get_connection().send(
-            pickle.dumps(
-                ClientGameState(
-                    ClientPhase.GUESSING,
-                    "{}\n{}".format(
-                        transition.op_message, "Its your turn. Guess a number."
-                    ),
-                    other_player.get_number(),
-                    other_player.get_guesses(),
-                    current_player.get_guesses(),
-                )
-            )
+        server_network.send(
+            other_player.get_connection(),
+            ClientGameState(
+                ClientPhase.GUESSING,
+                "{}\n{}".format(
+                    transition.op_message, "Its your turn. Guess a number."
+                ),
+                other_player.get_number(),
+                other_player.get_guesses(),
+                current_player.get_guesses(),
+            ),
         )
 
 
@@ -299,14 +286,13 @@ def process_input(state: GameState, input: any, player: int) -> Error:
 
 def threaded_client(connection, state: GameState, player: int):
     state.get_player_state(player).set_connection(connection)
-    connection.send(
-        pickle.dumps(
-            ClientGameState(ClientPhase.PICKING, "Pick a number between 1 and 100")
-        )
+    server_network.send(
+        connection,
+        ClientGameState(ClientPhase.PICKING, "Pick a number between 1 and 100"),
     )
     while True:
         try:
-            input = pickle.loads(connection.recv(2048))
+            input = server_network.recieve(connection)
 
             if not input:
                 print("Disconnected")
@@ -315,7 +301,7 @@ def threaded_client(connection, state: GameState, player: int):
             error = process_input(state, input, player)
 
             if error is not None:
-                connection.sendall(pickle.dumps(error))
+                server_network.send(connection, error)
 
         except:
             break

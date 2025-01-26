@@ -1,5 +1,5 @@
 import sys
-from client_network import Network
+from client_network import ClientNetwork
 from shared_data import *
 import argparse
 
@@ -26,7 +26,7 @@ def get_number() -> int:
             print("{} is not a valid number".format(string_in))
 
 
-def pick_my_number(coms: Network, server_message: str) -> ClientGameState:
+def pick_my_number(coms: ClientNetwork, server_message: str) -> ClientGameState:
     while True:
         print("The server says ", server_message)
         response = coms.send_recieve(NumberPickData(get_number()))
@@ -39,7 +39,7 @@ def pick_my_number(coms: Network, server_message: str) -> ClientGameState:
                 raise Exception("recieved an unknown response from the server")
 
 
-def guess_other_players_number(coms: Network, state: ClientGameState):
+def guess_other_players_number(coms: ClientNetwork, state: ClientGameState):
     print("The server says ", state.GetMessage())
     print("Your number is ", state.GetMyNum())
     print("Their past geusses are ", state.GetTheirGuesses())
@@ -48,7 +48,7 @@ def guess_other_players_number(coms: Network, state: ClientGameState):
 
 
 def main(host: str, port: int) -> int:
-    coms = Network(host, port)
+    coms = ClientNetwork(host, port)
     initial_state = handle_connection_data(coms.connect())
     if initial_state.GetPhase() != ClientPhase.PICKING:
         raise Exception(
