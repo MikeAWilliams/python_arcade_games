@@ -6,6 +6,7 @@ import sys
 from shared_data import *
 from enum import Enum
 import random
+from typing import List
 
 
 class ServerPhase(Enum):
@@ -21,6 +22,7 @@ class ServerPhase(Enum):
 class PlayerState:
     def __init__(self):
         self.phase = ServerPhase.WAITING_FOR_CONNECTION
+        self.past_guesses = []
 
     def get_phase(self) -> ServerPhase:
         return self.phase
@@ -50,6 +52,12 @@ class PlayerState:
 
     def set_lost(self):
         self.phase = ServerPhase.LOST
+
+    def add_guess(self, guess: int):
+        self.past_guesses.append(guess)
+
+    def get_guesses(self) -> List[int]:
+        return self.past_guesses
 
 
 class GameState:
@@ -146,7 +154,11 @@ def move_both_players_out_of_waiting_for_pick(state: GameState):
 
     turn_player.get_connection().send(
         pickle.dumps(
-            ClientGameState(ClientPhase.GUESSING, "Its your turn. Guess a number.")
+            ClientGameState(
+                ClientPhase.GUESSING,
+                "Its your turn. Guess a number.",
+                turn_player.get_number(),
+            )
         )
     )
     other_player.get_connection().send(
@@ -172,6 +184,9 @@ def change_turn_or_win(
                 ClientGameState(
                     ClientPhase.YOU_WIN,
                     "{}\n{}".format(transition.cp_message, "Congradulations you win!"),
+                    current_player.get_number(),
+                    current_player.get_guesses(),
+                    other_player.get_guesses(),
                 )
             )
         )
@@ -180,6 +195,9 @@ def change_turn_or_win(
                 ClientGameState(
                     ClientPhase.YOU_LOOSE,
                     "{}\n{}".format(transition.op_message, "You loose!"),
+                    other_player.get_number(),
+                    other_player.get_guesses(),
+                    current_player.get_guesses(),
                 )
             )
         )
@@ -193,6 +211,9 @@ def change_turn_or_win(
                     "{}\n{}".format(
                         transition.cp_message, "Its the other players turn."
                     ),
+                    current_player.get_number(),
+                    current_player.get_guesses(),
+                    other_player.get_guesses(),
                 )
             )
         )
@@ -203,6 +224,9 @@ def change_turn_or_win(
                     "{}\n{}".format(
                         transition.op_message, "Its your turn. Guess a number."
                     ),
+                    other_player.get_number(),
+                    other_player.get_guesses(),
+                    current_player.get_guesses(),
                 )
             )
         )
@@ -215,6 +239,7 @@ def process_GuessData(state: GameState, input: NumberPickData, player: int) -> E
         return Error("Got NumberPickData when player was not guessing")
 
     number = input.GetNumber()
+    player_state.add_guess(number)
 
     other_player_state = state.get_other_player_state(player)
     other_number = other_player_state.get_number()
@@ -244,7 +269,7 @@ def process_NumberPickData(
 ) -> Error:
     player_state = state.get_player_state(player)
     if player_state.get_phase() != ServerPhase.PICKING:
-        return Error("Got NumberPickData when player was not picking")
+        raise Exception("Got NumberPickData when player was not picking")
 
     number = input.GetNumber()
     if number < 1 or number > 100:

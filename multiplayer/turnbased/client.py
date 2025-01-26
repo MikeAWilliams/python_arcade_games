@@ -39,8 +39,11 @@ def pick_my_number(coms: Network, server_message: str) -> ClientGameState:
                 raise Exception("recieved an unknown response from the server")
 
 
-def guess_other_players_number(coms: Network, server_message: str):
-    print("The server says ", server_message)
+def guess_other_players_number(coms: Network, state: ClientGameState):
+    print("The server says ", state.GetMessage())
+    print("Your number is ", state.GetMyNum())
+    print("Their past geusses are ", state.GetTheirGuesses())
+    print("Your past geusses are ", state.GetMyGuesses())
     coms.send(GuessData(get_number()))
 
 
@@ -72,7 +75,7 @@ def main(host: str, port: int) -> int:
                         print("Bummer ", new_state.GetMessage())
                         return  # hard stop
                     case ClientPhase.GUESSING:
-                        guess_other_players_number(coms, new_state.GetMessage())
+                        guess_other_players_number(coms, new_state)
                     case ClientPhase.WAITING_FOR_SERVER:
                         print("server says ", new_state.GetMessage())
                     case _:
