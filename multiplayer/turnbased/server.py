@@ -114,12 +114,12 @@ def send_to_player_based_on_NumberPickData(
     return False
 
 
-def move_both_players_out_of_waiting_for_pick(current_state: GameState) -> GameState:
+def move_both_players_out_of_waiting_for_pick(state: GameState):
     # pick a random player to go first
     turn_index = random.choice([0, 1])
     print("picked player {} to go first".format(turn_index))
-    turn_player = current_state.get_player_state(turn_index)
-    other_player = current_state.get_other_player_state(turn_index)
+    turn_player = state.get_player_state(turn_index)
+    other_player = state.get_other_player_state(turn_index)
     if (
         turn_player.get_phase() != ServerPhase.PICKED
         and other_player.get_phase() != ServerPhase.PICKED
@@ -177,10 +177,8 @@ def change_turn_or_win(
         )
 
 
-def process_GuessData(
-    current_state: GameState, input: NumberPickData, player: int
-) -> GameState | Error:
-    player_state = current_state.get_player_state(player)
+def process_GuessData(state: GameState, input: NumberPickData, player: int) -> Error:
+    player_state = state.get_player_state(player)
     if player_state.get_phase() != ServerPhase.GUESSING:
         return Error("Got NumberPickData when player was not guessing")
 
@@ -188,7 +186,7 @@ def process_GuessData(
     if number < 1 or number > 100:
         return Error("{} is not in the range 1 to 100".format(number))
 
-    other_player_state = current_state.get_other_player_state(player)
+    other_player_state = state.get_other_player_state(player)
     other_number = other_player_state.get_number()
     current_player_won = False
     if number < other_number:
@@ -215,13 +213,13 @@ def process_GuessData(
         current_player_won = True
 
     change_turn_or_win(player_state, other_player_state, current_player_won)
-    return current_state
+    return None
 
 
 def process_NumberPickData(
-    current_state: GameState, input: NumberPickData, player: int
-) -> GameState | Error:
-    player_state = current_state.get_player_state(player)
+    state: GameState, input: NumberPickData, player: int
+) -> Error:
+    player_state = state.get_player_state(player)
     if player_state.get_phase() != ServerPhase.PICKING:
         return Error("Got NumberPickData when player was not picking")
 
@@ -230,24 +228,22 @@ def process_NumberPickData(
         return Error("{} is not in the range 1 to 100".format(number))
 
     player_state.set_number(number)
-    other_player_state = current_state.get_other_player_state(player)
+    other_player_state = state.get_other_player_state(player)
     both_picked = send_to_player_based_on_NumberPickData(
         player, player_state, other_player_state
     )
     if both_picked:
-        current_state = move_both_players_out_of_waiting_for_pick(current_state)
+        move_both_players_out_of_waiting_for_pick(state)
 
-    return current_state
+    return None
 
 
-def process_input(
-    current_state: GameState, input: any, player: int
-) -> GameState | Error:
+def process_input(state: GameState, input: any, player: int) -> Error:
     match input:
         case NumberPickData() as data:
-            return process_NumberPickData(current_state, data, player)
+            return process_NumberPickData(state, data, player)
         case GuessData() as data:
-            return process_GuessData(current_state, data, player)
+            return process_GuessData(state, data, player)
         case _:
             print("recieved an unknown type")
             return Error("server recieved an unknown type")
@@ -268,13 +264,10 @@ def threaded_client(connection, state: GameState, player: int):
                 print("Disconnected")
                 break
 
-            result = process_input(state, input, player)
+            error = process_input(state, input, player)
 
-            match result:
-                case GameState() as new_state:
-                    state = new_state
-                case Error() as error:
-                    connection.sendall(pickle.dumps(error))
+            if error is not None:
+                connection.sendall(pickle.dumps(error))
 
         except:
             break
