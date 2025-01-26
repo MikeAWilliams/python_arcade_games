@@ -321,7 +321,7 @@ def main(host: str, port: int, timeout: int) -> int:
         return
 
     main_socket.listen(2)
-    print("Waiting for a players to connect")
+    print("Waiting for players to connect")
 
     game_state = GameState()
     currentPlayer = 0
