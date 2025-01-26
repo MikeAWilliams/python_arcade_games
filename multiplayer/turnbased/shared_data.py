@@ -1,14 +1,6 @@
 from enum import Enum
 
 
-class Message:
-    def __init__(self, message: str):
-        self.message = message
-
-    def GetMessage(self):
-        return self.message
-
-
 class Error:
     def __init__(self, message):
         self.message = message
@@ -31,10 +23,6 @@ class GuessData:
 
     def GetNumber(self) -> int:
         return self.number
-
-
-class InputType2:
-    pass
 
 
 class ClientPhase(Enum):

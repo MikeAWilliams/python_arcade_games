@@ -17,10 +17,21 @@ class Network:
             raise
 
     # send and recieve an object
-    def send(self, data):
+    def send_recieve(self, data):
         try:
             self.client.send(pickle.dumps(data))
             return pickle.loads(self.client.recv(2048))
+        except socket.error as err:
+            print(f"Exception in network::send_recieve {err=}, {type(err)=}")
+            raise
+        except Exception as err:
+            print(f"Exception in network::send_recieve {err=}, {type(err)=}")
+            raise
+
+    # send an object, do not recieve
+    def send(self, data):
+        try:
+            self.client.send(pickle.dumps(data))
         except socket.error as err:
             print(f"Exception in network::send {err=}, {type(err)=}")
             raise

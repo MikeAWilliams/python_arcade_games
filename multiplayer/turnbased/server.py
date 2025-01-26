@@ -66,6 +66,18 @@ class GameState:
         return self.player_state[0]
 
 
+class TurnTransitionData:
+    def __init__(self):
+        self.cp_won = False
+
+    def set_messages(self, cp_message: str, op_message: str):
+        self.cp_message = cp_message
+        self.op_message = op_message
+
+    def current_player_won(self):
+        self.cp_won = True
+
+
 def send_to_player_based_on_NumberPickData(
     player: int, player_state: PlayerState, other_player_state: PlayerState
 ) -> bool:
@@ -147,18 +159,29 @@ def move_both_players_out_of_waiting_for_pick(state: GameState):
 
 
 def change_turn_or_win(
-    current_player: PlayerState, other_player: PlayerState, current_player_won: bool
+    current_player: PlayerState,
+    other_player: PlayerState,
+    transition: TurnTransitionData,
 ):
-    if current_player_won:
+    print("changing turn")
+    if transition.cp_won:
         current_player.set_won()
         other_player.set_lost()
         current_player.get_connection().send(
             pickle.dumps(
-                ClientGameState(ClientPhase.YOU_WIN, "Congradulations you win!")
+                ClientGameState(
+                    ClientPhase.YOU_WIN,
+                    "{}\n{}".format(transition.cp_message, "Congradulations you win!"),
+                )
             )
         )
         other_player.get_connection().send(
-            pickle.dumps(ClientGameState(ClientPhase.YOU_LOOSE, "You loose!"))
+            pickle.dumps(
+                ClientGameState(
+                    ClientPhase.YOU_LOOSE,
+                    "{}\n{}".format(transition.op_message, "You loose!"),
+                )
+            )
         )
     else:
         current_player.set_waiting()
@@ -166,53 +189,53 @@ def change_turn_or_win(
         current_player.get_connection().send(
             pickle.dumps(
                 ClientGameState(
-                    ClientPhase.WAITING_FOR_SERVER, "Its the other players turn."
+                    ClientPhase.WAITING_FOR_SERVER,
+                    "{}\n{}".format(
+                        transition.cp_message, "Its the other players turn."
+                    ),
                 )
             )
         )
         other_player.get_connection().send(
             pickle.dumps(
-                ClientGameState(ClientPhase.GUESSING, "Its your turn. Guess a number.")
+                ClientGameState(
+                    ClientPhase.GUESSING,
+                    "{}\n{}".format(
+                        transition.op_message, "Its your turn. Guess a number."
+                    ),
+                )
             )
         )
 
 
 def process_GuessData(state: GameState, input: NumberPickData, player: int) -> Error:
+    print("processing a guess for player {}".format(player))
     player_state = state.get_player_state(player)
     if player_state.get_phase() != ServerPhase.GUESSING:
         return Error("Got NumberPickData when player was not guessing")
 
     number = input.GetNumber()
-    if number < 1 or number > 100:
-        return Error("{} is not in the range 1 to 100".format(number))
 
     other_player_state = state.get_other_player_state(player)
     other_number = other_player_state.get_number()
-    current_player_won = False
+    transition = TurnTransitionData()
     if number < other_number:
-        player_state.get_connection().send(
-            pickle.dumps(Message("Your guess is to low"))
-        )
-        other_player_state.get_connection().send(
-            pickle.dumps(Message("They guessed {} which is to low".format(number)))
+        transition.set_messages(
+            "Your guess is to low", "They guessed {} which is to low".format(number)
         )
     elif number > other_number:
-        player_state.get_connection().send(
-            pickle.dumps(Message("Your guess is to high"))
-        )
-        other_player_state.get_connection().send(
-            pickle.dumps(Message("They guessed {} which is to high".format(number)))
+        transition.set_messages(
+            "Your guess is to high", "They guessed {} which is to high".format(number)
         )
     else:
-        player_state.get_connection().send(
-            pickle.dumps(Message("You guessed their number"))
+        print("player {} won".format(player))
+        transition.set_messages(
+            "You guessed their number",
+            "They guessed {} which is your number".format(number),
         )
-        other_player_state.get_connection().send(
-            pickle.dumps(Message("They guessed {} which is your number".format(number)))
-        )
-        current_player_won = True
+        transition.current_player_won()
 
-    change_turn_or_win(player_state, other_player_state, current_player_won)
+    change_turn_or_win(player_state, other_player_state, transition)
     return None
 
 

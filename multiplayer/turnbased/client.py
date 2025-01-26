@@ -29,12 +29,10 @@ def get_number() -> int:
 def pick_my_number(coms: Network, server_message: str) -> ClientGameState:
     while True:
         print("The server says ", server_message)
-        response = coms.send(NumberPickData(get_number()))
+        response = coms.send_recieve(NumberPickData(get_number()))
         match response:
             case Error() as error:
                 print("error from server {}".format(error.GetMessage()))
-            case Message() as message:
-                print("server says ", message.GetMessage())
             case ClientGameState() as new_state:
                 return new_state
             case _:
@@ -42,17 +40,8 @@ def pick_my_number(coms: Network, server_message: str) -> ClientGameState:
 
 
 def guess_other_players_number(coms: Network, server_message: str):
-    while True:
-        print("The server says ", server_message)
-        response = coms.send(GuessData(get_number()))
-        match response:
-            case Error() as error:
-                print("error from server {}".format(error.GetMessage()))
-            case Message() as message:
-                print("server says ", message.GetMessage())
-                return
-            case _:
-                raise Exception("recieved an unknown response from the server")
+    print("The server says ", server_message)
+    coms.send(GuessData(get_number()))
 
 
 def main(host: str, port: int) -> int:
@@ -66,16 +55,14 @@ def main(host: str, port: int) -> int:
         )
 
     # picking a number
-    state = pick_my_number(coms, initial_state.GetMessage())
-    print("server says ", state.GetMessage())
+    post_pic_state = pick_my_number(coms, initial_state.GetMessage())
+    print("server says ", post_pic_state.GetMessage())
 
     while True:
         response = coms.recieve()
         match response:
             case Error() as error:
                 print("error from server {}".format(error.GetMessage()))
-            case Message() as message:
-                print("server says ", message.GetMessage())
             case ClientGameState() as new_state:
                 match new_state.GetPhase():
                     case ClientPhase.YOU_WIN:
@@ -86,8 +73,13 @@ def main(host: str, port: int) -> int:
                         return  # hard stop
                     case ClientPhase.GUESSING:
                         guess_other_players_number(coms, new_state.GetMessage())
+                    case ClientPhase.WAITING_FOR_SERVER:
+                        print("server says ", new_state.GetMessage())
                     case _:
-                        print("from server ", new_state.GetMessage())
+                        raise Exception(
+                            "got an unexpected phase from the server ",
+                            new_state.GetPhase(),
+                        )
             case _:
                 raise Exception("recieved an unknown response from the server")
 
