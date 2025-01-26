@@ -9,7 +9,7 @@ import random
 
 
 class ServerPhase(Enum):
-    WAITING_FOR_CONN = 0
+    WAITING_FOR_CONNECTION = 0
     PICKING = 1
     PICKED = 2
     GUESSING = 3
@@ -20,16 +20,16 @@ class ServerPhase(Enum):
 
 class PlayerState:
     def __init__(self):
-        self.phase = ServerPhase.WAITING_FOR_CONN
+        self.phase = ServerPhase.WAITING_FOR_CONNECTION
 
     def get_phase(self) -> ServerPhase:
         return self.phase
 
-    def set_connection(self, connection):
+    def set_connection(self, connection: socket.socket):
         self.connection = connection
         self.phase = ServerPhase.PICKING
 
-    def get_connection(self):
+    def get_connection(self) -> socket.socket:
         return self.connection
 
     def set_number(self, number: int):
@@ -71,7 +71,7 @@ def send_to_player_based_on_NumberPickData(
 ) -> bool:
     # there is race condition here. Both players may be in this block of code at the same time
     match (other_player_state.get_phase()):
-        case ServerPhase.WAITING_FOR_CONN:
+        case ServerPhase.WAITING_FOR_CONNECTION:
             print("sending conn message for player ", player)
             player_state.get_connection().send(
                 pickle.dumps(
