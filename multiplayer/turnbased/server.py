@@ -86,13 +86,113 @@ class TurnTransitionData:
         self.cp_won = True
 
 
-def send_to_player_based_on_NumberPickData(
+def change_turn(
+    current_player: PlayerState,
+    other_player: PlayerState,
+    transition: TurnTransitionData,
+):
+    current_player.set_waiting()
+    other_player.set_your_turn()
+    server_network.send(
+        current_player.get_connection(),
+        ClientGameState(
+            ClientPhase.WAITING_FOR_SERVER,
+            "{}\n{}".format(transition.cp_message, "Its the other players turn."),
+            current_player.get_number(),
+            current_player.get_guesses(),
+            other_player.get_guesses(),
+        ),
+    )
+    server_network.send(
+        other_player.get_connection(),
+        ClientGameState(
+            ClientPhase.GUESSING,
+            "{}\n{}".format(transition.op_message, "Its your turn. Guess a number."),
+            other_player.get_number(),
+            other_player.get_guesses(),
+            current_player.get_guesses(),
+        ),
+    )
+
+
+def current_player_won(
+    current_player: PlayerState,
+    other_player: PlayerState,
+    transition: TurnTransitionData,
+):
+    current_player.set_won()
+    other_player.set_lost()
+    server_network.send(
+        current_player.get_connection(),
+        ClientGameState(
+            ClientPhase.YOU_WIN,
+            "{}\n{}".format(transition.cp_message, "Congradulations you win!"),
+            current_player.get_number(),
+            current_player.get_guesses(),
+            other_player.get_guesses(),
+        ),
+    )
+    server_network.send(
+        other_player.get_connection(),
+        ClientGameState(
+            ClientPhase.YOU_LOOSE,
+            "{}\n{}".format(transition.op_message, "You loose!"),
+            other_player.get_number(),
+            other_player.get_guesses(),
+            current_player.get_guesses(),
+        ),
+    )
+
+
+def change_turn_or_win(
+    current_player: PlayerState,
+    other_player: PlayerState,
+    transition: TurnTransitionData,
+):
+    if transition.cp_won:
+        current_player_won(current_player, other_player, transition)
+    else:
+        change_turn(current_player, other_player, transition)
+
+
+def process_GuessData(state: GameState, input: NumberPickData, player: int) -> Error:
+    print("processing a guess for player {}".format(player))
+    player_state = state.get_player_state(player)
+    if player_state.get_phase() != ServerPhase.GUESSING:
+        return Error("Got NumberPickData when player was not guessing")
+
+    number = input.GetNumber()
+    player_state.add_guess(number)
+
+    other_player_state = state.get_other_player_state(player)
+    other_number = other_player_state.get_number()
+    transition = TurnTransitionData()
+    if number < other_number:
+        transition.set_messages(
+            "Your guess is to low", "They guessed {} which is to low".format(number)
+        )
+    elif number > other_number:
+        transition.set_messages(
+            "Your guess is to high", "They guessed {} which is to high".format(number)
+        )
+    else:
+        print("player {} won".format(player))
+        transition.set_messages(
+            "You guessed their number",
+            "They guessed {} which is your number".format(number),
+        )
+        transition.current_player_won()
+
+    change_turn_or_win(player_state, other_player_state, transition)
+    return None
+
+
+def notify_player_of_other_picking_status(
     player: int, player_state: PlayerState, other_player_state: PlayerState
 ) -> bool:
     # there is race condition here. Both players may be in this block of code at the same time
     match (other_player_state.get_phase()):
         case ServerPhase.WAITING_FOR_CONNECTION:
-            print("sending conn message for player ", player)
             server_network.send(
                 player_state.get_connection(),
                 ClientGameState(
@@ -101,7 +201,6 @@ def send_to_player_based_on_NumberPickData(
                 ),
             )
         case ServerPhase.PICKING:
-            print("sending picking message for player ", player)
             server_network.send(
                 player_state.get_connection(),
                 ClientGameState(
@@ -111,12 +210,11 @@ def send_to_player_based_on_NumberPickData(
             )
         case ServerPhase.PICKED:
             # both players have picked
-            print("sending picked message for player ", player)
             server_network.send(
                 player_state.get_connection(),
                 ClientGameState(
                     ClientPhase.WAITING_FOR_SERVER,
-                    "Your number is set. Ohter player picked before you",
+                    "Your number is set. Other player picked before you",
                 ),
             )
             # return true to tell caller to move both players to the next step
@@ -163,94 +261,6 @@ def move_both_players_out_of_waiting_for_pick(state: GameState):
     )
 
 
-def change_turn_or_win(
-    current_player: PlayerState,
-    other_player: PlayerState,
-    transition: TurnTransitionData,
-):
-    print("changing turn")
-    if transition.cp_won:
-        current_player.set_won()
-        other_player.set_lost()
-        server_network.send(
-            current_player.get_connection(),
-            ClientGameState(
-                ClientPhase.YOU_WIN,
-                "{}\n{}".format(transition.cp_message, "Congradulations you win!"),
-                current_player.get_number(),
-                current_player.get_guesses(),
-                other_player.get_guesses(),
-            ),
-        )
-        server_network.send(
-            other_player.get_connection(),
-            ClientGameState(
-                ClientPhase.YOU_LOOSE,
-                "{}\n{}".format(transition.op_message, "You loose!"),
-                other_player.get_number(),
-                other_player.get_guesses(),
-                current_player.get_guesses(),
-            ),
-        )
-    else:
-        current_player.set_waiting()
-        other_player.set_your_turn()
-        server_network.send(
-            current_player.get_connection(),
-            ClientGameState(
-                ClientPhase.WAITING_FOR_SERVER,
-                "{}\n{}".format(transition.cp_message, "Its the other players turn."),
-                current_player.get_number(),
-                current_player.get_guesses(),
-                other_player.get_guesses(),
-            ),
-        )
-        server_network.send(
-            other_player.get_connection(),
-            ClientGameState(
-                ClientPhase.GUESSING,
-                "{}\n{}".format(
-                    transition.op_message, "Its your turn. Guess a number."
-                ),
-                other_player.get_number(),
-                other_player.get_guesses(),
-                current_player.get_guesses(),
-            ),
-        )
-
-
-def process_GuessData(state: GameState, input: NumberPickData, player: int) -> Error:
-    print("processing a guess for player {}".format(player))
-    player_state = state.get_player_state(player)
-    if player_state.get_phase() != ServerPhase.GUESSING:
-        return Error("Got NumberPickData when player was not guessing")
-
-    number = input.GetNumber()
-    player_state.add_guess(number)
-
-    other_player_state = state.get_other_player_state(player)
-    other_number = other_player_state.get_number()
-    transition = TurnTransitionData()
-    if number < other_number:
-        transition.set_messages(
-            "Your guess is to low", "They guessed {} which is to low".format(number)
-        )
-    elif number > other_number:
-        transition.set_messages(
-            "Your guess is to high", "They guessed {} which is to high".format(number)
-        )
-    else:
-        print("player {} won".format(player))
-        transition.set_messages(
-            "You guessed their number",
-            "They guessed {} which is your number".format(number),
-        )
-        transition.current_player_won()
-
-    change_turn_or_win(player_state, other_player_state, transition)
-    return None
-
-
 def process_NumberPickData(
     state: GameState, input: NumberPickData, player: int
 ) -> Error:
@@ -264,7 +274,7 @@ def process_NumberPickData(
 
     player_state.set_number(number)
     other_player_state = state.get_other_player_state(player)
-    both_picked = send_to_player_based_on_NumberPickData(
+    both_picked = notify_player_of_other_picking_status(
         player, player_state, other_player_state
     )
     if both_picked:
@@ -284,7 +294,7 @@ def process_input(state: GameState, input: any, player: int) -> Error:
             return Error("server recieved an unknown type")
 
 
-def threaded_client(connection, state: GameState, player: int):
+def server_game_loop(connection, state: GameState, player: int):
     state.get_player_state(player).set_connection(connection)
     server_network.send(
         connection,
@@ -330,7 +340,7 @@ def main(host: str, port: int, timeout: int) -> int:
         connection, addr = main_socket.accept()
         print("Connected to:", addr)
 
-        start_new_thread(threaded_client, (connection, game_state, currentPlayer))
+        start_new_thread(server_game_loop, (connection, game_state, currentPlayer))
         currentPlayer += 1
 
     # keep the program allive after we got two connections accept ctrl+c
