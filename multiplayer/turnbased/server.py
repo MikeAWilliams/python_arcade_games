@@ -278,23 +278,23 @@ def threaded_client(conn, state: GameState, player: int):
 
 
 def main(host: str, port: int, timeout: int) -> int:
-    mySocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    mySocket.settimeout(timeout)  # seconds
+    main_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    main_socket.settimeout(timeout)  # seconds
 
     try:
-        mySocket.bind((host, port))
-    except mySocket.error as e:
+        main_socket.bind((host, port))
+    except main_socket.error as e:
         print(str(e))
         return
 
-    mySocket.listen(2)
+    main_socket.listen(2)
     print("Waiting for a players to connect")
 
     game_state = GameState()
     currentPlayer = 0
     while currentPlayer < 2:
         # needs a timeout. blocks forever and ingores ctrl+c
-        conn, addr = mySocket.accept()
+        conn, addr = main_socket.accept()
         print("Connected to:", addr)
 
         start_new_thread(threaded_client, (conn, game_state, currentPlayer))
