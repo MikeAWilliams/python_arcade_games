@@ -25,12 +25,12 @@ class PlayerState:
     def get_phase(self) -> ServerPhase:
         return self.phase
 
-    def set_conn(self, conn):
-        self.conn = conn
+    def set_connection(self, connection):
+        self.connection = connection
         self.phase = ServerPhase.PICKING
 
-    def get_conn(self):
-        return self.conn
+    def get_connection(self):
+        return self.connection
 
     def set_number(self, number: int):
         self.number = number
@@ -73,7 +73,7 @@ def send_to_player_based_on_NumberPickData(
     match (other_player_state.get_phase()):
         case ServerPhase.WAITING_FOR_CONN:
             print("sending conn message for player ", player)
-            player_state.get_conn().send(
+            player_state.get_connection().send(
                 pickle.dumps(
                     ClientGameState(
                         ClientPhase.WAITING_FOR_SERVER,
@@ -83,7 +83,7 @@ def send_to_player_based_on_NumberPickData(
             )
         case ServerPhase.PICKING:
             print("sending picking message for player ", player)
-            player_state.get_conn().send(
+            player_state.get_connection().send(
                 pickle.dumps(
                     ClientGameState(
                         ClientPhase.WAITING_FOR_SERVER,
@@ -94,7 +94,7 @@ def send_to_player_based_on_NumberPickData(
         case ServerPhase.PICKED:
             # both players have picked
             print("sending picked message for player ", player)
-            player_state.get_conn().send(
+            player_state.get_connection().send(
                 pickle.dumps(
                     ClientGameState(
                         ClientPhase.WAITING_FOR_SERVER,
@@ -132,12 +132,12 @@ def move_both_players_out_of_waiting_for_pick(current_state: GameState) -> GameS
     turn_player.set_your_turn()
     other_player.set_waiting()
 
-    turn_player.get_conn().send(
+    turn_player.get_connection().send(
         pickle.dumps(
             ClientGameState(ClientPhase.GUESSING, "Its your turn. Guess a number.")
         )
     )
-    other_player.get_conn().send(
+    other_player.get_connection().send(
         pickle.dumps(
             ClientGameState(
                 ClientPhase.WAITING_FOR_SERVER, "Its the other players turn."
@@ -152,25 +152,25 @@ def change_turn_or_win(
     if current_player_won:
         current_player.set_won()
         other_player.set_lost()
-        current_player.get_conn().send(
+        current_player.get_connection().send(
             pickle.dumps(
                 ClientGameState(ClientPhase.YOU_WIN, "Congradulations you win!")
             )
         )
-        other_player.get_conn().send(
+        other_player.get_connection().send(
             pickle.dumps(ClientGameState(ClientPhase.YOU_LOOSE, "You loose!"))
         )
     else:
         current_player.set_waiting()
         other_player.set_your_turn()
-        current_player.get_conn().send(
+        current_player.get_connection().send(
             pickle.dumps(
                 ClientGameState(
                     ClientPhase.WAITING_FOR_SERVER, "Its the other players turn."
                 )
             )
         )
-        other_player.get_conn().send(
+        other_player.get_connection().send(
             pickle.dumps(
                 ClientGameState(ClientPhase.GUESSING, "Its your turn. Guess a number.")
             )
@@ -192,18 +192,24 @@ def process_GuessData(
     other_number = other_player_state.get_number()
     current_player_won = False
     if number < other_number:
-        player_state.get_conn().send(pickle.dumps(Message("Your guess is to low")))
-        other_player_state.get_conn().send(
+        player_state.get_connection().send(
+            pickle.dumps(Message("Your guess is to low"))
+        )
+        other_player_state.get_connection().send(
             pickle.dumps(Message("They guessed {} which is to low".format(number)))
         )
     elif number > other_number:
-        player_state.get_conn().send(pickle.dumps(Message("Your guess is to high")))
-        other_player_state.get_conn().send(
+        player_state.get_connection().send(
+            pickle.dumps(Message("Your guess is to high"))
+        )
+        other_player_state.get_connection().send(
             pickle.dumps(Message("They guessed {} which is to high".format(number)))
         )
     else:
-        player_state.get_conn().send(pickle.dumps(Message("You guessed their number")))
-        other_player_state.get_conn().send(
+        player_state.get_connection().send(
+            pickle.dumps(Message("You guessed their number"))
+        )
+        other_player_state.get_connection().send(
             pickle.dumps(Message("They guessed {} which is your number".format(number)))
         )
         current_player_won = True
@@ -247,16 +253,16 @@ def process_input(
             return Error("server recieved an unknown type")
 
 
-def threaded_client(conn, state: GameState, player: int):
-    state.get_player_state(player).set_conn(conn)
-    conn.send(
+def threaded_client(connection, state: GameState, player: int):
+    state.get_player_state(player).set_connection(connection)
+    connection.send(
         pickle.dumps(
             ClientGameState(ClientPhase.PICKING, "Pick a number between 1 and 100")
         )
     )
     while True:
         try:
-            input = pickle.loads(conn.recv(2048))
+            input = pickle.loads(connection.recv(2048))
 
             if not input:
                 print("Disconnected")
@@ -268,13 +274,13 @@ def threaded_client(conn, state: GameState, player: int):
                 case GameState() as new_state:
                     state = new_state
                 case Error() as error:
-                    conn.sendall(pickle.dumps(error))
+                    connection.sendall(pickle.dumps(error))
 
         except:
             break
 
     print("Lost connection")
-    conn.close()
+    connection.close()
 
 
 def main(host: str, port: int, timeout: int) -> int:
@@ -294,10 +300,10 @@ def main(host: str, port: int, timeout: int) -> int:
     currentPlayer = 0
     while currentPlayer < 2:
         # needs a timeout. blocks forever and ingores ctrl+c
-        conn, addr = main_socket.accept()
+        connection, addr = main_socket.accept()
         print("Connected to:", addr)
 
-        start_new_thread(threaded_client, (conn, game_state, currentPlayer))
+        start_new_thread(threaded_client, (connection, game_state, currentPlayer))
         currentPlayer += 1
 
     # keep the program allive after we got two connections accept ctrl+c
