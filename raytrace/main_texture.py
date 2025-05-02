@@ -194,7 +194,6 @@ class Raycaster(arcade.Window):
         for x in range(SCREEN_WIDTH):
             texture_num = WORLD_MAP[map_x[x], map_y[x]] - 1
             step = TEXTURE_HEIGHT / line_heights[x]
-            texPos = (draw_starts[x] - SCREEN_HEIGHT / 2 + line_heights[x] / 2) * step
             texY = (
                 (
                     np.arange(draw_starts[x], draw_ends[x])
