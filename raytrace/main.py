@@ -13,7 +13,7 @@ MAP_HEIGHT = 24
 # Player position and direction
 initial_pos = arcade.Vec2(22, 12)
 initial_facing_dir = arcade.Vec2(-1, 0)
-intiial_view_plane = arcade.Vec2(0, 0.66)
+initial_view_plane = arcade.Vec2(0, 0.66)
 
 # Colors for walls
 COLORS = {
@@ -57,7 +57,7 @@ class Raycaster(arcade.Window):
         super().__init__(SCREEN_WIDTH, SCREEN_HEIGHT, "Raycaster")
         self.position = initial_pos
         self.facing_dir = initial_facing_dir
-        self.view_plane = intiial_view_plane
+        self.view_plane = initial_view_plane
         self.keys = set()
 
     def on_key_press(self, key, modifiers):
@@ -117,6 +117,7 @@ class Raycaster(arcade.Window):
                     map_y += step_y
                     last_step_was_x_side = False
                 # Check if ray has hit a wall
+                # note this will infinite loop if the ray escapes the world map without hitting a wall
                 if WORLD_MAP[map_x][map_y] > 0:
                     break
 
@@ -178,7 +179,6 @@ class Raycaster(arcade.Window):
             self.facing_dir = self.facing_dir.rotate(-rot_speed)
             self.view_plane = self.view_plane.rotate(-rot_speed)
         if arcade.key.LEFT in self.keys:
-            old_dir_x = self.facing_dir.x
             self.facing_dir = self.facing_dir.rotate(rot_speed)
             self.view_plane = self.view_plane.rotate(rot_speed)
 
