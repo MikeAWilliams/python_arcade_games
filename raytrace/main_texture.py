@@ -7,6 +7,7 @@ import arcade
 
 print("arcade version", arcade.__version__)
 
+# this is sooooooo slow that I had to drop the resolution to 300x300
 SCREEN_WIDTH = 300
 SCREEN_HEIGHT = 300
 MAP_WIDTH = 24
@@ -78,6 +79,7 @@ class Raycaster(arcade.Window):
 
     def load_textures(self):
         self.images = []
+        # you can downlaod the textures from https://lodev.org/cgtutor/raycasting.html
         self.images.append(Image.open("pics/eagle.png"))
         self.images.append(Image.open("./pics/redbrick.png"))
         self.images.append(Image.open("./pics/purplestone.png"))
