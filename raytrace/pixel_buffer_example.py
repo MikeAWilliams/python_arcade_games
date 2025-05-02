@@ -1,7 +1,6 @@
 import arcade
 import numpy as np
 from PIL import Image
-import random
 
 SCREEN_WIDTH, SCREEN_HEIGHT = 1200, 1200
 
