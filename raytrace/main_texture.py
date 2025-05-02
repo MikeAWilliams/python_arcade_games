@@ -7,24 +7,17 @@ import arcade
 
 print("arcade version", arcade.__version__)
 
-SCREEN_WIDTH = 1200
-SCREEN_HEIGHT = 1200
+SCREEN_WIDTH = 300
+SCREEN_HEIGHT = 300
 MAP_WIDTH = 24
 MAP_HEIGHT = 24
+TEXTURE_WIDTH = 64
+TEXTURE_HEIGHT = 64
 
 # Player position and direction
 initial_pos = arcade.Vec2(22, 12)
 initial_facing_dir = arcade.Vec2(-1, 0)
 initial_view_plane = arcade.Vec2(0, 0.66)
-
-# Colors for walls
-COLORS = {
-    1: arcade.color.RED,
-    2: arcade.color.GREEN,
-    3: arcade.color.BLUE,
-    4: arcade.color.WHITE,
-    5: arcade.color.YELLOW,
-}
 
 WORLD_MAP = [
     [4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 7, 7, 7, 7, 7, 7, 7, 7],
@@ -62,10 +55,11 @@ class Raycaster(arcade.Window):
         self.view_plane = initial_view_plane
         self.keys = set()
         self.init_single_sprite_as_buffer()
+        self.load_textures()
 
     def init_single_sprite_as_buffer(self):
         self.pixel_buffer = np.zeros(
-            (SCREEN_HEIGHT, SCREEN_WIDTH, 4), dtype=np.uint8
+            (SCREEN_HEIGHT, SCREEN_WIDTH, 3), dtype=np.uint8
         )  # RGB format
         self.sprite_list = arcade.SpriteList()  # Create a SpriteList to manage sprites
 
@@ -82,6 +76,17 @@ class Raycaster(arcade.Window):
         sprite.height = SCREEN_HEIGHT
         self.sprite_list.append(sprite)
 
+    def load_textures(self):
+        self.images = []
+        self.images.append(Image.open("pics/eagle.png"))
+        self.images.append(Image.open("./pics/redbrick.png"))
+        self.images.append(Image.open("./pics/purplestone.png"))
+        self.images.append(Image.open("./pics/greystone.png"))
+        self.images.append(Image.open("./pics/bluestone.png"))
+        self.images.append(Image.open("./pics/mossy.png"))
+        self.images.append(Image.open("./pics/wood.png"))
+        self.images.append(Image.open("./pics/colorstone.png"))
+
     def on_key_press(self, key, modifiers):
         self.keys.add(key)
 
@@ -97,12 +102,13 @@ class Raycaster(arcade.Window):
     def update_texture(self):
         # Create an image from the buffer
         image = Image.frombuffer(
-            "RGBA", (SCREEN_HEIGHT, SCREEN_WIDTH), self.pixel_buffer.tobytes()
-        )
+            "RGB", (SCREEN_HEIGHT, SCREEN_WIDTH), self.pixel_buffer.tobytes()
+        ).convert("RGBA")
         self.sprite_list[0].texture = arcade.Texture(name="pixel_buffer", image=image)
 
     def render(self):
-        self.pixel_buffer[:, :] = [0, 0, 0, 0]
+        # paint it black
+        self.pixel_buffer[:, :] = [0, 0, 0]
         # draw one vertical line for each column of pixels
         for x in range(SCREEN_WIDTH):
             # Calculate ray position and direction
@@ -179,16 +185,32 @@ class Raycaster(arcade.Window):
             draw_start = max(0, draw_start)
             draw_end = min(SCREEN_HEIGHT - 1, draw_end)
 
-            # Choose wall color
-            color = COLORS.get(WORLD_MAP[map_x][map_y], arcade.color.YELLOW)
-            if not last_step_was_x_side:
-                # Darken color for x-side
-                # recall that color is a tuple of RGB values
-                color = tuple(c // 2 for c in color)
+            wall_x = 0
+            if last_step_was_x_side:
+                wall_x = self.position.y + perp_wall_dist * ray_dir.y
+            else:
+                wall_x = self.position.x + perp_wall_dist * ray_dir.x
+            wall_x -= int(wall_x)
 
-            # Draw the vertical line
-            # arcade.draw_line(x, draw_start, x, draw_end, color)
-            self.pixel_buffer[draw_start:draw_end, x] = color  # RGB format
+            texture_x = int(wall_x * TEXTURE_WIDTH)
+            if last_step_was_x_side and ray_dir.x > 0:
+                texture_x = TEXTURE_WIDTH - texture_x - 1
+            if not last_step_was_x_side and ray_dir.y < 0:
+                texture_x = TEXTURE_WIDTH - texture_x - 1
+
+            step = TEXTURE_HEIGHT / line_height
+
+            texture_num = WORLD_MAP[map_x][map_y] - 1  # 0-indexed
+
+            texPos = (draw_start - SCREEN_HEIGHT / 2 + line_height / 2) * step
+            for y in range(draw_start, draw_end):
+                texY = int(texPos) & (TEXTURE_HEIGHT - 1)
+                texPos += step
+                color = self.images[texture_num].getpixel((texture_x, texY))
+
+                if not last_step_was_x_side:
+                    color = tuple(c // 2 for c in color)
+                self.pixel_buffer[y, x] = color
 
     def on_update(self, delta_time):
         move_speed = delta_time * 5.0
