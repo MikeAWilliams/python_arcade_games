@@ -7,9 +7,8 @@ import arcade
 
 print("arcade version", arcade.__version__)
 
-# this is sooooooo slow that I had to drop the resolution to 300x300
-SCREEN_WIDTH = 300
-SCREEN_HEIGHT = 300
+SCREEN_WIDTH = 1200
+SCREEN_HEIGHT = 1200
 MAP_WIDTH = 24
 MAP_HEIGHT = 24
 TEXTURE_WIDTH = 64
@@ -80,14 +79,14 @@ class Raycaster(arcade.Window):
     def load_textures(self):
         self.images = []
         # you can downlaod the textures from https://lodev.org/cgtutor/raycasting.html
-        self.images.append(Image.open("pics/eagle.png"))
-        self.images.append(Image.open("./pics/redbrick.png"))
-        self.images.append(Image.open("./pics/purplestone.png"))
-        self.images.append(Image.open("./pics/greystone.png"))
-        self.images.append(Image.open("./pics/bluestone.png"))
-        self.images.append(Image.open("./pics/mossy.png"))
-        self.images.append(Image.open("./pics/wood.png"))
-        self.images.append(Image.open("./pics/colorstone.png"))
+        self.images.append(np.array(Image.open("pics/eagle.png")))
+        self.images.append(np.array(Image.open("./pics/redbrick.png")))
+        self.images.append(np.array(Image.open("./pics/purplestone.png")))
+        self.images.append(np.array(Image.open("./pics/greystone.png")))
+        self.images.append(np.array(Image.open("./pics/bluestone.png")))
+        self.images.append(np.array(Image.open("./pics/mossy.png")))
+        self.images.append(np.array(Image.open("./pics/wood.png")))
+        self.images.append(np.array(Image.open("./pics/colorstone.png")))
 
     def on_key_press(self, key, modifiers):
         self.keys.add(key)
@@ -205,14 +204,13 @@ class Raycaster(arcade.Window):
             texture_num = WORLD_MAP[map_x][map_y] - 1  # 0-indexed
 
             texPos = (draw_start - SCREEN_HEIGHT / 2 + line_height / 2) * step
-            for y in range(draw_start, draw_end):
-                texY = int(texPos) & (TEXTURE_HEIGHT - 1)
-                texPos += step
-                color = self.images[texture_num].getpixel((texture_x, texY))
-
-                if not last_step_was_x_side:
-                    color = tuple(c // 2 for c in color)
-                self.pixel_buffer[y, x] = color
+            # holy cow python cannot loop to save its life. Here we are using numpy to save our lives and let us render above 300x300
+            texY = (
+                (np.arange(draw_start, draw_end) - SCREEN_HEIGHT / 2 + line_height / 2)
+                * step
+            ).astype(np.int32) & (TEXTURE_HEIGHT - 1)
+            stripe = self.images[texture_num][texY, texture_x]
+            self.pixel_buffer[draw_start:draw_end, x] = stripe
 
     def on_update(self, delta_time):
         move_speed = delta_time * 5.0
