@@ -15,36 +15,39 @@ TEXTURE_WIDTH = 64
 TEXTURE_HEIGHT = 64
 
 # Player position and direction
-initial_pos = arcade.Vec2(22, 12)
+initial_pos = arcade.Vec2(20, 12)
 initial_facing_dir = arcade.Vec2(-1, 0)
 initial_view_plane = arcade.Vec2(0, 0.66)
 
-WORLD_MAP = [
-    [4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 7, 7, 7, 7, 7, 7, 7, 7],
-    [4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 7, 0, 0, 0, 0, 0, 0, 7],
-    [4, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 7],
-    [4, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 7],
-    [4, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 7, 0, 0, 0, 0, 0, 0, 7],
-    [4, 0, 4, 0, 0, 0, 0, 5, 5, 5, 5, 5, 5, 5, 5, 5, 7, 7, 0, 7, 7, 7, 7, 7],
-    [4, 0, 5, 0, 0, 0, 0, 5, 0, 5, 0, 5, 0, 5, 0, 5, 7, 0, 0, 0, 7, 7, 7, 1],
-    [4, 0, 6, 0, 0, 0, 0, 5, 0, 0, 0, 0, 0, 0, 0, 5, 7, 0, 0, 0, 0, 0, 0, 8],
-    [4, 0, 7, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 7, 7, 7, 1],
-    [4, 0, 8, 0, 0, 0, 0, 5, 0, 0, 0, 0, 0, 0, 0, 5, 7, 0, 0, 0, 0, 0, 0, 8],
-    [4, 0, 0, 0, 0, 0, 0, 5, 0, 0, 0, 0, 0, 0, 0, 5, 7, 0, 0, 0, 7, 7, 7, 1],
-    [4, 0, 0, 0, 0, 0, 0, 5, 5, 5, 5, 0, 5, 5, 5, 5, 7, 7, 7, 7, 7, 7, 7, 1],
-    [6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 0, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6],
-    [8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4],
-    [6, 6, 6, 6, 6, 6, 0, 6, 6, 6, 6, 0, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6],
-    [4, 4, 4, 4, 4, 4, 0, 4, 4, 4, 6, 0, 6, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3],
-    [4, 0, 0, 0, 0, 0, 0, 0, 0, 4, 6, 0, 6, 2, 0, 0, 0, 0, 0, 2, 0, 0, 0, 2],
-    [4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 2, 0, 0, 5, 0, 0, 2, 0, 0, 0, 2],
-    [4, 0, 0, 0, 0, 0, 0, 0, 0, 4, 6, 0, 6, 2, 0, 0, 0, 0, 0, 2, 2, 0, 2, 2],
-    [4, 0, 6, 0, 6, 0, 0, 0, 0, 4, 6, 0, 0, 0, 0, 0, 5, 0, 0, 0, 0, 0, 0, 2],
-    [4, 0, 0, 5, 0, 0, 0, 0, 0, 4, 6, 0, 6, 2, 0, 0, 0, 0, 0, 2, 2, 0, 2, 2],
-    [4, 0, 6, 0, 6, 0, 0, 0, 0, 4, 6, 0, 6, 2, 0, 0, 5, 0, 0, 2, 0, 0, 0, 2],
-    [4, 0, 0, 0, 0, 0, 0, 0, 0, 4, 6, 0, 6, 2, 0, 0, 0, 0, 0, 2, 0, 0, 0, 2],
-    [4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 1, 1, 1, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3],
-]
+# Convert WORLD_MAP to a NumPy array
+WORLD_MAP = np.array(
+    [
+        [4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 7, 7, 7, 7, 7, 7, 7, 7],
+        [4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 7, 0, 0, 0, 0, 0, 0, 7],
+        [4, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 7],
+        [4, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 7],
+        [4, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 7, 0, 0, 0, 0, 0, 0, 7],
+        [4, 0, 4, 0, 0, 0, 0, 5, 5, 5, 5, 5, 5, 5, 5, 5, 7, 7, 0, 7, 7, 7, 7, 7],
+        [4, 0, 5, 0, 0, 0, 0, 5, 0, 5, 0, 5, 0, 5, 0, 5, 7, 0, 0, 0, 7, 7, 7, 1],
+        [4, 0, 6, 0, 0, 0, 0, 5, 0, 0, 0, 0, 0, 0, 0, 5, 7, 0, 0, 0, 0, 0, 0, 8],
+        [4, 0, 7, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 7, 7, 7, 1],
+        [4, 0, 8, 0, 0, 0, 0, 5, 0, 0, 0, 0, 0, 0, 0, 5, 7, 0, 0, 0, 0, 0, 0, 8],
+        [4, 0, 0, 0, 0, 0, 0, 5, 0, 0, 0, 0, 0, 0, 0, 5, 7, 0, 0, 0, 7, 7, 7, 1],
+        [4, 0, 0, 0, 0, 0, 0, 5, 5, 5, 5, 0, 5, 5, 5, 5, 7, 7, 7, 7, 7, 7, 7, 1],
+        [6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 0, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6],
+        [8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4],
+        [6, 6, 6, 6, 6, 6, 0, 6, 6, 6, 6, 0, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6],
+        [4, 4, 4, 4, 4, 4, 0, 4, 4, 4, 6, 0, 6, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3],
+        [4, 0, 0, 0, 0, 0, 0, 0, 0, 4, 6, 0, 6, 2, 0, 0, 0, 0, 0, 2, 0, 0, 0, 2],
+        [4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 2, 0, 0, 5, 0, 0, 2, 0, 0, 0, 2],
+        [4, 0, 0, 0, 0, 0, 0, 0, 0, 4, 6, 0, 6, 2, 0, 0, 0, 0, 0, 2, 2, 0, 2, 2],
+        [4, 0, 6, 0, 6, 0, 0, 0, 0, 4, 6, 0, 0, 0, 0, 0, 5, 0, 0, 0, 0, 0, 0, 2],
+        [4, 0, 0, 5, 0, 0, 0, 0, 0, 4, 6, 0, 6, 2, 0, 0, 0, 0, 0, 2, 2, 0, 2, 2],
+        [4, 0, 6, 0, 6, 0, 0, 0, 0, 4, 6, 0, 6, 2, 0, 0, 5, 0, 0, 2, 0, 0, 0, 2],
+        [4, 0, 0, 0, 0, 0, 0, 0, 0, 4, 6, 0, 6, 2, 0, 0, 0, 0, 0, 2, 0, 0, 0, 2],
+        [4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 1, 1, 1, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3],
+    ]
+)
 
 
 class Raycaster(arcade.Window):
@@ -108,109 +111,104 @@ class Raycaster(arcade.Window):
         self.sprite_list[0].texture = arcade.Texture(name="pixel_buffer", image=image)
 
     def render(self):
-        # paint it black
+        # Paint the screen black
         self.pixel_buffer[:, :] = [0, 0, 0]
-        # draw one vertical line for each column of pixels
+
+        # Calculate ray directions for all columns
+        camera_x = np.linspace(-1, 1, SCREEN_WIDTH, dtype=np.float32)
+        ray_dirs = np.array(
+            [
+                self.facing_dir.x + self.view_plane.x * camera_x,
+                self.facing_dir.y + self.view_plane.y * camera_x,
+            ]
+        )
+
+        # Integer map positions for DDA (one value per ray)
+        map_x = np.floor(self.position.x + np.zeros(SCREEN_WIDTH)).astype(np.int32)
+        map_y = np.floor(self.position.y + np.zeros(SCREEN_WIDTH)).astype(np.int32)
+
+        # DDA step calculations
+        delta_dist_x = np.abs(1 / ray_dirs[0])
+        delta_dist_y = np.abs(1 / ray_dirs[1])
+
+        step_x = np.where(ray_dirs[0] < 0, -1, 1)
+        step_y = np.where(ray_dirs[1] < 0, -1, 1)
+
+        side_dist_x = np.where(
+            ray_dirs[0] < 0,
+            (self.position.x - map_x) * delta_dist_x,
+            (map_x + 1.0 - self.position.x) * delta_dist_x,
+        )
+
+        side_dist_y = np.where(
+            ray_dirs[1] < 0,
+            (self.position.y - map_y) * delta_dist_y,
+            (map_y + 1.0 - self.position.y) * delta_dist_y,
+        )
+
+        # Perform DDA for all rays
+        hit = np.zeros(SCREEN_WIDTH, dtype=bool)
+        side = np.zeros(SCREEN_WIDTH, dtype=bool)
+
+        while not np.all(hit):
+            mask = (side_dist_x < side_dist_y) & ~hit
+            side_dist_x[mask] += delta_dist_x[mask]
+            map_x[mask] += step_x[mask]
+            side[mask] = True
+
+            mask = ~mask & ~hit
+            side_dist_y[mask] += delta_dist_y[mask]
+            map_y[mask] += step_y[mask]
+            side[mask] = False
+
+            hit = WORLD_MAP[map_x, map_y] > 0
+
+        # Calculate perpendicular wall distances
+        perp_wall_dist = np.where(
+            side,
+            (map_x - self.position.x + (1 - step_x) / 2) / ray_dirs[0],
+            (map_y - self.position.y + (1 - step_y) / 2) / ray_dirs[1],
+        )
+
+        # Calculate line heights and draw ranges
+        line_heights = (SCREEN_HEIGHT / perp_wall_dist).astype(np.int32)
+        draw_starts = np.clip(-line_heights // 2 + SCREEN_HEIGHT // 2, 0, SCREEN_HEIGHT)
+        draw_ends = np.clip(line_heights // 2 + SCREEN_HEIGHT // 2, 0, SCREEN_HEIGHT)
+
+        # Texture calculations
+        wall_x = np.where(
+            side,
+            self.position.y + perp_wall_dist * ray_dirs[1],
+            self.position.x + perp_wall_dist * ray_dirs[0],
+        )
+        wall_x -= np.floor(wall_x)
+
+        texture_x = (wall_x * TEXTURE_WIDTH).astype(np.int32)
+        texture_x = np.where(
+            (side & (ray_dirs[0] > 0)) | (~side & (ray_dirs[1] < 0)),
+            TEXTURE_WIDTH - texture_x - 1,
+            texture_x,
+        )
+
+        # Draw vertical stripes for all columns
         for x in range(SCREEN_WIDTH):
-            # Calculate ray position and direction
-            camera_x = 2 * x / SCREEN_WIDTH - 1
-            ray_dir = self.facing_dir + self.view_plane * camera_x
-
-            # Integer map position for DDA
-            map_x = int(self.position.x)
-            map_y = int(self.position.y)
-
-            # Length of ray from current position to next x or y side
-            side_dist_x = 0
-            side_dist_y = 0
-
-            # Length of ray from one x or y side to next x or y side
-            delta_dist_x = abs(1 / ray_dir.x) if ray_dir.x != 0 else float("inf")
-            delta_dist_y = abs(1 / ray_dir.y) if ray_dir.y != 0 else float("inf")
-            perp_wall_dist = 0
-
-            # Step and initial sideDist
-            step_x, step_y = 0, 0
-            if ray_dir.x < 0:
-                step_x = -1
-                side_dist_x = (self.position.x - map_x) * delta_dist_x
-            else:
-                step_x = 1
-                side_dist_x = (map_x + 1.0 - self.position.x) * delta_dist_x
-            if ray_dir.y < 0:
-                step_y = -1
-                side_dist_y = (self.position.y - map_y) * delta_dist_y
-            else:
-                step_y = 1
-                side_dist_y = (map_y + 1.0 - self.position.y) * delta_dist_y
-
-            # Perform DDA
-            # find the first intersection with a wall
-            last_step_was_x_side = False
-            while True:
-                # Jump to next map square
-                if side_dist_x < side_dist_y:
-                    side_dist_x += delta_dist_x
-                    map_x += step_x
-                    last_step_was_x_side = True
-                else:
-                    side_dist_y += delta_dist_y
-                    map_y += step_y
-                    last_step_was_x_side = False
-                # Check if ray has hit a wall
-                # note this will infinite loop if the ray escapes the world map without hitting a wall
-                if WORLD_MAP[map_x][map_y] > 0:
-                    break
-
-            # Calculate distance to the wall
-            if last_step_was_x_side:
-                perp_wall_dist = (
-                    map_x - self.position.x + (1 - step_x) / 2
-                ) / ray_dir.x
-            else:
-                perp_wall_dist = (
-                    map_y - self.position.y + (1 - step_y) / 2
-                ) / ray_dir.y
-
-            if perp_wall_dist <= 0:
-                perp_wall_dist = 0.1
-
-            # Calculate height of line to draw
-            line_height = int(SCREEN_HEIGHT / perp_wall_dist)
-
-            # Calculate lowest and highest pixel to fill in current stripe
-            draw_start = -line_height // 2 + SCREEN_HEIGHT // 2
-            draw_end = line_height // 2 + SCREEN_HEIGHT // 2
-
-            # Clamp values
-            draw_start = max(0, draw_start)
-            draw_end = min(SCREEN_HEIGHT - 1, draw_end)
-
-            wall_x = 0
-            if last_step_was_x_side:
-                wall_x = self.position.y + perp_wall_dist * ray_dir.y
-            else:
-                wall_x = self.position.x + perp_wall_dist * ray_dir.x
-            wall_x -= int(wall_x)
-
-            texture_x = int(wall_x * TEXTURE_WIDTH)
-            if last_step_was_x_side and ray_dir.x > 0:
-                texture_x = TEXTURE_WIDTH - texture_x - 1
-            if not last_step_was_x_side and ray_dir.y < 0:
-                texture_x = TEXTURE_WIDTH - texture_x - 1
-
-            step = TEXTURE_HEIGHT / line_height
-
-            texture_num = WORLD_MAP[map_x][map_y] - 1  # 0-indexed
-
-            texPos = (draw_start - SCREEN_HEIGHT / 2 + line_height / 2) * step
-            # holy cow python cannot loop to save its life. Here we are using numpy to save our lives and let us render above 300x300
+            texture_num = WORLD_MAP[map_x[x], map_y[x]] - 1
+            step = TEXTURE_HEIGHT / line_heights[x]
+            texPos = (draw_starts[x] - SCREEN_HEIGHT / 2 + line_heights[x] / 2) * step
             texY = (
-                (np.arange(draw_start, draw_end) - SCREEN_HEIGHT / 2 + line_height / 2)
+                (
+                    np.arange(draw_starts[x], draw_ends[x])
+                    - SCREEN_HEIGHT / 2
+                    + line_heights[x] / 2
+                )
                 * step
             ).astype(np.int32) & (TEXTURE_HEIGHT - 1)
-            stripe = self.images[texture_num][texY, texture_x]
-            self.pixel_buffer[draw_start:draw_end, x] = stripe
+            stripe = self.images[texture_num][texY, texture_x[x]]
+
+            if not side[x]:
+                stripe = stripe // 2  # Darken the color for y-side walls
+
+            self.pixel_buffer[draw_starts[x] : draw_ends[x], x] = stripe
 
     def on_update(self, delta_time):
         move_speed = delta_time * 5.0
