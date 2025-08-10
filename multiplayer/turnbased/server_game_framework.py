@@ -192,7 +192,7 @@ class GameServer:
         # Send state to other player (now playing)
         other_player_index = 1 - current_player_index
         op_state = self.game_logic.create_client_state(
-            state, other_player_index, ClientPhase.GUESSING,
+            state, other_player_index, ClientPhase.PLAYING,
             f"{transition.op_message}\nIt's your turn."
         )
         server_network.send(other_player.get_connection(), op_state)
@@ -256,7 +256,7 @@ class GameServer:
             if player_state.get_phase() == ServerPhase.PLAYING:
                 # This player goes first
                 first_state = self.game_logic.create_client_state(
-                    state, i, ClientPhase.GUESSING, "It's your turn."
+                    state, i, ClientPhase.PLAYING, "It's your turn."
                 )
                 server_network.send(player_state.get_connection(), first_state)
             elif player_state.get_phase() == ServerPhase.WAITING:

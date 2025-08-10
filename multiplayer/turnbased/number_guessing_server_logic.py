@@ -30,7 +30,7 @@ class NumberGuessingGame(ServerGameLogic):
         Send initial setup message asking player to pick their secret number.
         """
         return ClientGameState(
-            ClientPhase.PICKING, 
+            ClientPhase.SETUP, 
             "Welcome to the Number Guessing Game!\nPick a secret number between 1 and 100."
         )
     

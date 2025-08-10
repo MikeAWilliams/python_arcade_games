@@ -27,9 +27,9 @@ class GuessData:
 
 
 class ClientPhase(Enum):
-    PICKING = 0
+    SETUP = 0
     WAITING_FOR_SERVER = 1
-    GUESSING = 2
+    PLAYING = 2
     YOU_WIN = 3
     YOU_LOOSE = 4
 

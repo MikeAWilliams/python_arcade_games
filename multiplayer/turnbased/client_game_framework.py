@@ -95,7 +95,7 @@ class GameClient:
     def __init__(self, game_logic: ClientGameLogic):
         self.game_logic = game_logic
     
-    def handle_connection_data(self, data) -> ClientGameState:
+    def handle_connection_data(self, data: ClientGameState|Error) -> ClientGameState:
         """
         Handle the initial connection response from the server.
         
@@ -176,7 +176,7 @@ class GameClient:
             initial_state = self.handle_connection_data(coms.connect())
             
             # Verify we're in the expected initial state
-            if initial_state.GetPhase() != ClientPhase.PICKING:
+            if initial_state.GetPhase() != ClientPhase.SETUP:
                 raise Exception(f"Unexpected initial phase: {initial_state.GetPhase()}")
             
             print("Connected successfully!")
@@ -205,7 +205,7 @@ class GameClient:
                                     self.game_logic.display_game_end(new_state, won=False)
                                     return 0
                                     
-                                case ClientPhase.GUESSING:
+                                case ClientPhase.PLAYING:
                                     self.game_logic.display_game_state(new_state)
                                     game_input = self.game_logic.get_game_input(new_state)
                                     coms.send(game_input)
