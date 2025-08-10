@@ -14,6 +14,7 @@ A Python framework for creating turn-based multiplayer games that communicate vi
 ### Example Game Implementation
 - **`number_guessing_server_logic.py`** - Server-side game logic using the framework
 - **`number_guessing_client_logic.py`** - Client-side game logic implementation
+- **`number_guessing_data.py`** - Game-specific data classes (NumberPickData, GuessData)
 - **`server.py`** - Server entry point for the number guessing game
 - **`client.py`** - Client entry point using the client framework
 
