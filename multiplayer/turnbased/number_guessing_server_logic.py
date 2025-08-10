@@ -12,6 +12,7 @@ import random
 from typing import Optional, Any
 from server_game_framework import ServerGameLogic, GameState, PlayerState, TurnTransitionData
 from shared_data import *
+from number_guessing_data import NumberPickData, GuessData
 
 
 class NumberGuessingGame(ServerGameLogic):

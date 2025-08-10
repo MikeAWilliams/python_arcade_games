@@ -9,6 +9,7 @@ import sys
 from typing import Any
 from client_game_framework import ClientGameLogic
 from shared_data import *
+from number_guessing_data import NumberPickData, GuessData
 
 
 class NumberGuessingClientLogic(ClientGameLogic):

@@ -10,22 +10,6 @@ class Error:
         return self.message
 
 
-class NumberPickData:
-    def __init__(self, number: int):
-        self.number = number
-
-    def GetNumber(self) -> int:
-        return self.number
-
-
-class GuessData:
-    def __init__(self, number: int):
-        self.number = number
-
-    def GetNumber(self) -> int:
-        return self.number
-
-
 class ClientPhase(Enum):
     SETUP = 0
     WAITING_FOR_SERVER = 1
