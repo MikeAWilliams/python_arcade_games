@@ -5,7 +5,7 @@ This module provides the core framework for creating turn-based multiplayer game
 that communicate via websockets. It handles player connections, turn management,
 and basic game state synchronization.
 
-To create a new game, inherit from GameLogic and implement the required methods.
+To create a new game, inherit from ServerGameLogic and implement the required methods.
 """
 
 import socket
@@ -123,7 +123,7 @@ class TurnTransitionData:
         self.current_player_won = True
 
 
-class GameLogic:
+class ServerGameLogic:
     """
     Abstract base class for game-specific logic.
     Inherit from this class to implement your own turn-based game.
@@ -173,7 +173,7 @@ class GameServer:
     Main game server that handles networking and delegates game logic
     """
     
-    def __init__(self, game_logic: GameLogic):
+    def __init__(self, game_logic: ServerGameLogic):
         self.game_logic = game_logic
     
     def change_turn(self, current_player: PlayerState, other_player: PlayerState, 

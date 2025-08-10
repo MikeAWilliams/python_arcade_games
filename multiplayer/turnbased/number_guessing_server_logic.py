@@ -5,16 +5,16 @@ This is an example implementation of a turn-based multiplayer game using the gam
 In this game, each player picks a secret number (1-100), then players take turns guessing
 each other's numbers. The first player to guess correctly wins.
 
-This demonstrates how to use the GameLogic base class to create your own games.
+This demonstrates how to use the ServerGameLogic base class to create your own games.
 """
 
 import random
 from typing import Optional, Any
-from game_framework import GameLogic, GameState, PlayerState, TurnTransitionData
+from server_game_framework import ServerGameLogic, GameState, PlayerState, TurnTransitionData
 from shared_data import *
 
 
-class NumberGuessingGame(GameLogic):
+class NumberGuessingGame(ServerGameLogic):
     """
     Implementation of the number guessing game logic.
     

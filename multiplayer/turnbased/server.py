@@ -14,8 +14,8 @@ The server will wait for exactly 2 players to connect before starting the game.
 
 import argparse
 import sys
-from game_framework import GameServer
-from number_guessing_game import NumberGuessingGame
+from server_game_framework import GameServer
+from number_guessing_server_logic import NumberGuessingGame
 
 
 def main(host: str, port: int, timeout: int) -> int:
