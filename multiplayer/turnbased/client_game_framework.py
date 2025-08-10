@@ -176,16 +176,15 @@ class GameClient:
             initial_state = self.handle_connection_data(coms.connect())
             
             # Verify we're in the expected initial state
-            if initial_state.GetPhase() != ClientPhase.SETUP:
+            if initial_state.GetPhase() != ClientPhase.PICKING:
                 raise Exception(f"Unexpected initial phase: {initial_state.GetPhase()}")
             
             print("Connected successfully!")
             
-            # Phase 1: Setup (e.g., pick secret number)
             post_setup_state = self.handle_setup_phase(coms, initial_state.GetMessage())
             print(f"\n{post_setup_state.GetMessage()}")
             
-            # Phase 2: Game loop
+            # Game loop
             while True:
                 try:
                     response = coms.recieve()
@@ -205,7 +204,7 @@ class GameClient:
                                     self.game_logic.display_game_end(new_state, won=False)
                                     return 0
                                     
-                                case ClientPhase.PLAYING:
+                                case ClientPhase.GUESSING:
                                     self.game_logic.display_game_state(new_state)
                                     game_input = self.game_logic.get_game_input(new_state)
                                     coms.send(game_input)
