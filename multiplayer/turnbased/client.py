@@ -1,101 +1,58 @@
+#!/usr/bin/env python3
+"""
+Number Guessing Game Client
+
+This is the client for the number guessing game. It connects to the server
+and provides a console interface for playing the game using the client framework.
+
+Usage:
+    python client.py -a localhost -p 5555
+
+The client will connect to the server and guide you through:
+1. Picking your secret number (1-100)
+2. Taking turns guessing the other player's number
+3. Receiving feedback (too high, too low, or correct)
+"""
+
 import sys
-from client_network import ClientNetwork
-from shared_data import *
 import argparse
-
-
-def handle_connection_data(data) -> ClientGameState:
-    match data:
-        case ClientGameState() as state:
-            return state
-        case Error() as error:
-            print("got an error ", error.GetMessage())
-            raise Exception(error.GetMessage())
-        case _:
-            print("recieved an unknown type")
-            raise Exception("an unknown error occured on initial connection")
-
-
-def get_number() -> int:
-    while True:
-        try:
-            string_in = input("Enter your number ")
-            number = int(string_in)
-            return number
-        except ValueError:
-            print("{} is not a valid number".format(string_in))
-
-
-def pick_my_number(coms: ClientNetwork, server_message: str) -> ClientGameState:
-    while True:
-        print("The server says ", server_message)
-        response = coms.send_recieve(NumberPickData(get_number()))
-        match response:
-            case Error() as error:
-                print("error from server {}".format(error.GetMessage()))
-            case ClientGameState() as new_state:
-                return new_state
-            case _:
-                raise Exception("recieved an unknown response from the server")
-
-
-def guess_other_players_number(coms: ClientNetwork, state: ClientGameState):
-    print("The server says ", state.GetMessage())
-    print("Your number is ", state.GetMyNum())
-    print("Their past geusses are ", state.GetTheirGuesses())
-    print("Your past geusses are ", state.GetMyGuesses())
-    coms.send(GuessData(get_number()))
+from client_game_framework import GameClient
+from number_guessing_client_logic import NumberGuessingClientLogic
 
 
 def main(host: str, port: int) -> int:
-    coms = ClientNetwork(host, port)
-    initial_state = handle_connection_data(coms.connect())
-    if initial_state.GetPhase() != ClientPhase.PICKING:
-        raise Exception(
-            "Got an unexpected initial state from server {}".format(
-                initial_state.GetPhase()
-            )
-        )
-
-    # picking a number
-    post_pic_state = pick_my_number(coms, initial_state.GetMessage())
-    print("server says ", post_pic_state.GetMessage())
-
-    while True:
-        response = coms.recieve()
-        match response:
-            case Error() as error:
-                print("error from server {}".format(error.GetMessage()))
-            case ClientGameState() as new_state:
-                match new_state.GetPhase():
-                    case ClientPhase.YOU_WIN:
-                        print("Yay yay yay! ", new_state.GetMessage())
-                        return  # hard stop
-                    case ClientPhase.YOU_LOOSE:
-                        print("Bummer ", new_state.GetMessage())
-                        return  # hard stop
-                    case ClientPhase.GUESSING:
-                        guess_other_players_number(coms, new_state)
-                    case ClientPhase.WAITING_FOR_SERVER:
-                        print("server says ", new_state.GetMessage())
-                    case _:
-                        raise Exception(
-                            "got an unexpected phase from the server ",
-                            new_state.GetPhase(),
-                        )
-            case _:
-                raise Exception("recieved an unknown response from the server")
+    """
+    Main client function - creates game client and runs the game.
+    
+    Args:
+        host: Server host address
+        port: Server port number
+        
+    Returns:
+        Exit code (0 for success, 1 for error)
+    """
+    # Create the game logic implementation
+    game_logic = NumberGuessingClientLogic()
+    
+    # Create the client with our game logic
+    client = GameClient(game_logic)
+    
+    # Run the game
+    return client.run_game(host, port)
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "--address", "-a", required=True, type=str, help="host to connect to"
-    )
-    parser.add_argument(
-        "--port", "-p", required=True, type=int, help="port to connect to"
-    )
+    parser = argparse.ArgumentParser(description="Number Guessing Game Client")
+    parser.add_argument("-a", "--address", default="localhost", 
+                       help="Server address (default: localhost)")
+    parser.add_argument("-p", "--port", type=int, default=5555,
+                       help="Server port (default: 5555)")
+    
     args = parser.parse_args()
-    print("host: {0} port: {1}".format(args.address, args.port))
-
-    sys.exit(main(args.address, args.port))
+    
+    try:
+        exit_code = main(args.address, args.port)
+        sys.exit(exit_code)
+    except KeyboardInterrupt:
+        print("\nClient terminated by user")
+        sys.exit(0)
