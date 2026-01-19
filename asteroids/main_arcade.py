@@ -49,11 +49,11 @@ class GameView(arcade.View):
         elif key == arcade.key.UP or key == arcade.key.DOWN:
             self.game.clear_acc()
 
-    def draw_player(self):
-        cx = self.game.player.geometry.pos.x
-        cy = self.game.player.geometry.pos.y
-        r = self.game.player.geometry.radius
-        p_angle = self.game.player.geometry.angle
+    def draw_player(self, player_geometry):
+        cx = player_geometry.pos.x
+        cy = player_geometry.pos.y
+        r = player_geometry.radius
+        p_angle = player_geometry.angle
 
         # outline for collision detection
         arcade.draw_circle_outline(cx, cy, r, arcade.color.WHITE, border_width=1)
@@ -77,17 +77,26 @@ class GameView(arcade.View):
             x1, y1, x2, y2, x3, y3, arcade.color.WHITE
         )
 
-        # Draw bullets
-        for bullet in self.game.bullets:
-            arcade.draw_circle_filled(bullet.geometry.pos.x, bullet.geometry.pos.y, bullet.geometry.radius, arcade.color.WHITE)
+    def draw_bullets(self, bullets):
+        self.draw_circles(bullets)
+
+    def draw_asteroids(self, asteroids):
+        self.draw_circles(asteroids)
+
+    def draw_circles(self, geometries):
+        for g in geometries:
+            arcade.draw_circle_filled(g.pos.x, g.pos.y, g.radius, arcade.color.WHITE)
+
+    def draw_geometry(self, geometry: game.geometry_state):
+        # Draw the player
+        self.draw_player(geometry.player)
+        self.draw_asteroids(geometry.asteroids)
+        self.draw_bullets(geometry.bullets)
 
     def on_draw(self):
         """ Render the screen. """
         self.clear()
-        self.draw_player()
-        for a in self.game.asteroids:
-            arcade.draw_circle_filled(a.geometry.pos.x, a.geometry.pos.y, a.geometry.radius, arcade.color.WHITE)
-
+        self.draw_geometry(self.game.geometry_state())
 
 def main():
     g = game.Game(WINDOW_WIDTH, WINDOW_HEIGHT)

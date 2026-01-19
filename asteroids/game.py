@@ -53,6 +53,12 @@ class geometry_object:
     def copy(self):
         return geometry_object(self.pos.copy(), self.radius, self.angle)
 
+class geometry_state():
+    def __init__(self, player: geometry_object, asteroids: list[geometry_object], bullets: list[geometry_object]):
+        self.player = player
+        self.asteroids = asteroids
+        self.bullets = bullets
+
 def bounce(obj, width, height):
     if obj.geometry.pos.x - obj.geometry.radius < 0:
         obj.geometry.pos.x = obj.geometry.radius
@@ -97,6 +103,9 @@ class Player():
         self.geometry.pos.y += self.vel.y * dt
         self.geometry.angle += self.angle_vel * dt
 
+    def copy_geometry(self):
+        return self.geometry.copy()
+
 
     def turning_left(self):
         self.angle_vel = PLAYER_TURN_RATE
@@ -119,7 +128,6 @@ class Player():
         self.accel.x = 0
         self.accel.y = 0
 
-
     def no_action(self):
         pass
 
@@ -132,6 +140,9 @@ class Asteroid():
         self.geometry.pos.x += self.vel.x * dt
         self.geometry.pos.y += self.vel.y * dt
 
+    def copy_geometry(self):
+        return self.geometry.copy()
+
 class Bullet():
     def __init__(self, geometry: geometry_object, vel: vec2d):
         self.geometry = geometry
@@ -140,6 +151,9 @@ class Bullet():
     def update(self, dt):
         self.geometry.pos.x += self.vel.x * dt
         self.geometry.pos.y += self.vel.y * dt
+
+    def copy_geometry(self):
+        return self.geometry.copy()
 
 class Game():
     def __init__(self, width, height):
@@ -194,6 +208,12 @@ class Game():
             bounce(a, self.width, self.height)
         self.check_player_asteroid_collision()
         self.check_bullet_asteroid_collision()
+
+    def geometry_state(self)->geometry_state:
+        asteroids = [a.geometry.copy() for a in self.asteroids]
+        bullets = [b.geometry.copy() for b in self.bullets]
+        return geometry_state(self.player.geometry.copy(), asteroids, bullets)
+
 
     def turning_left(self):
         self.player.turning_left()
