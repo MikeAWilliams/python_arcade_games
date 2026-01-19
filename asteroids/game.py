@@ -3,6 +3,8 @@ import math
 
 PLAYER_TURN_RATE = math.pi/3
 PLAYER_ACCELERATION = 20
+PLAYER_RADIUS = 20
+PLAYER_EXCLUSION_RADIUS = PLAYER_RADIUS*5
 BULLET_SPEED = 500
 ASTEROID_SPEED = 50
 BIG_ASTEROID_RADIUS = 90
@@ -45,6 +47,9 @@ class geometry_object:
         self.radius = radius
         self.angle = angle
 
+    def intersects(self, other):
+        return math.dist(self.pos, other.pos) <= self.radius + other.radius
+
     def copy(self):
         return geometry_object(self.pos.copy(), self.radius, self.angle)
 
@@ -62,19 +67,19 @@ def bounce(obj, width, height):
         obj.geometry.pos.y = height - obj.geometry.radius
         obj.vel.y *= -1
 
-def generate_fair_asteroid_starting_positions(width, height, num, radius, exclusion_center, exclusion_radius):
+def generate_fair_asteroid_starting_geometry(width: int, height: int, num: int, radius: int, exclusion_geometry: geometry_object):
     result = []
     while len(result) < num:
-        pos = vec2d(random.randint(radius, width-radius), random.randint(radius, height-radius))
-        if math.dist(pos, exclusion_center) > exclusion_radius:
+        geo = geometry_object(vec2d(random.randint(radius, width-radius), random.randint(radius, height-radius)), radius)
+        if not geo.intersects(exclusion_geometry):
             to_close = False
             for other in result:
-                if math.dist(pos, other) < radius * 2:
+                if geo.intersects(other):
                     to_close = True
                     break
 
             if not to_close:
-                result.append(pos)
+                result.append(geo)
     return result
 
 class Player():
@@ -140,10 +145,10 @@ class Game():
     def __init__(self, width, height):
         self.width = width
         self.height = height
-        self.player = Player(geometry_object(vec2d(width//2, height//2), 20))
+        self.player = Player(geometry_object(vec2d(width//2, height//2), PLAYER_RADIUS))
         self.bullets = []
-        asteroid_centers = generate_fair_asteroid_starting_positions(width, height, 3, BIG_ASTEROID_RADIUS, self.player.geometry.pos, 100)
-        self.asteroids = [Asteroid(geometry_object(center, 90), vec2d.random_size(ASTEROID_SPEED)) for center in asteroid_centers]
+        asteroid_centers = generate_fair_asteroid_starting_geometry(width, height, 3, BIG_ASTEROID_RADIUS, geometry_object(self.player.geometry.pos, PLAYER_EXCLUSION_RADIUS))
+        self.asteroids = [Asteroid(geo, vec2d.random_size(ASTEROID_SPEED)) for geo in asteroid_centers]
         self.time_alive = 0
         self.player_alive = True
         self.player_score = 0
@@ -153,7 +158,7 @@ class Game():
 
     def check_player_asteroid_collision(self):
         for asteroid in self.asteroids:
-            if math.dist(self.player.geometry.pos, asteroid.geometry.pos) <= self.player.geometry.radius + asteroid.geometry.radius:
+            if asteroid.geometry.intersects(self.player.geometry):
                 self.player_alive = False
 
     def spawn_new_asteroid_if_needed(self, parent):
@@ -168,7 +173,7 @@ class Game():
     def check_bullet_asteroid_collision(self):
         for asteroid in self.asteroids:
             for bullet in self.bullets:
-                if math.dist(asteroid.geometry.pos, bullet.geometry.pos) <= asteroid.geometry.radius + bullet.geometry.radius:
+                if asteroid.geometry.intersects(bullet.geometry):
                     self.player_score += 1
                     self.asteroids.remove(asteroid)
                     self.bullets.remove(bullet)
