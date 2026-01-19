@@ -1,6 +1,6 @@
 # asteroids
 
-My asteroids clone. I hope to develop an AI Player.
+My asteroids clone. I hope to develop an AI Player one day
 
 ## Installation
 
