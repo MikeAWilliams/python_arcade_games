@@ -13,8 +13,28 @@ class vec2d:
     def __init__(self, x, y):
         self.x = x
         self.y = y
+
     def __iter__(self):
         return iter((self.x, self.y))
+
+    def size(self):
+        return math.sqrt(self.x**2 + self.y**2)
+
+    def normalize(self):
+        size = self.size()
+        if size == 0:
+            return vec2d(0, 0)
+        return vec2d(self.x / size, self.y / size)
+
+    def multiply(self, scalar):
+        return vec2d(self.x * scalar, self.y * scalar)
+
+    @staticmethod
+    def random_size(size):
+        result = vec2d(random.randint(-1, 1), random.randint(-1, 1))
+        result.normalize()
+        result = result.multiply(size)
+        return result
 
 def bounce(obj, width, height):
     if obj.pos.x - obj.radius < 0:
@@ -111,7 +131,7 @@ class Game():
         self.height = height
         self.player = Player(vec2d(width//2, height//2), 20)
         asteroid_centers = generate_fair_asteroid_starting_positions(width, height, 3, BIG_ASTEROID_RADIUS, self.player.pos, 100)
-        self.asteroids = [Asteroid(center, vec2d(random.choice([-1, 1])*ASTEROID_SPEED, random.choice([-1, 1])*ASTEROID_SPEED), 90) for center in asteroid_centers]
+        self.asteroids = [Asteroid(center, vec2d.random_size(ASTEROID_SPEED), 90) for center in asteroid_centers]
         self.time_alive = 0
         self.player_alive = True
         self.player_score = 0
@@ -126,12 +146,12 @@ class Game():
 
     def spawn_new_asteroid_if_needed(self, parent):
         if parent.radius == BIG_ASTEROID_RADIUS:
-            self.asteroids.append(Asteroid(vec2d(parent.pos.x, parent.pos.y), vec2d(random.choice([-1, 1])*ASTEROID_SPEED, random.choice([-1, 1])*ASTEROID_SPEED), MEDIUM_ASTEROID_RADIUS))
-            self.asteroids.append(Asteroid(vec2d(parent.pos.x, parent.pos.y), vec2d(random.choice([-1, 1])*ASTEROID_SPEED, random.choice([-1, 1])*ASTEROID_SPEED), MEDIUM_ASTEROID_RADIUS))
+            self.asteroids.append(Asteroid(vec2d(parent.pos.x, parent.pos.y), vec2d.random_size(ASTEROID_SPEED), MEDIUM_ASTEROID_RADIUS))
+            self.asteroids.append(Asteroid(vec2d(parent.pos.x, parent.pos.y), vec2d.random_size(ASTEROID_SPEED), MEDIUM_ASTEROID_RADIUS))
         elif parent.radius == MEDIUM_ASTEROID_RADIUS:
-            self.asteroids.append(Asteroid(vec2d(parent.pos.x, parent.pos.y), vec2d(random.choice([-1, 1])*ASTEROID_SPEED, random.choice([-1, 1])*ASTEROID_SPEED), SMALL_ASTEROID_RADIUS))
-            self.asteroids.append(Asteroid(vec2d(parent.pos.x, parent.pos.y), vec2d(random.choice([-1, 1])*ASTEROID_SPEED, random.choice([-1, 1])*ASTEROID_SPEED), SMALL_ASTEROID_RADIUS))
-            self.asteroids.append(Asteroid(vec2d(parent.pos.x, parent.pos.y), vec2d(random.choice([-1, 1])*ASTEROID_SPEED, random.choice([-1, 1])*ASTEROID_SPEED), SMALL_ASTEROID_RADIUS))
+            self.asteroids.append(Asteroid(vec2d(parent.pos.x, parent.pos.y), vec2d.random_size(ASTEROID_SPEED), SMALL_ASTEROID_RADIUS))
+            self.asteroids.append(Asteroid(vec2d(parent.pos.x, parent.pos.y), vec2d.random_size(ASTEROID_SPEED), SMALL_ASTEROID_RADIUS))
+            self.asteroids.append(Asteroid(vec2d(parent.pos.x, parent.pos.y), vec2d.random_size(ASTEROID_SPEED), SMALL_ASTEROID_RADIUS))
 
     def check_bullet_asteroid_collision(self):
         for asteroid in self.asteroids:
