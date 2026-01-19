@@ -12,7 +12,6 @@ class GameView(arcade.View):
     """ Main application class. """
 
     def __init__(self, game):
-        # Call the parent __init__
         super().__init__()
         self.game = game
 
@@ -88,7 +87,6 @@ class GameView(arcade.View):
             arcade.draw_circle_filled(g.pos.x, g.pos.y, g.radius, arcade.color.WHITE)
 
     def draw_geometry(self, geometry: game.geometry_state):
-        # Draw the player
         self.draw_player(geometry.player)
         self.draw_asteroids(geometry.asteroids)
         self.draw_bullets(geometry.bullets)
