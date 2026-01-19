@@ -128,14 +128,13 @@ class Asteroid():
         self.geometry.pos.y += self.vel.y * dt
 
 class Bullet():
-    def __init__(self, pos: vec2d, vel: vec2d, radius: int):
-        self.pos = pos
+    def __init__(self, geometry: geometry_object, vel: vec2d):
+        self.geometry = geometry
         self.vel = vel
-        self.radius = radius
 
     def update(self, dt):
-        self.pos.x += self.vel.x * dt
-        self.pos.y += self.vel.y * dt
+        self.geometry.pos.x += self.vel.x * dt
+        self.geometry.pos.y += self.vel.y * dt
 
 class Game():
     def __init__(self, width, height):
@@ -150,7 +149,7 @@ class Game():
         self.player_score = 0
 
     def prune_bullets(self):
-        self.bullets = [bullet for bullet in self.bullets if bullet.pos.x >= 0 and bullet.pos.x <= self.width and bullet.pos.y >= 0 and bullet.pos.y <= self.height]
+        self.bullets = [bullet for bullet in self.bullets if bullet.geometry.pos.x >= 0 and bullet.geometry.pos.x <= self.width and bullet.geometry.pos.y >= 0 and bullet.geometry.pos.y <= self.height]
 
     def check_player_asteroid_collision(self):
         for asteroid in self.asteroids:
@@ -169,7 +168,7 @@ class Game():
     def check_bullet_asteroid_collision(self):
         for asteroid in self.asteroids:
             for bullet in self.bullets:
-                if math.dist(asteroid.geometry.pos, bullet.pos) <= asteroid.geometry.radius + bullet.radius:
+                if math.dist(asteroid.geometry.pos, bullet.geometry.pos) <= asteroid.geometry.radius + bullet.geometry.radius:
                     self.player_score += 1
                     self.asteroids.remove(asteroid)
                     self.bullets.remove(bullet)
@@ -211,7 +210,7 @@ class Game():
 
     def shoot(self):
         dir_vec = vec2d(math.cos(self.player.geometry.angle), math.sin(self.player.geometry.angle))
-        bullet = Bullet(vec2d(self.player.geometry.pos.x + dir_vec.x * self.player.geometry.radius, self.player.geometry.pos.y + dir_vec.y * self.player.geometry.radius), vec2d(dir_vec.x * BULLET_SPEED, dir_vec.y * BULLET_SPEED), 1)
+        bullet = Bullet(geometry_object(vec2d(self.player.geometry.pos.x + dir_vec.x * self.player.geometry.radius, self.player.geometry.pos.y + dir_vec.y * self.player.geometry.radius),1), vec2d(dir_vec.x * BULLET_SPEED, dir_vec.y * BULLET_SPEED))
         self.bullets.append(bullet)
 
     def no_action(self):

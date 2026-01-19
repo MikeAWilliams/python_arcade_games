@@ -79,7 +79,7 @@ class GameView(arcade.View):
 
         # Draw bullets
         for bullet in self.game.bullets:
-            arcade.draw_circle_filled(bullet.pos.x, bullet.pos.y, bullet.radius, arcade.color.WHITE)
+            arcade.draw_circle_filled(bullet.geometry.pos.x, bullet.geometry.pos.y, bullet.geometry.radius, arcade.color.WHITE)
 
     def on_draw(self):
         """ Render the screen. """
