@@ -50,10 +50,10 @@ class GameView(arcade.View):
             self.game.clear_acc()
 
     def draw_player(self):
-        cx = self.game.player.pos.x
-        cy = self.game.player.pos.y
-        r = self.game.player.radius
-        p_angle = self.game.player.angle
+        cx = self.game.player.geometry.pos.x
+        cy = self.game.player.geometry.pos.y
+        r = self.game.player.geometry.radius
+        p_angle = self.game.player.geometry.angle
 
         # outline for collision detection
         arcade.draw_circle_outline(cx, cy, r, arcade.color.WHITE, border_width=1)
@@ -86,7 +86,7 @@ class GameView(arcade.View):
         self.clear()
         self.draw_player()
         for a in self.game.asteroids:
-            arcade.draw_circle_filled(a.pos.x, a.pos.y, a.radius, arcade.color.WHITE)
+            arcade.draw_circle_filled(a.geometry.pos.x, a.geometry.pos.y, a.geometry.radius, arcade.color.WHITE)
 
 
 def main():

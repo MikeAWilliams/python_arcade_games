@@ -34,48 +34,63 @@ class vec2d:
 
     @staticmethod
     def random_size(size):
-        result = vec2d(random.randint(-1, 1), random.randint(-1, 1))
+        result = vec2d(random.uniform(-1, 1), random.uniform(-1, 1))
         result.normalize()
         result = result.multiply(size)
         return result
 
+class geometry_object:
+    def __init__(self, pos: vec2d, radius: int, angle: float=0):
+        self.pos = pos
+        self.radius = radius
+        self.angle = angle
+
+    def copy(self):
+        return geometry_object(self.pos.copy(), self.radius, self.angle)
+
 def bounce(obj, width, height):
-    if obj.pos.x - obj.radius < 0:
-        obj.pos.x = obj.radius
+    if obj.geometry.pos.x - obj.geometry.radius < 0:
+        obj.geometry.pos.x = obj.geometry.radius
         obj.vel.x *= -1
-    elif obj.pos.x + obj.radius > width:
-        obj.pos.x = width - obj.radius
+    elif obj.geometry.pos.x + obj.geometry.radius > width:
+        obj.geometry.pos.x = width - obj.geometry.radius
         obj.vel.x *= -1
-    if obj.pos.y - obj.radius < 0:
-        obj.pos.y = obj.radius
+    if obj.geometry.pos.y - obj.geometry.radius < 0:
+        obj.geometry.pos.y = obj.geometry.radius
         obj.vel.y *= -1
-    elif obj.pos.y + obj.radius > height:
-        obj.pos.y = height - obj.radius
+    elif obj.geometry.pos.y + obj.geometry.radius > height:
+        obj.geometry.pos.y = height - obj.geometry.radius
         obj.vel.y *= -1
 
 def generate_fair_asteroid_starting_positions(width, height, num, radius, exclusion_center, exclusion_radius):
     result = []
     while len(result) < num:
-        pos = vec2d(random.randint(0, width), random.randint(0, height))
+        pos = vec2d(random.randint(radius, width-radius), random.randint(radius, height-radius))
         if math.dist(pos, exclusion_center) > exclusion_radius:
-            result.append(pos)
+            to_close = False
+            for other in result:
+                if math.dist(pos, other) < radius * 2:
+                    to_close = True
+                    break
+
+            if not to_close:
+                result.append(pos)
     return result
 
 class Player():
-    def __init__(self, pos: vec2d, radius: int):
-        self.pos = pos
+    def __init__(self, geometry :geometry_object):
+        self.geometry = geometry
+        self.geometry.angle = math.pi/2
         self.vel = vec2d(0, 0)
         self.accel= vec2d(0, 0)
-        self.radius = radius
-        self.angle = math.pi/2
         self.angle_vel = 0
 
     def update(self, dt):
         self.vel.x += self.accel.x * dt
         self.vel.y += self.accel.y * dt
-        self.pos.x += self.vel.x * dt
-        self.pos.y += self.vel.y * dt
-        self.angle += self.angle_vel * dt
+        self.geometry.pos.x += self.vel.x * dt
+        self.geometry.pos.y += self.vel.y * dt
+        self.geometry.angle += self.angle_vel * dt
 
 
     def turning_left(self):
@@ -88,12 +103,12 @@ class Player():
         self.angle_vel = 0
 
     def accelerate(self):
-        self.accel.x = math.cos(self.angle) * PLAYER_ACCELERATION
-        self.accel.y = math.sin(self.angle) * PLAYER_ACCELERATION
+        self.accel.x = math.cos(self.geometry.angle) * PLAYER_ACCELERATION
+        self.accel.y = math.sin(self.geometry.angle) * PLAYER_ACCELERATION
 
     def decelerate(self):
-        self.accel.x = -math.cos(self.angle) * PLAYER_ACCELERATION
-        self.accel.y = -math.sin(self.angle) * PLAYER_ACCELERATION
+        self.accel.x = -math.cos(self.geometry.angle) * PLAYER_ACCELERATION
+        self.accel.y = -math.sin(self.geometry.angle) * PLAYER_ACCELERATION
 
     def clear_acc(self):
         self.accel.x = 0
@@ -104,14 +119,13 @@ class Player():
         pass
 
 class Asteroid():
-    def __init__(self, pos: vec2d, vel: vec2d, radius: int):
-        self.pos = pos
+    def __init__(self, geometer: geometry_object, vel: vec2d):
+        self.geometry = geometer
         self.vel = vel
-        self.radius = radius
 
     def update(self, dt):
-        self.pos.x += self.vel.x * dt
-        self.pos.y += self.vel.y * dt
+        self.geometry.pos.x += self.vel.x * dt
+        self.geometry.pos.y += self.vel.y * dt
 
 class Bullet():
     def __init__(self, pos: vec2d, vel: vec2d, radius: int):
@@ -127,10 +141,10 @@ class Game():
     def __init__(self, width, height):
         self.width = width
         self.height = height
-        self.player = Player(vec2d(width//2, height//2), 20)
+        self.player = Player(geometry_object(vec2d(width//2, height//2), 20))
         self.bullets = []
-        asteroid_centers = generate_fair_asteroid_starting_positions(width, height, 3, BIG_ASTEROID_RADIUS, self.player.pos, 100)
-        self.asteroids = [Asteroid(center, vec2d.random_size(ASTEROID_SPEED), 90) for center in asteroid_centers]
+        asteroid_centers = generate_fair_asteroid_starting_positions(width, height, 3, BIG_ASTEROID_RADIUS, self.player.geometry.pos, 100)
+        self.asteroids = [Asteroid(geometry_object(center, 90), vec2d.random_size(ASTEROID_SPEED)) for center in asteroid_centers]
         self.time_alive = 0
         self.player_alive = True
         self.player_score = 0
@@ -140,22 +154,22 @@ class Game():
 
     def check_player_asteroid_collision(self):
         for asteroid in self.asteroids:
-            if math.dist(self.player.pos, asteroid.pos) <= self.player.radius + asteroid.radius:
+            if math.dist(self.player.geometry.pos, asteroid.geometry.pos) <= self.player.geometry.radius + asteroid.geometry.radius:
                 self.player_alive = False
 
     def spawn_new_asteroid_if_needed(self, parent):
-        if parent.radius == BIG_ASTEROID_RADIUS:
-            self.asteroids.append(Asteroid(parent.pos.copy(), vec2d.random_size(ASTEROID_SPEED), MEDIUM_ASTEROID_RADIUS))
-            self.asteroids.append(Asteroid(parent.pos.copy(), vec2d.random_size(ASTEROID_SPEED), MEDIUM_ASTEROID_RADIUS))
-        elif parent.radius == MEDIUM_ASTEROID_RADIUS:
-            self.asteroids.append(Asteroid(parent.pos.copy(), vec2d.random_size(ASTEROID_SPEED), SMALL_ASTEROID_RADIUS))
-            self.asteroids.append(Asteroid(parent.pos.copy(), vec2d.random_size(ASTEROID_SPEED), SMALL_ASTEROID_RADIUS))
-            self.asteroids.append(Asteroid(parent.pos.copy(), vec2d.random_size(ASTEROID_SPEED), SMALL_ASTEROID_RADIUS))
+        if parent.geometry.radius == BIG_ASTEROID_RADIUS:
+            self.asteroids.append(Asteroid(geometry_object(parent.geometry.pos.copy(), MEDIUM_ASTEROID_RADIUS), vec2d.random_size(ASTEROID_SPEED)))
+            self.asteroids.append(Asteroid(geometry_object(parent.geometry.pos.copy(), MEDIUM_ASTEROID_RADIUS), vec2d.random_size(ASTEROID_SPEED)))
+        elif parent.geometry.radius == MEDIUM_ASTEROID_RADIUS:
+            self.asteroids.append(Asteroid(geometry_object(parent.geometry.pos.copy(), SMALL_ASTEROID_RADIUS), vec2d.random_size(ASTEROID_SPEED)))
+            self.asteroids.append(Asteroid(geometry_object(parent.geometry.pos.copy(), SMALL_ASTEROID_RADIUS), vec2d.random_size(ASTEROID_SPEED)))
+            self.asteroids.append(Asteroid(geometry_object(parent.geometry.pos.copy(), SMALL_ASTEROID_RADIUS), vec2d.random_size(ASTEROID_SPEED)))
 
     def check_bullet_asteroid_collision(self):
         for asteroid in self.asteroids:
             for bullet in self.bullets:
-                if math.dist(asteroid.pos, bullet.pos) <= asteroid.radius + bullet.radius:
+                if math.dist(asteroid.geometry.pos, bullet.pos) <= asteroid.geometry.radius + bullet.radius:
                     self.player_score += 1
                     self.asteroids.remove(asteroid)
                     self.bullets.remove(bullet)
@@ -196,8 +210,8 @@ class Game():
         self.player.clear_acc()
 
     def shoot(self):
-        dir_vec = vec2d(math.cos(self.player.angle), math.sin(self.player.angle))
-        bullet = Bullet(vec2d(self.player.pos.x + dir_vec.x * self.player.radius, self.player.pos.y + dir_vec.y * self.player.radius), vec2d(dir_vec.x * BULLET_SPEED, dir_vec.y * BULLET_SPEED), 1)
+        dir_vec = vec2d(math.cos(self.player.geometry.angle), math.sin(self.player.geometry.angle))
+        bullet = Bullet(vec2d(self.player.geometry.pos.x + dir_vec.x * self.player.geometry.radius, self.player.geometry.pos.y + dir_vec.y * self.player.geometry.radius), vec2d(dir_vec.x * BULLET_SPEED, dir_vec.y * BULLET_SPEED), 1)
         self.bullets.append(bullet)
 
     def no_action(self):
