@@ -33,21 +33,21 @@ class GameView(arcade.View):
 
     def on_key_press(self, key, modifiers):
         if key == arcade.key.LEFT:
-            self.game.player.turning_left()
+            self.game.turning_left()
         elif key == arcade.key.RIGHT:
-            self.game.player.turning_right()
+            self.game.turning_right()
         elif key == arcade.key.SPACE:
-            self.game.player.shoot()
+            self.game.shoot()
         elif key == arcade.key.UP:
-            self.game.player.accelerate()
+            self.game.accelerate()
         elif key == arcade.key.DOWN:
-            self.game.player.decelerate()
+            self.game.decelerate()
 
     def on_key_release(self, key, modifiers):
         if key == arcade.key.LEFT or key == arcade.key.RIGHT:
-            self.game.player.clear_turn()
+            self.game.clear_turn()
         elif key == arcade.key.UP or key == arcade.key.DOWN:
-            self.game.player.clear_acc()
+            self.game.clear_acc()
 
     def draw_player(self):
         cx = self.game.player.pos.x
@@ -78,7 +78,7 @@ class GameView(arcade.View):
         )
 
         # Draw bullets
-        for bullet in self.game.player.bullets:
+        for bullet in self.game.bullets:
             arcade.draw_circle_filled(bullet.pos.x, bullet.pos.y, bullet.radius, arcade.color.WHITE)
 
     def on_draw(self):

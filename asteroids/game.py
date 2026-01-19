@@ -69,7 +69,6 @@ class Player():
         self.radius = radius
         self.angle = math.pi/2
         self.angle_vel = 0
-        self.bullets = []
 
     def update(self, dt):
         self.vel.x += self.accel.x * dt
@@ -78,9 +77,6 @@ class Player():
         self.pos.y += self.vel.y * dt
         self.angle += self.angle_vel * dt
 
-        # Update bullets
-        for bullet in self.bullets:
-            bullet.update(dt)
 
     def turning_left(self):
         self.angle_vel = PLAYER_TURN_RATE
@@ -103,10 +99,9 @@ class Player():
         self.accel.x = 0
         self.accel.y = 0
 
-    def shoot(self):
-        dir_vec = vec2d(math.cos(self.angle), math.sin(self.angle))
-        bullet = Bullet(vec2d(self.pos.x + dir_vec.x * self.radius, self.pos.y + dir_vec.y * self.radius), vec2d(dir_vec.x * BULLET_SPEED, dir_vec.y * BULLET_SPEED), 1)
-        self.bullets.append(bullet)
+
+    def no_action(self):
+        pass
 
 class Asteroid():
     def __init__(self, pos: vec2d, vel: vec2d, radius: int):
@@ -133,6 +128,7 @@ class Game():
         self.width = width
         self.height = height
         self.player = Player(vec2d(width//2, height//2), 20)
+        self.bullets = []
         asteroid_centers = generate_fair_asteroid_starting_positions(width, height, 3, BIG_ASTEROID_RADIUS, self.player.pos, 100)
         self.asteroids = [Asteroid(center, vec2d.random_size(ASTEROID_SPEED), 90) for center in asteroid_centers]
         self.time_alive = 0
@@ -140,7 +136,7 @@ class Game():
         self.player_score = 0
 
     def prune_bullets(self):
-        self.player.bullets = [bullet for bullet in self.player.bullets if bullet.pos.x >= 0 and bullet.pos.x <= self.width and bullet.pos.y >= 0 and bullet.pos.y <= self.height]
+        self.bullets = [bullet for bullet in self.bullets if bullet.pos.x >= 0 and bullet.pos.x <= self.width and bullet.pos.y >= 0 and bullet.pos.y <= self.height]
 
     def check_player_asteroid_collision(self):
         for asteroid in self.asteroids:
@@ -158,17 +154,20 @@ class Game():
 
     def check_bullet_asteroid_collision(self):
         for asteroid in self.asteroids:
-            for bullet in self.player.bullets:
+            for bullet in self.bullets:
                 if math.dist(asteroid.pos, bullet.pos) <= asteroid.radius + bullet.radius:
                     self.player_score += 1
                     self.asteroids.remove(asteroid)
-                    self.player.bullets.remove(bullet)
+                    self.bullets.remove(bullet)
                     self.spawn_new_asteroid_if_needed(asteroid)
                     break
 
     def update(self, dt):
         self.time_alive += dt
         self.player.update(dt)
+        for bullet in self.bullets:
+            bullet.update(dt)
+
         bounce(self.player, self.width, self.height)
         self.prune_bullets()
 
@@ -177,3 +176,29 @@ class Game():
             bounce(a, self.width, self.height)
         self.check_player_asteroid_collision()
         self.check_bullet_asteroid_collision()
+
+    def turning_left(self):
+        self.player.turning_left()
+
+    def turning_right(self):
+        self.player.turning_right()
+
+    def clear_turn(self):
+        self.player.clear_turn()
+
+    def accelerate(self):
+        self.player.accelerate()
+
+    def decelerate(self):
+        self.player.decelerate()
+
+    def clear_acc(self):
+        self.player.clear_acc()
+
+    def shoot(self):
+        dir_vec = vec2d(math.cos(self.player.angle), math.sin(self.player.angle))
+        bullet = Bullet(vec2d(self.player.pos.x + dir_vec.x * self.player.radius, self.player.pos.y + dir_vec.y * self.player.radius), vec2d(dir_vec.x * BULLET_SPEED, dir_vec.y * BULLET_SPEED), 1)
+        self.bullets.append(bullet)
+
+    def no_action(self):
+        pass
