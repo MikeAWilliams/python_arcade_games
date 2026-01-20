@@ -105,15 +105,12 @@ class GameView(arcade.View):
         for g in geometries:
             arcade.draw_circle_filled(g.pos.x, g.pos.y, g.radius, arcade.color.WHITE)
 
-    def draw_geometry(self, geometry: game.geometry_state):
+    def on_draw(self):
+        self.clear()
+        geometry = self.game.geometry_state()
         self.draw_player(geometry.player)
         self.draw_asteroids(geometry.asteroids)
         self.draw_bullets(geometry.bullets)
-
-    def on_draw(self):
-        """ Render the screen. """
-        self.clear()
-        self.draw_geometry(self.game.geometry_state())
 
 def main():
     parser = argparse.ArgumentParser(description='Asteroids Game')
