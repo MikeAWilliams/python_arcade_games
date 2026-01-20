@@ -7,7 +7,7 @@ that doesn't rely on keyboard input.
 
 import random
 import math
-from game import InputMethod, Action
+from game import InputMethod, Action, BULLET_SPEED
 
 
 class RandomAIInput(InputMethod):
@@ -55,17 +55,71 @@ class RandomAIInput(InputMethod):
 class SmartAIInput(InputMethod):
     """
     A more intelligent AI that analyzes game state.
-    This implementation aims at the nearest asteroid.
+    This implementation predicts asteroid position based on velocity and aims ahead.
     """
 
     def __init__(self, game):
         self.game = game
         self.current_action = Action.NO_ACTION
+        self.shoot_cooldown = 0
+
+    def predict_intercept(self, player_pos, asteroid_pos, asteroid_vel):
+        """
+        Calculate the intercept point for a moving asteroid.
+        Returns the angle to aim at, or None if no solution.
+        """
+        # Relative position
+        dx = asteroid_pos.x - player_pos.x
+        dy = asteroid_pos.y - player_pos.y
+
+        # Solve quadratic equation for intercept time
+        # |asteroid_pos + asteroid_vel * t - player_pos| = BULLET_SPEED * t
+
+        a = asteroid_vel.x**2 + asteroid_vel.y**2 - BULLET_SPEED**2
+        b = 2 * (dx * asteroid_vel.x + dy * asteroid_vel.y)
+        c = dx**2 + dy**2
+
+        discriminant = b**2 - 4*a*c
+
+        if discriminant < 0:
+            # No solution, aim at current position
+            return math.atan2(dy, dx)
+
+        if abs(a) < 1e-6:
+            # Linear case
+            if abs(b) < 1e-6:
+                return math.atan2(dy, dx)
+            t = -c / b
+        else:
+            # Quadratic case - take the smaller positive root
+            sqrt_disc = math.sqrt(discriminant)
+            t1 = (-b + sqrt_disc) / (2*a)
+            t2 = (-b - sqrt_disc) / (2*a)
+
+            if t1 > 0 and t2 > 0:
+                t = min(t1, t2)
+            elif t1 > 0:
+                t = t1
+            elif t2 > 0:
+                t = t2
+            else:
+                # No positive solution, aim at current position
+                return math.atan2(dy, dx)
+
+        # Calculate predicted position
+        pred_x = asteroid_pos.x + asteroid_vel.x * t
+        pred_y = asteroid_pos.y + asteroid_vel.y * t
+
+        # Return angle to predicted position
+        return math.atan2(pred_y - player_pos.y, pred_x - player_pos.x)
 
     def get_move(self) -> Action:
         """
         Analyze game state and return intelligent action.
         """
+        # Decrement cooldown
+        if self.shoot_cooldown > 0:
+            self.shoot_cooldown -= 1
         player_pos = self.game.player.geometry.pos
         player_angle = self.game.player.geometry.angle
         asteroids = self.game.asteroids
@@ -76,19 +130,22 @@ class SmartAIInput(InputMethod):
                                   key=lambda a: ((a.geometry.pos.x - player_pos.x)**2 +
                                                 (a.geometry.pos.y - player_pos.y)**2))
 
-            # Calculate angle to closest asteroid
-            dx = closest_asteroid.geometry.pos.x - player_pos.x
-            dy = closest_asteroid.geometry.pos.y - player_pos.y
-            angle_to_asteroid = math.atan2(dy, dx)
+            # Calculate predicted intercept angle
+            target_angle = self.predict_intercept(
+                player_pos,
+                closest_asteroid.geometry.pos,
+                closest_asteroid.vel
+            )
 
             # Normalize angle difference
-            angle_diff = (angle_to_asteroid - player_angle) % (2 * math.pi)
+            angle_diff = (target_angle - player_angle) % (2 * math.pi)
             if angle_diff > math.pi:
                 angle_diff -= 2 * math.pi
 
-            # Simple strategy: turn to face asteroid and shoot
-            if abs(angle_diff) < 0.1:
-                # Facing asteroid, shoot!
+            # Strategy: turn to face predicted position and shoot
+            if abs(angle_diff) < 0.05 and self.shoot_cooldown == 0:
+                # Aimed at predicted position, shoot!
+                self.shoot_cooldown = 30
                 return Action.SHOOT
             elif angle_diff > 0:
                 return Action.TURN_LEFT
