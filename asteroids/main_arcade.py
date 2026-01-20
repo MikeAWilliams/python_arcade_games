@@ -4,7 +4,7 @@ import math
 import sys
 import argparse
 from game_input_keyboard import KeyboardInput
-from example_ai_input import RandomAIInput
+from example_ai_input import RandomAIInput, SmartAIInput
 
 # constants
 WINDOW_WIDTH = 1280
@@ -117,13 +117,16 @@ class GameView(arcade.View):
 
 def main():
     parser = argparse.ArgumentParser(description='Asteroids Game')
-    parser.add_argument('--ai', action='store_true', help='Use AI input instead of keyboard')
+    parser.add_argument('--air', action='store_true', help='Use Random AI input instead of keyboard')
+    parser.add_argument('--ais', action='store_true', help='Use Smart AI input instead of keyboard')
     args = parser.parse_args()
 
     g = game.Game(WINDOW_WIDTH, WINDOW_HEIGHT)
 
-    if args.ai:
+    if args.air:
         input_method = RandomAIInput()
+    elif args.ais:
+        input_method = SmartAIInput(g)
     else:
         input_method = KeyboardInput()
 
