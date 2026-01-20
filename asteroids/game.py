@@ -1,5 +1,29 @@
 import random
 import math
+from abc import ABC, abstractmethod
+from enum import Enum
+
+
+class Action(Enum):
+    """Enumeration of possible game actions"""
+    TURN_LEFT = "turn_left"
+    TURN_RIGHT = "turn_right"
+    ACCELERATE = "accelerate"
+    DECELERATE = "decelerate"
+    SHOOT = "shoot"
+    NO_ACTION = "no_action"
+
+
+class InputMethod(ABC):
+    """Abstract base class for input methods"""
+
+    @abstractmethod
+    def get_move(self) -> Action:
+        """
+        Returns the next action to take.
+        Should return Action.NO_ACTION if no action should be taken.
+        """
+        pass
 
 PLAYER_TURN_RATE = math.pi/3
 PLAYER_ACCELERATION = 20

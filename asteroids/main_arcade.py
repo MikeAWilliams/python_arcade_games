@@ -2,22 +2,32 @@ import arcade
 import game
 import math
 import sys
+from game_input_keyboard import KeyboardInput
 
 # constants
 WINDOW_WIDTH = 1280
 WINDOW_HEIGHT = 720
 WINDOW_TITLE = "Asteroids!"
 
+
 class GameView(arcade.View):
     """ Main application class. """
 
-    def __init__(self, game):
+    def __init__(self, game, input_method: game.InputMethod):
         super().__init__()
         self.game = game
-
+        self.input_method = input_method
 
     def on_update(self, dt):
         """ Move everything """
+        # Clear turn and acceleration every frame
+        self.game.clear_turn()
+        self.game.clear_acc()
+
+        # Get and execute the action from input method
+        action = self.input_method.get_move()
+        self.execute_action(action)
+
         self.game.update(dt)
         if not self.game.player_alive:
             print(f"Your score was {self.game.player_score}")
@@ -30,23 +40,30 @@ class GameView(arcade.View):
             print("You Win!")
             sys.exit(0)
 
-    def on_key_press(self, key, modifiers):
-        if key == arcade.key.LEFT:
+    def execute_action(self, action: game.Action):
+        """Execute the given action on the game"""
+        if action == game.Action.TURN_LEFT:
             self.game.turning_left()
-        elif key == arcade.key.RIGHT:
+        elif action == game.Action.TURN_RIGHT:
             self.game.turning_right()
-        elif key == arcade.key.SPACE:
-            self.game.shoot()
-        elif key == arcade.key.UP:
+        elif action == game.Action.ACCELERATE:
             self.game.accelerate()
-        elif key == arcade.key.DOWN:
+        elif action == game.Action.DECELERATE:
             self.game.decelerate()
+        elif action == game.Action.SHOOT:
+            self.game.shoot()
+        elif action == game.Action.NO_ACTION:
+            self.game.no_action()
+
+    def on_key_press(self, key, modifiers):
+        """Delegate key press to input method if it supports it"""
+        if hasattr(self.input_method, 'on_key_press'):
+            self.input_method.on_key_press(key, modifiers)
 
     def on_key_release(self, key, modifiers):
-        if key == arcade.key.LEFT or key == arcade.key.RIGHT:
-            self.game.clear_turn()
-        elif key == arcade.key.UP or key == arcade.key.DOWN:
-            self.game.clear_acc()
+        """Delegate key release to input method if it supports it"""
+        if hasattr(self.input_method, 'on_key_release'):
+            self.input_method.on_key_release(key, modifiers)
 
     def draw_player(self, player_geometry):
         cx = player_geometry.pos.x
@@ -98,10 +115,12 @@ class GameView(arcade.View):
 
 def main():
     g = game.Game(WINDOW_WIDTH, WINDOW_HEIGHT)
+    input_method = KeyboardInput()
 
     window = arcade.Window(WINDOW_WIDTH, WINDOW_HEIGHT, WINDOW_TITLE)
-    game_view = GameView(g)
+    game_view = GameView(g, input_method)
     window.show_view(game_view)
     arcade.run()
+
 if __name__ == "__main__":
     main()
