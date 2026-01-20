@@ -56,6 +56,8 @@ class SmartAIInput(InputMethod):
     """
     A more intelligent AI that analyzes game state.
     This implementation predicts asteroid position based on velocity and aims ahead.
+    It does not account for the time it would take to turn and point at the asteroid
+    It cannot move
     """
 
     def __init__(self, game):
