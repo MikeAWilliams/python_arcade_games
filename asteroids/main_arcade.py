@@ -4,7 +4,7 @@ import math
 import sys
 import argparse
 from game_input_keyboard import KeyboardInput
-from example_ai_input import RandomAIInput, SmartAIInput
+from heuristic_ai_input import RandomAIInput, SmartAIInput
 
 # constants
 WINDOW_WIDTH = 1280
