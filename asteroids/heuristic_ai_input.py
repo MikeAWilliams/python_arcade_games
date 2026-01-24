@@ -159,10 +159,16 @@ class SmartAIInput(InputMethod):
     def evasive_action(self) -> Action:
         """
         Strategy: Compute weighted average threat vector from nearby asteroids
-        and turn to face that direction, then decelerate to move away from danger.
-
+        and choose the shorter turn to evade (either face toward and decelerate,
+        or face away and accelerate).
+        
         Weight calculation: For asteroids within EVASION_MAX_DISTANCE,
         weight = max(0, EVASION_MAX_DISTANCE - distance)
+        
+        Evasion logic:
+        - If threat is <90° away: Turn toward threat, then DECELERATE
+        - If threat is >90° away: Turn away from threat, then ACCELERATE
+        - Chooses the shorter turn for faster evasion response
         """
         if not self.game.asteroids:
             return Action.NO_ACTION
@@ -206,14 +212,41 @@ class SmartAIInput(InputMethod):
         angle_diff = (threat_angle - self.game.player.geometry.angle) % (2 * math.pi)
         if angle_diff > math.pi:
             angle_diff -= 2 * math.pi
-
-        # Turn to face the threat direction, then decelerate (move away)
-        if abs(angle_diff) < 0.1:  # Facing threat direction
+        
+        # Determine which turn is shorter: toward threat or away from threat
+        # angle_diff: positive = threat is counterclockwise from orientation
+        #            negative = threat is clockwise from orientation
+        
+        abs_angle_diff = abs(angle_diff)
+        
+        # If close to aligned with threat (within ~6 degrees)
+        if abs_angle_diff < 0.1:
+            # Facing threat direction, decelerate to move away
             return Action.DECELERATE
-        elif angle_diff > 0:
-            return Action.TURN_LEFT
+        
+        # If close to opposite of threat (within ~6 degrees of 180°)
+        elif abs_angle_diff > math.pi - 0.1:
+            # Facing opposite of threat, accelerate to move away
+            return Action.ACCELERATE
+        
+        # Determine shorter turn direction
+        # If angle_diff is between -90° and +90°, turning toward threat is shorter
+        # If angle_diff is beyond ±90°, turning away from threat is shorter
+        
+        if abs_angle_diff < math.pi / 2:
+            # Turning toward threat is shorter
+            # Once aligned, we'll DECELERATE
+            if angle_diff > 0:
+                return Action.TURN_LEFT  # Threat is counterclockwise
+            else:
+                return Action.TURN_RIGHT  # Threat is clockwise
         else:
-            return Action.TURN_RIGHT
+            # Turning away from threat is shorter (>90° difference)
+            # Once aligned opposite, we'll ACCELERATE
+            if angle_diff > 0:
+                return Action.TURN_RIGHT  # Turn away (clockwise)
+            else:
+                return Action.TURN_LEFT  # Turn away (counterclockwise)
 
     def speed_control(self) -> Action:
         """
