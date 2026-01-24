@@ -84,7 +84,8 @@ class GeometryObject:
         self.angle = angle
 
     def intersects(self, other):
-        return math.dist(self.pos, other.pos) <= self.radius + other.radius
+        r = self.radius + other.radius
+        return self.pos.distance2(other.pos) <= r * r
 
     def copy(self):
         return GeometryObject(self.pos.copy(), self.radius, self.angle)

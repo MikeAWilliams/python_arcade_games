@@ -87,7 +87,7 @@ class SmartAIInput(InputMethod):
         Returns the angle to aim at.
         """
         # Calculate distance to asteroid
-        distance = math.dist(player_pos, asteroid_pos)
+        distance = player_pos.distance(asteroid_pos)
 
         # Naive time estimate: time for bullet to reach current asteroid position
         time = distance / BULLET_SPEED
@@ -134,11 +134,9 @@ class SmartAIInput(InputMethod):
                 )
 
                 # Check collision using both radii
-                distance = math.dist(future_player_pos, future_asteroid_pos)
-                if (
-                    distance
-                    <= self.game.player.geometry.radius + asteroid.geometry.radius
-                ):
+                distance2 = future_player_pos.distance2(future_asteroid_pos)
+                r = self.game.player.geometry.radius + asteroid.geometry.radius
+                if distance2 <= r * r:
                     dangerous_asteroids.append(asteroid)
 
         # Return strategy based on prediction
@@ -165,7 +163,7 @@ class SmartAIInput(InputMethod):
         if asteroids:
             closest_asteroid = min(
                 asteroids,
-                key=lambda a: math.dist(a.geometry.pos, player_pos),
+                key=lambda a: a.geometry.pos.distance2(player_pos),
             )
 
             # Calculate predicted intercept angle
@@ -223,7 +221,7 @@ class SmartAIInput(InputMethod):
                 asteroid.geometry.pos.x + asteroid.vel.x * look_ahead_t,
                 asteroid.geometry.pos.y + asteroid.vel.y * look_ahead_t,
             )
-            distance = math.dist(player_pos, asteroid_pos)
+            distance = player_pos.distance(asteroid_pos)
             distance -= self.game.player.geometry.radius
             distance -= asteroid.geometry.radius
             if distance <= 0:
