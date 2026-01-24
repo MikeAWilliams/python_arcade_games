@@ -160,10 +160,15 @@ def smart_ai_crossover(
         shoot_angle_tolerance=crossover_parameter(
             params1.shoot_angle_tolerance, params2.shoot_angle_tolerance
         ),
-        evasion_max_distance=crossover_parameter(
-            params1.evasion_max_distance, params2.evasion_max_distance
+        movement_angle_tolerance=crossover_parameter(
+            params1.movement_angle_tolerance, params2.movement_angle_tolerance
         ),
-        max_speed=crossover_parameter(params1.max_speed, params2.max_speed),
+        evasion_max_distance=int(
+            crossover_parameter(
+                params1.evasion_max_distance, params2.evasion_max_distance
+            )
+        ),
+        max_speed=int(crossover_parameter(params1.max_speed, params2.max_speed)),
         evasion_lookahead_ticks=int(
             crossover_parameter(
                 params1.evasion_lookahead_ticks, params2.evasion_lookahead_ticks
@@ -205,23 +210,35 @@ def smart_ai_mutate(
             SMART_AI_PARAM_BOUNDS["shoot_angle_tolerance"][1],
             mutation_rate,
         ),
-        evasion_max_distance=mutate_param(
-            params.evasion_max_distance,
-            SMART_AI_PARAM_BOUNDS["evasion_max_distance"][0],
-            SMART_AI_PARAM_BOUNDS["evasion_max_distance"][1],
+        movement_angle_tolerance=mutate_param(
+            params.movement_angle_tolerance,
+            SMART_AI_PARAM_BOUNDS["movement_angle_tolerance"][0],
+            SMART_AI_PARAM_BOUNDS["movement_angle_tolerance"][1],
             mutation_rate,
         ),
-        max_speed=mutate_param(
-            params.max_speed,
-            SMART_AI_PARAM_BOUNDS["max_speed"][0],
-            SMART_AI_PARAM_BOUNDS["max_speed"][1],
-            mutation_rate,
+        evasion_max_distance=int(
+            mutate_param(
+                params.evasion_max_distance,
+                SMART_AI_PARAM_BOUNDS["evasion_max_distance"][0],
+                SMART_AI_PARAM_BOUNDS["evasion_max_distance"][1],
+                mutation_rate,
+            )
         ),
-        evasion_lookahead_ticks=mutate_param(
-            params.evasion_lookahead_ticks,
-            SMART_AI_PARAM_BOUNDS["evasion_lookahead_ticks"][0],
-            SMART_AI_PARAM_BOUNDS["evasion_lookahead_ticks"][1],
-            mutation_rate,
+        max_speed=int(
+            mutate_param(
+                params.max_speed,
+                SMART_AI_PARAM_BOUNDS["max_speed"][0],
+                SMART_AI_PARAM_BOUNDS["max_speed"][1],
+                mutation_rate,
+            )
+        ),
+        evasion_lookahead_ticks=int(
+            mutate_param(
+                params.evasion_lookahead_ticks,
+                SMART_AI_PARAM_BOUNDS["evasion_lookahead_ticks"][0],
+                SMART_AI_PARAM_BOUNDS["evasion_lookahead_ticks"][1],
+                mutation_rate,
+            )
         ),
     )
 
