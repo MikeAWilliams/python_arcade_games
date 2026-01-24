@@ -127,10 +127,7 @@ class SmartAIInput(InputMethod):
         if asteroids:
             closest_asteroid = min(
                 asteroids,
-                key=lambda a: (
-                    (a.geometry.pos.x - player_pos.x) ** 2
-                    + (a.geometry.pos.y - player_pos.y) ** 2
-                ),
+                key=lambda a: math.dist(a.geometry.pos, player_pos),
             )
 
             # Calculate predicted intercept angle
