@@ -227,13 +227,6 @@ class GeneticAlgorithm:
         """
         Main evolution loop.
 
-        For each generation:
-        1. Evaluate population fitness
-        2. Select parents
-        3. Create offspring through crossover and mutation
-        4. Replace population (keep elites)
-        5. Track best individual
-
         Returns:
             Best individual found across all generations
         """
@@ -245,8 +238,12 @@ class GeneticAlgorithm:
         # Initialize population
         self.population = self.initialize_population()
 
+        start_time = time.time()
+        generation_times = []
+
         for gen in range(self.generations):
             self.generation = gen + 1
+            gen_start = time.time()
 
             # Evaluate fitness
             self.evaluate_population(self.population)
@@ -261,8 +258,17 @@ class GeneticAlgorithm:
             ):
                 self.best_ever = self.population[0]
 
+            # Timing calculations
+            gen_duration = time.time() - gen_start
+            generation_times.append(gen_duration)
+
+            elapsed = time.time() - start_time
+            avg_gen_time = sum(generation_times) / len(generation_times)
+            est_total = avg_gen_time * self.generations
+            remaining = est_total - elapsed
+
             # Print progress
-            self._print_generation_stats()
+            self._print_generation_stats(elapsed, est_total, remaining)
 
             # Last generation - no need to create offspring
             if gen == self.generations - 1:
@@ -271,21 +277,18 @@ class GeneticAlgorithm:
             # Create next generation
             next_population = []
 
-            # Elitism: keep best individuals
+            # Elitism
             next_population.extend(self.population[: self.elite_size])
 
             # Fill rest with offspring
             while len(next_population) < self.population_size:
-                # Selection
                 parents = self.selection(self.population, 2)
 
-                # Crossover
                 if random.random() < self.crossover_rate:
                     offspring = self.crossover(parents[0], parents[1])
                 else:
-                    offspring = parents[0]  # Clone first parent
+                    offspring = parents[0]
 
-                # Mutation
                 if random.random() < self.mutation_rate:
                     offspring = self.mutate(offspring)
 
@@ -295,7 +298,7 @@ class GeneticAlgorithm:
 
         return self.best_ever
 
-    def _print_generation_stats(self):
+    def _print_generation_stats(self, elapsed, total, remaining):
         """Print statistics for current generation"""
         fitnesses = [ind.fitness for ind in self.population]
         best = max(fitnesses)
@@ -308,7 +311,10 @@ class GeneticAlgorithm:
         print(
             f"Generation {self.generation}/{self.generations} - "
             f"Best: {best:.1f} - Avg: {avg:.1f} - Worst: {worst:.1f} - "
-            f"Diversity: {diversity:.2f}"
+            f"Diversity: {diversity:.2f} - "
+            f"Time elapsed: {elapsed:.1f}s - "
+            f"Estimated total: {total:.1f}s - "
+            f"Estimated remaining: {max(0, remaining):.1f}s"
         )
 
     def _calculate_diversity(self) -> float:
