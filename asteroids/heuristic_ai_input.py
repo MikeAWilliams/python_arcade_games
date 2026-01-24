@@ -67,51 +67,21 @@ class SmartAIInput(InputMethod):
 
     def predict_intercept(self, player_pos, asteroid_pos, asteroid_vel):
         """
-        Calculate the intercept point for a moving asteroid.
-        Returns the angle to aim at, or None if no solution.
+        Calculate the intercept point for a moving asteroid using naive time estimate.
+        Returns the angle to aim at.
         """
-        # Relative position
+        # Calculate distance to asteroid
         dx = asteroid_pos.x - player_pos.x
         dy = asteroid_pos.y - player_pos.y
-
-        # Solve quadratic equation for intercept time
-        # |asteroid_pos + asteroid_vel * t - player_pos| = BULLET_SPEED * t
-
-        a = asteroid_vel.x**2 + asteroid_vel.y**2 - BULLET_SPEED**2
-        b = 2 * (dx * asteroid_vel.x + dy * asteroid_vel.y)
-        c = dx**2 + dy**2
-
-        discriminant = b**2 - 4*a*c
-
-        if discriminant < 0:
-            # No solution, aim at current position
-            return math.atan2(dy, dx)
-
-        if abs(a) < 1e-6:
-            # Linear case
-            if abs(b) < 1e-6:
-                return math.atan2(dy, dx)
-            t = -c / b
-        else:
-            # Quadratic case - take the smaller positive root
-            sqrt_disc = math.sqrt(discriminant)
-            t1 = (-b + sqrt_disc) / (2*a)
-            t2 = (-b - sqrt_disc) / (2*a)
-
-            if t1 > 0 and t2 > 0:
-                t = min(t1, t2)
-            elif t1 > 0:
-                t = t1
-            elif t2 > 0:
-                t = t2
-            else:
-                # No positive solution, aim at current position
-                return math.atan2(dy, dx)
-
-        # Calculate predicted position
-        pred_x = asteroid_pos.x + asteroid_vel.x * t
-        pred_y = asteroid_pos.y + asteroid_vel.y * t
-
+        distance = math.sqrt(dx**2 + dy**2)
+        
+        # Naive time estimate: time for bullet to reach current asteroid position
+        time = distance / BULLET_SPEED
+        
+        # Predict where asteroid will be at that time
+        pred_x = asteroid_pos.x + asteroid_vel.x * time
+        pred_y = asteroid_pos.y + asteroid_vel.y * time
+        
         # Return angle to predicted position
         return math.atan2(pred_y - player_pos.y, pred_x - player_pos.x)
 
