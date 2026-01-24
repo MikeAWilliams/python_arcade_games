@@ -1,8 +1,9 @@
 """
-Headless multi-threaded Asteroids game simulation for AI benchmarking.
+Headless multi-process Asteroids game simulation for AI benchmarking.
 
 This module runs multiple game instances in parallel without rendering,
-collecting statistics on AI performance.
+collecting statistics on AI performance. Uses ProcessPoolExecutor to
+bypass the Python GIL and achieve true parallel execution across all CPU cores.
 """
 
 import argparse
@@ -10,7 +11,7 @@ import os
 import random
 import statistics
 import time
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from concurrent.futures import ProcessPoolExecutor, as_completed
 from typing import Optional
 
 from game import Action, Game
@@ -200,11 +201,11 @@ def run_parallel_games(
     show_progress: bool = True,
 ) -> StatisticsCollector:
     """
-    Run multiple games in parallel using thread pool
+    Run multiple games in parallel using process pool
 
     Args:
         num_games: Number of game instances to run
-        num_threads: Number of worker threads
+        num_threads: Number of worker processes
         width: Game world width
         height: Game world height
         ai_type: Type of AI to use ('smart' or 'random')
@@ -221,14 +222,14 @@ def run_parallel_games(
         (game_id, width, height, ai_type, seed) for game_id in range(num_games)
     ]
 
-    print(f"Running {num_games} games on {num_threads} threads...")
+    print(f"Running {num_games} games on {num_threads} processes...")
     print(f"AI Type: {ai_type}")
     if seed is not None:
         print(f"Random Seed: {seed}")
     print()
 
-    # Use ThreadPoolExecutor for parallel execution
-    with ThreadPoolExecutor(max_workers=num_threads) as executor:
+    # Use ProcessPoolExecutor for parallel execution (bypasses GIL)
+    with ProcessPoolExecutor(max_workers=num_threads) as executor:
         # Submit all games
         futures = [executor.submit(run_single_game, args) for args in game_args]
 
@@ -285,7 +286,7 @@ def main():
         "--threads",
         type=int,
         default=os.cpu_count() or 4,
-        help=f"Number of worker threads (default: {os.cpu_count() or 4})",
+        help=f"Number of worker processes (default: {os.cpu_count() or 4})",
     )
 
     parser.add_argument(

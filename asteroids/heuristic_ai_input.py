@@ -202,7 +202,7 @@ class SmartAIInput(InputMethod):
                     asteroid.geometry.pos.x - self.game.player.geometry.pos.x,
                     asteroid.geometry.pos.y - self.game.player.geometry.pos.y,
                 )
-                normalized_direction = direction.multiply(1.0 / distance)
+                normalized_direction = direction.normalize()
 
                 # Accumulate weighted direction vectors
                 weighted_vector.x += normalized_direction.x * weight
