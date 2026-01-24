@@ -7,6 +7,7 @@ that doesn't rely on keyboard input.
 
 import math
 import random
+import statistics
 from enum import Enum
 
 from pyglet.math import Vec2
@@ -171,11 +172,11 @@ def smart_ai_crossover(
     )
 
 
-def mutate_param(val, min, max, rate):
+def mutate_param(val, min_val, max_val, rate):
     if random.random() < rate:
-        sigma = (max - min) * 0.1
+        sigma = (max_val - min_val) * 0.1
         val += random.gauss(0, sigma)
-        val = max(min, min(val, max))
+        val = max(min_val, min(val, max_val))
     return val
 
 
@@ -238,16 +239,36 @@ def smart_ai_calculate_diversity(params_list: list[SmartAIInputParameters]) -> f
     Returns:
         Diversity metric (0-1, higher = more diverse)
     """
-    # TODO: Implement diversity calculation
-    # For each parameter:
-    #   1. Collect values across all individuals in params_list
-    #   2. Calculate standard deviation (can use statistics.stdev)
-    #   3. Get bounds from SMART_AI_PARAM_BOUNDS
-    #   4. Normalize by parameter range: std_dev / (max - min)
-    #   5. Average normalized std_devs across all parameters
-    #
+    # Need at least 2 individuals to calculate diversity
+    if len(params_list) < 2:
+        return 0.0
+
+    # Collect normalized diversities for each parameter
+    normalized_diversities = []
+
+    # For each parameter, calculate normalized standard deviation
+    for param_name, (min_val, max_val) in SMART_AI_PARAM_BOUNDS.items():
+        # Collect values for this parameter across all individuals
+        values = [getattr(p, param_name) for p in params_list]
+
+        # Calculate standard deviation
+        try:
+            std_dev = statistics.stdev(values)
+        except statistics.StatisticsError:
+            # All values are the same, no diversity
+            std_dev = 0.0
+
+        # Normalize by parameter range
+        param_range = max_val - min_val
+        if param_range > 0:
+            normalized_diversity = std_dev / param_range
+            normalized_diversities.append(normalized_diversity)
+
     # Return average normalized diversity
-    return 0.0
+    if normalized_diversities:
+        return sum(normalized_diversities) / len(normalized_diversities)
+    else:
+        return 0.0
 
 
 class SmartAIInput(InputMethod):
