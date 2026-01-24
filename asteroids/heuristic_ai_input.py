@@ -7,6 +7,7 @@ that doesn't rely on keyboard input.
 
 import random
 import math
+from enum import Enum
 from game import InputMethod, Action, BULLET_SPEED, SHOOT_COOLDOWN
 
 
@@ -52,6 +53,11 @@ class RandomAIInput(InputMethod):
         return self.current_action
 
 
+class Strategy(Enum):
+    """Enumeration of AI strategies"""
+    SHOOT_NEAREST = "shoot_nearest"
+
+
 class SmartAIInput(InputMethod):
     """
     A more intelligent AI that analyzes game state.
@@ -85,13 +91,18 @@ class SmartAIInput(InputMethod):
         # Return angle to predicted position
         return math.atan2(pred_y - player_pos.y, pred_x - player_pos.x)
 
-    def get_move(self) -> Action:
+    def get_strategy(self) -> Strategy:
         """
-        Analyze game state and return intelligent action.
+        Determine which strategy to use based on game state.
+        Currently returns SHOOT_NEAREST for all situations.
         """
-        # Decrement cooldown
-        if self.shoot_cooldown > 0:
-            self.shoot_cooldown -= 1
+        return Strategy.SHOOT_NEAREST
+
+    def shoot_nearest(self) -> Action:
+        """
+        Strategy: Find the nearest asteroid, predict its position, and shoot at it.
+        Turns to face the predicted intercept point.
+        """
         player_pos = self.game.player.geometry.pos
         player_angle = self.game.player.geometry.angle
         asteroids = self.game.asteroids
@@ -125,3 +136,18 @@ class SmartAIInput(InputMethod):
                 return Action.TURN_RIGHT
 
         return Action.NO_ACTION
+
+    def get_move(self) -> Action:
+        """
+        Analyze game state and return intelligent action.
+        """
+        # Decrement cooldown
+        if self.shoot_cooldown > 0:
+            self.shoot_cooldown -= 1
+        
+        strategy = self.get_strategy()
+        match strategy:
+            case Strategy.SHOOT_NEAREST:
+                return self.shoot_nearest()
+            case _:
+                return Action.NO_ACTION
