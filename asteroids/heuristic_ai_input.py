@@ -7,7 +7,7 @@ that doesn't rely on keyboard input.
 
 import random
 import math
-from game import InputMethod, Action, BULLET_SPEED
+from game import InputMethod, Action, BULLET_SPEED, SHOOT_COOLDOWN
 
 
 class RandomAIInput(InputMethod):
@@ -147,7 +147,7 @@ class SmartAIInput(InputMethod):
             # Strategy: turn to face predicted position and shoot
             if abs(angle_diff) < 0.05 and self.shoot_cooldown == 0:
                 # Aimed at predicted position, shoot!
-                self.shoot_cooldown = 30
+                self.shoot_cooldown = SHOOT_COOLDOWN
                 return Action.SHOOT
             elif angle_diff > 0:
                 return Action.TURN_LEFT

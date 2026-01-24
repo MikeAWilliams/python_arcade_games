@@ -34,6 +34,7 @@ ASTEROID_SPEED = 200
 BIG_ASTEROID_RADIUS = 90
 MEDIUM_ASTEROID_RADIUS = 60
 SMALL_ASTEROID_RADIUS = 30
+SHOOT_COOLDOWN = 30
 
 class vec2d:
     def __init__(self, x, y):
@@ -190,6 +191,7 @@ class Game():
         self.time_alive = 0
         self.player_alive = True
         self.player_score = 0
+        self.shoot_cooldown = 0
 
     def prune_bullets(self):
         self.bullets = [bullet for bullet in self.bullets if bullet.geometry.pos.x >= 0 and bullet.geometry.pos.x <= self.width and bullet.geometry.pos.y >= 0 and bullet.geometry.pos.y <= self.height]
@@ -220,6 +222,8 @@ class Game():
 
     def update(self, dt):
         self.time_alive += dt
+        if self.shoot_cooldown > 0:
+            self.shoot_cooldown -= 1
         self.player.update(dt)
         for bullet in self.bullets:
             bullet.update(dt)
@@ -258,9 +262,12 @@ class Game():
         self.player.clear_acc()
 
     def shoot(self):
+        if self.shoot_cooldown > 0:
+            return
         dir_vec = vec2d(math.cos(self.player.geometry.angle), math.sin(self.player.geometry.angle))
         bullet = Bullet(geometry_object(vec2d(self.player.geometry.pos.x + dir_vec.x * self.player.geometry.radius, self.player.geometry.pos.y + dir_vec.y * self.player.geometry.radius),1), vec2d(dir_vec.x * BULLET_SPEED, dir_vec.y * BULLET_SPEED))
         self.bullets.append(bullet)
+        self.shoot_cooldown = SHOOT_COOLDOWN
 
     def no_action(self):
         pass
