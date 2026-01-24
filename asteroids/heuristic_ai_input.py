@@ -71,23 +71,27 @@ class SmartAIInput(InputMethod):
     It does not account for the time it would take to turn and point at the asteroid
     """
 
-    # Class-level constants
-    EVASION_MAX_DISTANCE = 550  # Maximum distance to consider for evasion weighting
-    MAX_SPEED = 100  # Maximum velocity magnitude before speed control activates
+    # Constants that need not be optimized
+    MIN_DISTANCE_EPSILON = 0.0001
+    TURN_DIRECTION_THRESHOLD = math.pi / 2
     TICK_DURATION = 1 / 60
-    EVASION_LOOKAHEAD_TICKS = 60
+    MIN_VELOCITY_THRESHOLD = 1
 
-    # Angle thresholds (radians)
-    SHOOT_ANGLE_TOLERANCE = 0.05  # Shooting aim tolerance (~3 degrees)
-    ALIGNMENT_ANGLE_TOLERANCE = 0.1  # Alignment tolerance (~6 degrees)
-    TURN_DIRECTION_THRESHOLD = math.pi / 2  # 90 degrees
-
-    # Distance and velocity thresholds
-    MIN_DISTANCE_EPSILON = 0.0001  # Minimum distance to avoid division by zero
-    MIN_VELOCITY_THRESHOLD = 1  # Minimum velocity for speed control
-
-    def __init__(self, game):
+    def __init__(
+        self,
+        game,
+        evasion_max_distance: float = 550,
+        max_speed: float = 100,
+        evasion_lookahead_ticks: int = 60,
+        shoot_angle_tolerance: float = 0.05,
+        movement_angle_tolerance: float = 0.1,
+    ):
         self.game = game
+        self.EVASION_MAX_DISTANCE = evasion_max_distance
+        self.MAX_SPEED = max_speed
+        self.EVASION_LOOKAHEAD_TICKS = evasion_lookahead_ticks
+        self.SHOOT_ANGLE_TOLERANCE = shoot_angle_tolerance
+        self.MOVEMENT_ANGLE_TOLERANCE = movement_angle_tolerance
 
     def predict_intercept(self, player_pos, asteroid_pos, asteroid_vel):
         """
@@ -292,12 +296,12 @@ class SmartAIInput(InputMethod):
         abs_angle_diff = abs(angle_diff)
 
         # If close to aligned with threat (within ~6 degrees)
-        if abs_angle_diff < self.ALIGNMENT_ANGLE_TOLERANCE:
+        if abs_angle_diff < self.MOVEMENT_ANGLE_TOLERANCE:
             # Facing threat direction, decelerate to move away
             return Action.DECELERATE
 
         # If close to opposite of threat (within ~6 degrees of 180°)
-        elif abs_angle_diff > math.pi - self.ALIGNMENT_ANGLE_TOLERANCE:
+        elif abs_angle_diff > math.pi - self.MOVEMENT_ANGLE_TOLERANCE:
             # Facing opposite of threat, accelerate to move away
             return Action.ACCELERATE
 
@@ -353,12 +357,12 @@ class SmartAIInput(InputMethod):
         abs_angle_diff = abs(angle_diff)
 
         # If close to aligned with velocity (within ~6 degrees)
-        if abs_angle_diff < self.ALIGNMENT_ANGLE_TOLERANCE:
+        if abs_angle_diff < self.MOVEMENT_ANGLE_TOLERANCE:
             # Facing velocity direction, decelerate to slow down
             return Action.DECELERATE
 
         # If close to opposite of velocity (within ~6 degrees of 180°)
-        elif abs_angle_diff > math.pi - self.ALIGNMENT_ANGLE_TOLERANCE:
+        elif abs_angle_diff > math.pi - self.MOVEMENT_ANGLE_TOLERANCE:
             # Facing opposite of velocity, accelerate to slow down
             return Action.ACCELERATE
 
