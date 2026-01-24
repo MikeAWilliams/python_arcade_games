@@ -88,11 +88,11 @@ class SmartAIInputParameters:
 # Parameter bounds for SmartAI genetic algorithm
 # Format: {param_name: (min_value, max_value)}
 SMART_AI_PARAM_BOUNDS = {
-    "evasion_max_distance": (300, 800),
-    "max_speed": (50, 200),
-    "evasion_lookahead_ticks": (10, 100),
-    "shoot_angle_tolerance": (0.01, 0.2),
-    "movement_angle_tolerance": (0.05, 0.3),
+    "evasion_max_distance": (10, 1100),
+    "max_speed": (50, 1000),
+    "evasion_lookahead_ticks": (10, 120),
+    "shoot_angle_tolerance": (0.01, 1.0),
+    "movement_angle_tolerance": (0.01, 1),
 }
 
 
@@ -109,7 +109,33 @@ def smart_ai_random_params() -> SmartAIInputParameters:
     #   - Generate random value: random.uniform(min_val, max_val)
     #   - For integer parameters (like evasion_lookahead_ticks), use random.randint
     # Return SmartAIInputParameters with generated values
-    pass
+    return SmartAIInputParameters(
+        shoot_angle_tolerance=random.uniform(
+            SMART_AI_PARAM_BOUNDS["shoot_angle_tolerance"][0],
+            SMART_AI_PARAM_BOUNDS["shoot_angle_tolerance"][1],
+        ),
+        movement_angle_tolerance=random.uniform(
+            SMART_AI_PARAM_BOUNDS["movement_angle_tolerance"][0],
+            SMART_AI_PARAM_BOUNDS["movement_angle_tolerance"][1],
+        ),
+        evasion_max_distance=random.randint(
+            SMART_AI_PARAM_BOUNDS["evasion_max_distance"][0],
+            SMART_AI_PARAM_BOUNDS["evasion_max_distance"][1],
+        ),
+        max_speed=random.randint(
+            SMART_AI_PARAM_BOUNDS["max_speed"][0], SMART_AI_PARAM_BOUNDS["max_speed"][1]
+        ),
+        evasion_lookahead_ticks=random.randint(
+            SMART_AI_PARAM_BOUNDS["evasion_lookahead_ticks"][0],
+            SMART_AI_PARAM_BOUNDS["evasion_lookahead_ticks"][1],
+        ),
+    )
+
+
+def crossover_parameter(parent1, parent2):
+    alpha = random.random()
+    offspring_value = alpha * parent1 + (1 - alpha) * parent2
+    return offspring_value
 
 
 def smart_ai_crossover(
@@ -129,15 +155,28 @@ def smart_ai_crossover(
     Returns:
         New SmartAIInputParameters (offspring)
     """
-    # TODO: Implement blend crossover
-    # For each parameter:
-    #   alpha = random.random()
-    #   offspring_param = alpha * params1.param + (1-alpha) * params2.param
-    #
-    # For integer parameters, round the result: int(offspring_param)
-    #
-    # Create new SmartAIInputParameters with blended values
-    pass
+    return SmartAIInputParameters(
+        shoot_angle_tolerance=crossover_parameter(
+            params1.shoot_angle_tolerance, params2.shoot_angle_tolerance
+        ),
+        evasion_max_distance=crossover_parameter(
+            params1.evasion_max_distance, params2.evasion_max_distance
+        ),
+        max_speed=crossover_parameter(params1.max_speed, params2.max_speed),
+        evasion_lookahead_ticks=int(
+            crossover_parameter(
+                params1.evasion_lookahead_ticks, params2.evasion_lookahead_ticks
+            )
+        ),
+    )
+
+
+def mutate_param(val, min, max, rate):
+    if random.random() < rate:
+        sigma = (max - min) * 0.1
+        val += random.gauss(0, sigma)
+        val = max(min, min(val, max))
+    return val
 
 
 def smart_ai_mutate(
@@ -158,17 +197,32 @@ def smart_ai_mutate(
     Returns:
         New SmartAIInputParameters (mutated)
     """
-    # TODO: Implement Gaussian mutation
-    # For each parameter:
-    #   if random.random() < mutation_rate:
-    #     1. Get bounds from SMART_AI_PARAM_BOUNDS
-    #     2. Calculate sigma = (max - min) * 0.1
-    #     3. Add Gaussian noise: param += random.gauss(0, sigma)
-    #     4. Clamp to bounds: param = max(min_val, min(max_val, param))
-    #     5. For integer parameters, round: int(param)
-    #
-    # Create new SmartAIInputParameters with mutated values
-    pass
+    return SmartAIInputParameters(
+        shoot_angle_tolerance=mutate_param(
+            params.shoot_angle_tolerance,
+            SMART_AI_PARAM_BOUNDS["shoot_angle_tolerance"][0],
+            SMART_AI_PARAM_BOUNDS["shoot_angle_tolerance"][1],
+            mutation_rate,
+        ),
+        evasion_max_distance=mutate_param(
+            params.evasion_max_distance,
+            SMART_AI_PARAM_BOUNDS["evasion_max_distance"][0],
+            SMART_AI_PARAM_BOUNDS["evasion_max_distance"][1],
+            mutation_rate,
+        ),
+        max_speed=mutate_param(
+            params.max_speed,
+            SMART_AI_PARAM_BOUNDS["max_speed"][0],
+            SMART_AI_PARAM_BOUNDS["max_speed"][1],
+            mutation_rate,
+        ),
+        evasion_lookahead_ticks=mutate_param(
+            params.evasion_lookahead_ticks,
+            SMART_AI_PARAM_BOUNDS["evasion_lookahead_ticks"][0],
+            SMART_AI_PARAM_BOUNDS["evasion_lookahead_ticks"][1],
+            mutation_rate,
+        ),
+    )
 
 
 def smart_ai_calculate_diversity(params_list: list[SmartAIInputParameters]) -> float:
