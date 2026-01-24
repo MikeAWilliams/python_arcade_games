@@ -30,7 +30,8 @@ PLAYER_ACCELERATION = 180
 PLAYER_RADIUS = 20
 PLAYER_EXCLUSION_RADIUS = PLAYER_RADIUS*5
 BULLET_SPEED = 500
-ASTEROID_SPEED = 200
+ASTEROID_BASE_SPEED = 200
+ASTEROID_SPEED_INCREMENT = 1.1
 BIG_ASTEROID_RADIUS = 90
 MEDIUM_ASTEROID_RADIUS = 60
 SMALL_ASTEROID_RADIUS = 30
@@ -186,8 +187,9 @@ class Game():
         self.height = height
         self.player = Player(geometry_object(vec2d(width//2, height//2), PLAYER_RADIUS))
         self.bullets = []
+        self.asteroid_speed_multiplier = 1.0  # Increases with each wave
         asteroid_centers = generate_fair_asteroid_starting_geometry(width, height, 3, BIG_ASTEROID_RADIUS, geometry_object(self.player.geometry.pos, PLAYER_EXCLUSION_RADIUS))
-        self.asteroids = [Asteroid(geo, vec2d.random_size(ASTEROID_SPEED)) for geo in asteroid_centers]
+        self.asteroids = [Asteroid(geo, vec2d.random_size(ASTEROID_BASE_SPEED * self.asteroid_speed_multiplier)) for geo in asteroid_centers]
         self.time_alive = 0
         self.player_alive = True
         self.player_score = 0
@@ -202,13 +204,14 @@ class Game():
                 self.player_alive = False
 
     def spawn_new_asteroid_if_needed(self, parent):
+        current_speed = ASTEROID_BASE_SPEED * self.asteroid_speed_multiplier
         if parent.geometry.radius == BIG_ASTEROID_RADIUS:
-            self.asteroids.append(Asteroid(geometry_object(parent.geometry.pos.copy(), MEDIUM_ASTEROID_RADIUS), vec2d.random_size(ASTEROID_SPEED)))
-            self.asteroids.append(Asteroid(geometry_object(parent.geometry.pos.copy(), MEDIUM_ASTEROID_RADIUS), vec2d.random_size(ASTEROID_SPEED)))
+            self.asteroids.append(Asteroid(geometry_object(parent.geometry.pos.copy(), MEDIUM_ASTEROID_RADIUS), vec2d.random_size(current_speed)))
+            self.asteroids.append(Asteroid(geometry_object(parent.geometry.pos.copy(), MEDIUM_ASTEROID_RADIUS), vec2d.random_size(current_speed)))
         elif parent.geometry.radius == MEDIUM_ASTEROID_RADIUS:
-            self.asteroids.append(Asteroid(geometry_object(parent.geometry.pos.copy(), SMALL_ASTEROID_RADIUS), vec2d.random_size(ASTEROID_SPEED)))
-            self.asteroids.append(Asteroid(geometry_object(parent.geometry.pos.copy(), SMALL_ASTEROID_RADIUS), vec2d.random_size(ASTEROID_SPEED)))
-            self.asteroids.append(Asteroid(geometry_object(parent.geometry.pos.copy(), SMALL_ASTEROID_RADIUS), vec2d.random_size(ASTEROID_SPEED)))
+            self.asteroids.append(Asteroid(geometry_object(parent.geometry.pos.copy(), SMALL_ASTEROID_RADIUS), vec2d.random_size(current_speed)))
+            self.asteroids.append(Asteroid(geometry_object(parent.geometry.pos.copy(), SMALL_ASTEROID_RADIUS), vec2d.random_size(current_speed)))
+            self.asteroids.append(Asteroid(geometry_object(parent.geometry.pos.copy(), SMALL_ASTEROID_RADIUS), vec2d.random_size(current_speed)))
 
     def check_bullet_asteroid_collision(self):
         for asteroid in self.asteroids:
@@ -219,6 +222,10 @@ class Game():
                     self.bullets.remove(bullet)
                     self.spawn_new_asteroid_if_needed(asteroid)
                     break
+
+        # Check if all asteroids are destroyed and start new wave
+        if len(self.asteroids) == 0:
+            self.start_new_wave()
 
     def update(self, dt):
         self.time_alive += dt
@@ -271,3 +278,32 @@ class Game():
 
     def no_action(self):
         pass
+
+    def start_new_wave(self):
+        """
+        Start a new wave of asteroids with increased difficulty.
+        Resets player position and velocity, increases asteroid speed.
+        """
+        # Increase difficulty
+        self.asteroid_speed_multiplier *= ASTEROID_SPEED_INCREMENT
+
+        # Reset player to center with zero velocity
+        self.player.geometry.pos.x = self.width // 2
+        self.player.geometry.pos.y = self.height // 2
+        self.player.geometry.angle = math.pi / 2  # Facing up
+        self.player.vel.x = 0
+        self.player.vel.y = 0
+        self.player.accel.x = 0
+        self.player.accel.y = 0
+        self.player.angle_vel = 0
+
+        # Spawn 3 new large asteroids
+        current_speed = ASTEROID_BASE_SPEED * self.asteroid_speed_multiplier
+        asteroid_centers = generate_fair_asteroid_starting_geometry(
+            self.width, self.height, 3, BIG_ASTEROID_RADIUS,
+            geometry_object(self.player.geometry.pos, PLAYER_EXCLUSION_RADIUS)
+        )
+        self.asteroids = [Asteroid(geo, vec2d.random_size(current_speed)) for geo in asteroid_centers]
+
+        # Clear bullets (optional, but clean)
+        self.bullets = []

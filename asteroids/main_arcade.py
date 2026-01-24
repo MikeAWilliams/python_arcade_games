@@ -36,11 +36,6 @@ class GameView(arcade.View):
             print(f"You lived for {self.game.time_alive:.2f} seconds")
             print("Game Over!")
             sys.exit(0)
-        if len(self.game.asteroids) == 0:
-            print(f"Your score was {self.game.player_score}")
-            print(f"You lived for {self.game.time_alive:.2f} seconds")
-            print("You Win!")
-            sys.exit(0)
 
     def execute_action(self, action: game.Action):
         """Execute the given action on the game"""

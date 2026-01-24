@@ -69,7 +69,7 @@ class SmartAIInput(InputMethod):
     """
 
     # Class-level constants for evasive action
-    DANGER_RADIUS = PLAYER_RADIUS * 5
+    DANGER_RADIUS = PLAYER_RADIUS * 10
     EVASION_MAX_DISTANCE = 300  # Maximum distance to consider for evasion weighting
     MAX_SPEED = 100  # Maximum velocity magnitude before speed control activates
 
