@@ -8,7 +8,7 @@ that doesn't rely on keyboard input.
 import random
 import math
 from enum import Enum
-from game import InputMethod, Action, BULLET_SPEED, SHOOT_COOLDOWN, PLAYER_RADIUS, vec2d
+from game import InputMethod, Action, BULLET_SPEED, SHOOT_COOLDOWN, PLAYER_RADIUS, Vec2d
 
 
 class RandomAIInput(InputMethod):
@@ -65,7 +65,6 @@ class SmartAIInput(InputMethod):
     A more intelligent AI that analyzes game state.
     This implementation predicts asteroid position based on velocity and aims ahead.
     It does not account for the time it would take to turn and point at the asteroid
-    It cannot move
     """
 
     # Class-level constants for evasive action
@@ -75,8 +74,6 @@ class SmartAIInput(InputMethod):
 
     def __init__(self, game):
         self.game = game
-        self.current_action = Action.NO_ACTION
-        self.shoot_cooldown = 0
 
     def predict_intercept(self, player_pos, asteroid_pos, asteroid_vel):
         """
@@ -84,9 +81,7 @@ class SmartAIInput(InputMethod):
         Returns the angle to aim at.
         """
         # Calculate distance to asteroid
-        dx = asteroid_pos.x - player_pos.x
-        dy = asteroid_pos.y - player_pos.y
-        distance = math.sqrt(dx**2 + dy**2)
+        distance = math.dist(player_pos, asteroid_pos)
 
         # Naive time estimate: time for bullet to reach current asteroid position
         time = distance / BULLET_SPEED
@@ -145,9 +140,8 @@ class SmartAIInput(InputMethod):
                 angle_diff -= 2 * math.pi
 
             # Strategy: turn to face predicted position and shoot
-            if abs(angle_diff) < 0.05 and self.shoot_cooldown == 0:
+            if abs(angle_diff) < 0.05 and self.game.shoot_cooldown == 0:
                 # Aimed at predicted position, shoot!
-                self.shoot_cooldown = SHOOT_COOLDOWN
                 return Action.SHOOT
             elif angle_diff > 0:
                 return Action.TURN_LEFT
@@ -161,10 +155,10 @@ class SmartAIInput(InputMethod):
         Strategy: Compute weighted average threat vector from nearby asteroids
         and choose the shorter turn to evade (either face toward and decelerate,
         or face away and accelerate).
-        
+
         Weight calculation: For asteroids within EVASION_MAX_DISTANCE,
         weight = max(0, EVASION_MAX_DISTANCE - distance)
-        
+
         Evasion logic:
         - If threat is <90° away: Turn toward threat, then DECELERATE
         - If threat is >90° away: Turn away from threat, then ACCELERATE
@@ -173,8 +167,8 @@ class SmartAIInput(InputMethod):
         if not self.game.asteroids:
             return Action.NO_ACTION
 
-        # Compute weighted threat vector using vec2d
-        weighted_vector = vec2d(0.0, 0.0)
+        # Compute weighted threat vector using Vec2d
+        weighted_vector = Vec2d(0.0, 0.0)
         total_weight = 0.0
 
         for asteroid in self.game.asteroids:
@@ -186,7 +180,7 @@ class SmartAIInput(InputMethod):
                 weight = self.EVASION_MAX_DISTANCE - distance
 
                 # Direction vector from player to asteroid (normalized)
-                direction = vec2d(
+                direction = Vec2d(
                     asteroid.geometry.pos.x - self.game.player.geometry.pos.x,
                     asteroid.geometry.pos.y - self.game.player.geometry.pos.y
                 )
@@ -202,7 +196,7 @@ class SmartAIInput(InputMethod):
             return Action.NO_ACTION
 
         # Compute average threat direction
-        threat_vector = vec2d(
+        threat_vector = Vec2d(
             weighted_vector.x / total_weight,
             weighted_vector.y / total_weight
         )
@@ -212,27 +206,27 @@ class SmartAIInput(InputMethod):
         angle_diff = (threat_angle - self.game.player.geometry.angle) % (2 * math.pi)
         if angle_diff > math.pi:
             angle_diff -= 2 * math.pi
-        
+
         # Determine which turn is shorter: toward threat or away from threat
         # angle_diff: positive = threat is counterclockwise from orientation
         #            negative = threat is clockwise from orientation
-        
+
         abs_angle_diff = abs(angle_diff)
-        
+
         # If close to aligned with threat (within ~6 degrees)
         if abs_angle_diff < 0.1:
             # Facing threat direction, decelerate to move away
             return Action.DECELERATE
-        
+
         # If close to opposite of threat (within ~6 degrees of 180°)
         elif abs_angle_diff > math.pi - 0.1:
             # Facing opposite of threat, accelerate to move away
             return Action.ACCELERATE
-        
+
         # Determine shorter turn direction
         # If angle_diff is between -90° and +90°, turning toward threat is shorter
         # If angle_diff is beyond ±90°, turning away from threat is shorter
-        
+
         if abs_angle_diff < math.pi / 2:
             # Turning toward threat is shorter
             # Once aligned, we'll DECELERATE
@@ -313,10 +307,6 @@ class SmartAIInput(InputMethod):
         """
         Analyze game state and return intelligent action.
         """
-        # Decrement cooldown
-        if self.shoot_cooldown > 0:
-            self.shoot_cooldown -= 1
-
         strategy = self.get_strategy()
         match strategy:
             case Strategy.EVASIVE_ACTION:

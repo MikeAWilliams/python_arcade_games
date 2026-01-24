@@ -25,9 +25,9 @@ class KeyboardInput(InputMethod):
         elif key == arcade.key.RIGHT:
             self.current_action = Action.TURN_RIGHT
         elif key == arcade.key.UP:
-            self.current_action = Action.ACCELERATE
-        elif key == arcade.key.DOWN:
             self.current_action = Action.DECELERATE
+        elif key == arcade.key.DOWN:
+            self.current_action = Action.ACCELERATE
         elif key == arcade.key.SPACE:
             self.shoot_requested = True
 
@@ -37,7 +37,7 @@ class KeyboardInput(InputMethod):
             self.current_action = Action.NO_ACTION
         elif key == arcade.key.RIGHT and self.current_action == Action.TURN_RIGHT:
             self.current_action = Action.NO_ACTION
-        elif key == arcade.key.UP and self.current_action == Action.ACCELERATE:
+        elif key == arcade.key.UP and self.current_action == Action.DECELERATE:
             self.current_action = Action.NO_ACTION
-        elif key == arcade.key.DOWN and self.current_action == Action.DECELERATE:
+        elif key == arcade.key.DOWN and self.current_action == Action.ACCELERATE:
             self.current_action = Action.NO_ACTION

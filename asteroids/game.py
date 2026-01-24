@@ -28,7 +28,7 @@ class InputMethod(ABC):
 PLAYER_TURN_RATE = math.pi
 PLAYER_ACCELERATION = 180
 PLAYER_RADIUS = 20
-PLAYER_EXCLUSION_RADIUS = PLAYER_RADIUS*5
+PLAYER_EXCLUSION_RADIUS = PLAYER_RADIUS * 5
 BULLET_SPEED = 500
 ASTEROID_BASE_SPEED = 100
 ASTEROID_SPEED_INCREMENT = 1.1
@@ -37,7 +37,7 @@ MEDIUM_ASTEROID_RADIUS = 60
 SMALL_ASTEROID_RADIUS = 30
 SHOOT_COOLDOWN = 20
 
-class vec2d:
+class Vec2d:
     def __init__(self, x, y):
         self.x = x
         self.y = y
@@ -51,24 +51,24 @@ class vec2d:
     def normalize(self):
         size = self.size()
         if size == 0:
-            return vec2d(0, 0)
-        return vec2d(self.x / size, self.y / size)
+            return Vec2d(0, 0)
+        return Vec2d(self.x / size, self.y / size)
 
     def multiply(self, scalar):
-        return vec2d(self.x * scalar, self.y * scalar)
+        return Vec2d(self.x * scalar, self.y * scalar)
 
     def copy(self):
-        return vec2d(self.x, self.y)
+        return Vec2d(self.x, self.y)
 
     @staticmethod
     def random_size(size):
-        result = vec2d(random.uniform(-1, 1), random.uniform(-1, 1))
-        result.normalize()
+        result = Vec2d(random.uniform(-1, 1), random.uniform(-1, 1))
+        result = result.normalize()
         result = result.multiply(size)
         return result
 
-class geometry_object:
-    def __init__(self, pos: vec2d, radius: int, angle: float=0):
+class GeometryObject:
+    def __init__(self, pos: Vec2d, radius: int, angle: float=0):
         self.pos = pos
         self.radius = radius
         self.angle = angle
@@ -77,10 +77,10 @@ class geometry_object:
         return math.dist(self.pos, other.pos) <= self.radius + other.radius
 
     def copy(self):
-        return geometry_object(self.pos.copy(), self.radius, self.angle)
+        return GeometryObject(self.pos.copy(), self.radius, self.angle)
 
-class geometry_state():
-    def __init__(self, player: geometry_object, asteroids: list[geometry_object], bullets: list[geometry_object]):
+class GeometryState():
+    def __init__(self, player: GeometryObject, asteroids: list[GeometryObject], bullets: list[GeometryObject]):
         self.player = player
         self.asteroids = asteroids
         self.bullets = bullets
@@ -99,27 +99,27 @@ def bounce(obj, width, height):
         obj.geometry.pos.y = height - obj.geometry.radius
         obj.vel.y *= -1
 
-def generate_fair_asteroid_starting_geometry(width: int, height: int, num: int, radius: int, exclusion_geometry: geometry_object):
+def generate_fair_asteroid_starting_geometry(width: int, height: int, num: int, radius: int, exclusion_geometry: GeometryObject):
     result = []
     while len(result) < num:
-        geo = geometry_object(vec2d(random.randint(radius, width-radius), random.randint(radius, height-radius)), radius)
+        geo = GeometryObject(Vec2d(random.randint(radius, width-radius), random.randint(radius, height-radius)), radius)
         if not geo.intersects(exclusion_geometry):
-            to_close = False
+            too_close = False
             for other in result:
                 if geo.intersects(other):
-                    to_close = True
+                    too_close = True
                     break
 
-            if not to_close:
+            if not too_close:
                 result.append(geo)
     return result
 
 class Player():
-    def __init__(self, geometry :geometry_object):
+    def __init__(self, geometry: GeometryObject):
         self.geometry = geometry
-        self.geometry.angle = math.pi/2
-        self.vel = vec2d(0, 0)
-        self.accel= vec2d(0, 0)
+        self.geometry.angle = math.pi / 2
+        self.vel = Vec2d(0, 0)
+        self.accel = Vec2d(0, 0)
         self.angle_vel = 0
 
     def update(self, dt):
@@ -158,8 +158,8 @@ class Player():
         pass
 
 class Asteroid():
-    def __init__(self, geometer: geometry_object, vel: vec2d):
-        self.geometry = geometer
+    def __init__(self, geometry: GeometryObject, vel: Vec2d):
+        self.geometry = geometry
         self.vel = vel
 
     def update(self, dt):
@@ -170,7 +170,7 @@ class Asteroid():
         return self.geometry.copy()
 
 class Bullet():
-    def __init__(self, geometry: geometry_object, vel: vec2d):
+    def __init__(self, geometry: GeometryObject, vel: Vec2d):
         self.geometry = geometry
         self.vel = vel
 
@@ -185,11 +185,11 @@ class Game():
     def __init__(self, width, height):
         self.width = width
         self.height = height
-        self.player = Player(geometry_object(vec2d(width//2, height//2), PLAYER_RADIUS))
+        self.player = Player(GeometryObject(Vec2d(width//2, height//2), PLAYER_RADIUS))
         self.bullets = []
         self.asteroid_speed_multiplier = 1.0  # Increases with each wave
-        asteroid_centers = generate_fair_asteroid_starting_geometry(width, height, 3, BIG_ASTEROID_RADIUS, geometry_object(self.player.geometry.pos, PLAYER_EXCLUSION_RADIUS))
-        self.asteroids = [Asteroid(geo, vec2d.random_size(ASTEROID_BASE_SPEED * self.asteroid_speed_multiplier)) for geo in asteroid_centers]
+        asteroid_centers = generate_fair_asteroid_starting_geometry(width, height, 3, BIG_ASTEROID_RADIUS, GeometryObject(self.player.geometry.pos, PLAYER_EXCLUSION_RADIUS))
+        self.asteroids = [Asteroid(geo, Vec2d.random_size(ASTEROID_BASE_SPEED * self.asteroid_speed_multiplier)) for geo in asteroid_centers]
         self.time_alive = 0
         self.player_alive = True
         self.player_score = 0
@@ -206,12 +206,12 @@ class Game():
     def spawn_new_asteroid_if_needed(self, parent):
         current_speed = ASTEROID_BASE_SPEED * self.asteroid_speed_multiplier
         if parent.geometry.radius == BIG_ASTEROID_RADIUS:
-            self.asteroids.append(Asteroid(geometry_object(parent.geometry.pos.copy(), MEDIUM_ASTEROID_RADIUS), vec2d.random_size(current_speed)))
-            self.asteroids.append(Asteroid(geometry_object(parent.geometry.pos.copy(), MEDIUM_ASTEROID_RADIUS), vec2d.random_size(current_speed)))
+            self.asteroids.append(Asteroid(GeometryObject(parent.geometry.pos.copy(), MEDIUM_ASTEROID_RADIUS), Vec2d.random_size(current_speed)))
+            self.asteroids.append(Asteroid(GeometryObject(parent.geometry.pos.copy(), MEDIUM_ASTEROID_RADIUS), Vec2d.random_size(current_speed)))
         elif parent.geometry.radius == MEDIUM_ASTEROID_RADIUS:
-            self.asteroids.append(Asteroid(geometry_object(parent.geometry.pos.copy(), SMALL_ASTEROID_RADIUS), vec2d.random_size(current_speed)))
-            self.asteroids.append(Asteroid(geometry_object(parent.geometry.pos.copy(), SMALL_ASTEROID_RADIUS), vec2d.random_size(current_speed)))
-            self.asteroids.append(Asteroid(geometry_object(parent.geometry.pos.copy(), SMALL_ASTEROID_RADIUS), vec2d.random_size(current_speed)))
+            self.asteroids.append(Asteroid(GeometryObject(parent.geometry.pos.copy(), SMALL_ASTEROID_RADIUS), Vec2d.random_size(current_speed)))
+            self.asteroids.append(Asteroid(GeometryObject(parent.geometry.pos.copy(), SMALL_ASTEROID_RADIUS), Vec2d.random_size(current_speed)))
+            self.asteroids.append(Asteroid(GeometryObject(parent.geometry.pos.copy(), SMALL_ASTEROID_RADIUS), Vec2d.random_size(current_speed)))
 
     def check_bullet_asteroid_collision(self):
         for asteroid in self.asteroids:
@@ -244,10 +244,10 @@ class Game():
         self.check_player_asteroid_collision()
         self.check_bullet_asteroid_collision()
 
-    def geometry_state(self)->geometry_state:
+    def geometry_state(self) -> GeometryState:
         asteroids = [a.geometry.copy() for a in self.asteroids]
         bullets = [b.geometry.copy() for b in self.bullets]
-        return geometry_state(self.player.geometry.copy(), asteroids, bullets)
+        return GeometryState(self.player.geometry.copy(), asteroids, bullets)
 
 
     def turning_left(self):
@@ -271,8 +271,8 @@ class Game():
     def shoot(self):
         if self.shoot_cooldown > 0:
             return
-        dir_vec = vec2d(math.cos(self.player.geometry.angle), math.sin(self.player.geometry.angle))
-        bullet = Bullet(geometry_object(vec2d(self.player.geometry.pos.x + dir_vec.x * self.player.geometry.radius, self.player.geometry.pos.y + dir_vec.y * self.player.geometry.radius),1), vec2d(dir_vec.x * BULLET_SPEED, dir_vec.y * BULLET_SPEED))
+        dir_vec = Vec2d(math.cos(self.player.geometry.angle), math.sin(self.player.geometry.angle))
+        bullet = Bullet(GeometryObject(Vec2d(self.player.geometry.pos.x + dir_vec.x * self.player.geometry.radius, self.player.geometry.pos.y + dir_vec.y * self.player.geometry.radius),1), Vec2d(dir_vec.x * BULLET_SPEED, dir_vec.y * BULLET_SPEED))
         self.bullets.append(bullet)
         self.shoot_cooldown = SHOOT_COOLDOWN
 
@@ -301,9 +301,9 @@ class Game():
         current_speed = ASTEROID_BASE_SPEED * self.asteroid_speed_multiplier
         asteroid_centers = generate_fair_asteroid_starting_geometry(
             self.width, self.height, 3, BIG_ASTEROID_RADIUS,
-            geometry_object(self.player.geometry.pos, PLAYER_EXCLUSION_RADIUS)
+            GeometryObject(self.player.geometry.pos, PLAYER_EXCLUSION_RADIUS)
         )
-        self.asteroids = [Asteroid(geo, vec2d.random_size(current_speed)) for geo in asteroid_centers]
-
-        # Clear bullets (optional, but clean)
+        self.asteroids = [Asteroid(geo, Vec2d.random_size(current_speed)) for geo in asteroid_centers]
+        
+        # Clear bullets
         self.bullets = []
