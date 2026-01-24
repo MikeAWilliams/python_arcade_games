@@ -8,94 +8,12 @@ bypass the Python GIL and achieve true parallel execution across all CPU cores.
 
 import argparse
 import os
-import random
 import statistics
 import time
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from typing import Optional
 
-from game import Action, Game
-from heuristic_ai_input import RandomAIInput, SmartAIInput
-
-
-class GameRunner:
-    """Runs a single game instance without rendering"""
-
-    def __init__(
-        self,
-        width: int,
-        height: int,
-        ai_type: str,
-        game_id: int,
-        seed: Optional[int] = None,
-    ):
-        self.width = width
-        self.height = height
-        self.ai_type = ai_type
-        self.game_id = game_id
-        self.seed = seed
-
-    def run(self) -> dict:
-        """
-        Run game until completion, return statistics
-
-        Returns:
-            {
-                'game_id': int,
-                'score': int,
-                'time_alive': float,
-            }
-        """
-        # Set random seed if provided
-        if self.seed is not None:
-            random.seed(self.seed + self.game_id)
-
-        # Create game instance
-        game = Game(self.width, self.height)
-
-        # Create AI input
-        if self.ai_type == "smart":
-            input_method = SmartAIInput(game)
-        elif self.ai_type == "random":
-            input_method = RandomAIInput()
-        else:
-            raise ValueError(f"Unknown AI type: {self.ai_type}")
-
-        # Game loop with fixed timestep
-        dt = 1.0 / 60.0  # 60 FPS equivalent
-
-        while game.player_alive:
-            # Clear turn and acceleration every frame
-            game.clear_turn()
-            game.clear_acc()
-
-            # Get and execute action
-            action = input_method.get_move()
-            self._execute_action(game, action)
-
-            # Update game state
-            game.update(dt)
-
-        return {
-            "game_id": self.game_id,
-            "score": game.player_score,
-            "time_alive": game.time_alive,
-        }
-
-    def _execute_action(self, game, action):
-        """Execute action on game"""
-        if action == Action.TURN_LEFT:
-            game.turning_left()
-        elif action == Action.TURN_RIGHT:
-            game.turning_right()
-        elif action == Action.ACCELERATE:
-            game.accelerate()
-        elif action == Action.DECELERATE:
-            game.decelerate()
-        elif action == Action.SHOOT:
-            game.shoot()
-        elif action == Action.NO_ACTION:
-            game.no_action()
+from game_runner import run_single_game
 
 
 class StatisticsCollector:
@@ -176,21 +94,6 @@ class StatisticsCollector:
         print("=" * 60)
 
 
-def run_single_game(args) -> dict:
-    """
-    Run a single game (for thread pool)
-
-    Args:
-        args: Tuple of (game_id, width, height, ai_type, seed)
-
-    Returns:
-        Game result dictionary
-    """
-    game_id, width, height, ai_type, seed = args
-    runner = GameRunner(width, height, ai_type, game_id, seed)
-    return runner.run()
-
-
 def run_parallel_games(
     num_games: int,
     num_threads: int,
@@ -219,7 +122,7 @@ def run_parallel_games(
 
     # Prepare arguments for each game
     game_args = [
-        (game_id, width, height, ai_type, seed) for game_id in range(num_games)
+        (game_id, width, height, ai_type, seed, None) for game_id in range(num_games)
     ]
 
     print(f"Running {num_games} games on {num_threads} processes...")
