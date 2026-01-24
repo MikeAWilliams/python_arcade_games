@@ -71,11 +71,20 @@ class SmartAIInput(InputMethod):
     It does not account for the time it would take to turn and point at the asteroid
     """
 
-    # Class-level constants for evasive action
+    # Class-level constants
     EVASION_MAX_DISTANCE = 550  # Maximum distance to consider for evasion weighting
     MAX_SPEED = 100  # Maximum velocity magnitude before speed control activates
     TICK_DURATION = 1 / 60
     EVASION_LOOKAHEAD_TICKS = 60
+
+    # Angle thresholds (radians)
+    SHOOT_ANGLE_TOLERANCE = 0.05  # Shooting aim tolerance (~3 degrees)
+    ALIGNMENT_ANGLE_TOLERANCE = 0.1  # Alignment tolerance (~6 degrees)
+    TURN_DIRECTION_THRESHOLD = math.pi / 2  # 90 degrees
+
+    # Distance and velocity thresholds
+    MIN_DISTANCE_EPSILON = 0.0001  # Minimum distance to avoid division by zero
+    MIN_VELOCITY_THRESHOLD = 1  # Minimum velocity for speed control
 
     def __init__(self, game):
         self.game = game
@@ -192,7 +201,10 @@ class SmartAIInput(InputMethod):
                 angle_diff -= 2 * math.pi
 
             # Strategy: turn to face predicted position and shoot
-            if abs(angle_diff) < 0.05 and self.game.shoot_cooldown == 0:
+            if (
+                abs(angle_diff) < self.SHOOT_ANGLE_TOLERANCE
+                and self.game.shoot_cooldown == 0
+            ):
                 # Aimed at predicted position, shoot!
                 return Action.SHOOT
             elif angle_diff > 0:
@@ -240,7 +252,7 @@ class SmartAIInput(InputMethod):
             distance -= self.game.player.geometry.radius
             distance -= asteroid.geometry.radius
             if distance <= 0:
-                distance = 0.0001
+                distance = self.MIN_DISTANCE_EPSILON
 
             # Weight is inversely proportional to distance
             # Use EVASION_MAX_DISTANCE as reference for relative weighting
@@ -280,12 +292,12 @@ class SmartAIInput(InputMethod):
         abs_angle_diff = abs(angle_diff)
 
         # If close to aligned with threat (within ~6 degrees)
-        if abs_angle_diff < 0.1:
+        if abs_angle_diff < self.ALIGNMENT_ANGLE_TOLERANCE:
             # Facing threat direction, decelerate to move away
             return Action.DECELERATE
 
         # If close to opposite of threat (within ~6 degrees of 180°)
-        elif abs_angle_diff > math.pi - 0.1:
+        elif abs_angle_diff > math.pi - self.ALIGNMENT_ANGLE_TOLERANCE:
             # Facing opposite of threat, accelerate to move away
             return Action.ACCELERATE
 
@@ -293,7 +305,7 @@ class SmartAIInput(InputMethod):
         # If angle_diff is between -90° and +90°, turning toward threat is shorter
         # If angle_diff is beyond ±90°, turning away from threat is shorter
 
-        if abs_angle_diff < math.pi / 2:
+        if abs_angle_diff < self.TURN_DIRECTION_THRESHOLD:
             # Turning toward threat is shorter
             # Once aligned, we'll DECELERATE
             if angle_diff > 0:
@@ -322,7 +334,7 @@ class SmartAIInput(InputMethod):
         velocity = self.game.player.vel
 
         # If velocity is near zero, no speed control needed
-        if velocity.size() < 1:
+        if velocity.size() < self.MIN_VELOCITY_THRESHOLD:
             return Action.NO_ACTION
 
         # Calculate velocity angle (direction we're currently moving)
@@ -341,12 +353,12 @@ class SmartAIInput(InputMethod):
         abs_angle_diff = abs(angle_diff)
 
         # If close to aligned with velocity (within ~6 degrees)
-        if abs_angle_diff < 0.1:
+        if abs_angle_diff < self.ALIGNMENT_ANGLE_TOLERANCE:
             # Facing velocity direction, decelerate to slow down
             return Action.DECELERATE
 
         # If close to opposite of velocity (within ~6 degrees of 180°)
-        elif abs_angle_diff > math.pi - 0.1:
+        elif abs_angle_diff > math.pi - self.ALIGNMENT_ANGLE_TOLERANCE:
             # Facing opposite of velocity, accelerate to slow down
             return Action.ACCELERATE
 
@@ -354,7 +366,7 @@ class SmartAIInput(InputMethod):
         # If angle_diff is between -90° and +90°, turning toward velocity is shorter
         # If angle_diff is beyond ±90°, turning away from velocity is shorter
 
-        if abs_angle_diff < math.pi / 2:
+        if abs_angle_diff < self.TURN_DIRECTION_THRESHOLD:
             # Turning toward velocity is shorter
             # Once aligned, we'll DECELERATE
             if angle_diff > 0:
