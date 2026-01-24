@@ -51,6 +51,12 @@ class Vec2d:
     def size(self):
         return math.sqrt(self.x**2 + self.y**2)
 
+    def distance(self, other):
+        return math.sqrt((self.x - other.x) ** 2 + (self.y - other.y) ** 2)
+
+    def distance2(self, other):
+        return (self.x - other.x) ** 2 + (self.y - other.y) ** 2
+
     def normalize(self):
         size = self.size()
         if size == 0:

@@ -76,7 +76,7 @@ class SmartAIInput(InputMethod):
     EVASION_MAX_DISTANCE = 550  # Maximum distance to consider for evasion weighting
     MAX_SPEED = 100  # Maximum velocity magnitude before speed control activates
     TICK_DURATION = 1 / 60
-    EVASION_LOOKAHEAD_TICKS = 2
+    EVASION_LOOKAHEAD_TICKS = 60
 
     def __init__(self, game):
         self.game = game
@@ -99,24 +99,58 @@ class SmartAIInput(InputMethod):
         # Return angle to predicted position
         return math.atan2(pred_y - player_pos.y, pred_x - player_pos.x)
 
-    def get_strategy(self) -> Strategy:
+    def get_strategy(self) -> tuple[Strategy, list]:
         """
         Determine which strategy to use based on game state.
+        Uses tick-by-tick collision prediction to identify dangerous asteroids.
         Priority: EVASIVE_ACTION > SPEED_CONTROL > SHOOT_NEAREST
-        """
-        # Check if any asteroid is within danger radius
-        for asteroid in self.game.asteroids:
-            distance = math.dist(self.game.player.geometry.pos, asteroid.geometry.pos)
 
-            if distance < self.DANGER_RADIUS:
-                return Strategy.EVASIVE_ACTION
+        Returns:
+            tuple[Strategy, list]: Strategy to use and list of dangerous asteroids
+        """
+        # Find asteroids that will collide with player by checking each tick
+        dangerous_asteroids = []
+
+        # Check each tick from 1 to EVASION_LOOKAHEAD_TICKS
+        for tick in range(1, self.EVASION_LOOKAHEAD_TICKS + 1):
+            look_ahead_t = self.TICK_DURATION * tick
+
+            # Project player position at this tick
+            future_player_pos = Vec2d(
+                self.game.player.geometry.pos.x + self.game.player.vel.x * look_ahead_t,
+                self.game.player.geometry.pos.y + self.game.player.vel.y * look_ahead_t,
+            )
+
+            # Check all asteroids at this tick
+            for asteroid in self.game.asteroids:
+                # Skip if already identified as dangerous
+                if asteroid in dangerous_asteroids:
+                    continue
+
+                # Project asteroid position at this tick
+                future_asteroid_pos = Vec2d(
+                    asteroid.geometry.pos.x + asteroid.vel.x * look_ahead_t,
+                    asteroid.geometry.pos.y + asteroid.vel.y * look_ahead_t,
+                )
+
+                # Check collision using both radii
+                distance = math.dist(future_player_pos, future_asteroid_pos)
+                if (
+                    distance
+                    <= self.game.player.geometry.radius + asteroid.geometry.radius
+                ):
+                    dangerous_asteroids.append(asteroid)
+
+        # Return strategy based on prediction
+        if dangerous_asteroids:
+            return Strategy.EVASIVE_ACTION, dangerous_asteroids
 
         # Check if player velocity is too high
         velocity_magnitude = self.game.player.vel.size()
         if velocity_magnitude > self.MAX_SPEED:
-            return Strategy.SPEED_CONTROL
+            return Strategy.SPEED_CONTROL, []
 
-        return Strategy.SHOOT_NEAREST
+        return Strategy.SHOOT_NEAREST, []
 
     def shoot_nearest(self) -> Action:
         """
@@ -155,21 +189,24 @@ class SmartAIInput(InputMethod):
 
         return Action.NO_ACTION
 
-    def evasive_action(self) -> Action:
+    def evasive_action(self, dangerous_asteroids: list) -> Action:
         """
-        Strategy: Compute weighted average threat vector from nearby asteroids
+        Strategy: Compute weighted average threat vector from dangerous asteroids
         and choose the shorter turn to evade (either face toward and decelerate,
         or face away and accelerate).
 
-        Weight calculation: For asteroids within EVASION_MAX_DISTANCE,
-        weight = max(0, EVASION_MAX_DISTANCE - distance)
+        Args:
+            dangerous_asteroids: Pre-identified asteroids that will collide with player
+
+        Weight calculation: Weight is inversely proportional to distance
+        (closer asteroids have higher weight).
 
         Evasion logic:
         - If threat is <90° away: Turn toward threat, then DECELERATE
         - If threat is >90° away: Turn away from threat, then ACCELERATE
         - Chooses the shorter turn for faster evasion response
         """
-        if not self.game.asteroids:
+        if not dangerous_asteroids:
             return Action.NO_ACTION
 
         # Compute weighted threat vector using Vec2d
@@ -181,7 +218,7 @@ class SmartAIInput(InputMethod):
             self.game.player.geometry.pos.y + self.game.player.vel.y * look_ahead_t,
         )
 
-        for asteroid in self.game.asteroids:
+        for asteroid in dangerous_asteroids:
             asteroid_pos = Vec2d(
                 asteroid.geometry.pos.x + asteroid.vel.x * look_ahead_t,
                 asteroid.geometry.pos.y + asteroid.vel.y * look_ahead_t,
@@ -192,24 +229,23 @@ class SmartAIInput(InputMethod):
             if distance <= 0:
                 distance = 0.0001
 
-            # Only consider asteroids within max distance
-            if distance < self.EVASION_MAX_DISTANCE:
-                # Weight is inversely proportional to distance
-                weight = self.EVASION_MAX_DISTANCE - distance
+            # Weight is inversely proportional to distance
+            # Use EVASION_MAX_DISTANCE as reference for relative weighting
+            weight = max(0, self.EVASION_MAX_DISTANCE - distance)
 
-                # Direction vector from player to asteroid (normalized)
-                direction = Vec2d(
-                    asteroid.geometry.pos.x - self.game.player.geometry.pos.x,
-                    asteroid.geometry.pos.y - self.game.player.geometry.pos.y,
-                )
-                normalized_direction = direction.normalize()
+            # Direction vector from player to asteroid (normalized)
+            direction = Vec2d(
+                asteroid.geometry.pos.x - self.game.player.geometry.pos.x,
+                asteroid.geometry.pos.y - self.game.player.geometry.pos.y,
+            )
+            normalized_direction = direction.normalize()
 
-                # Accumulate weighted direction vectors
-                weighted_vector.x += normalized_direction.x * weight
-                weighted_vector.y += normalized_direction.y * weight
-                total_weight += weight
+            # Accumulate weighted direction vectors
+            weighted_vector.x += normalized_direction.x * weight
+            weighted_vector.y += normalized_direction.y * weight
+            total_weight += weight
 
-        # If no asteroids within range, fall back to no action
+        # If no weight accumulated (shouldn't happen with dangerous asteroids)
         if total_weight == 0:
             return Action.NO_ACTION
 
@@ -324,10 +360,10 @@ class SmartAIInput(InputMethod):
         """
         Analyze game state and return intelligent action.
         """
-        strategy = self.get_strategy()
+        strategy, dangerous_asteroids = self.get_strategy()
         match strategy:
             case Strategy.EVASIVE_ACTION:
-                return self.evasive_action()
+                return self.evasive_action(dangerous_asteroids)
             case Strategy.SPEED_CONTROL:
                 return self.speed_control()
             case Strategy.SHOOT_NEAREST:
