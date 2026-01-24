@@ -108,36 +108,52 @@ class SmartAIInput(InputMethod):
         Returns:
             tuple[Strategy, list]: Strategy to use and list of dangerous asteroids
         """
-        # Find asteroids that will collide with player by checking each tick
-        dangerous_asteroids = []
+        if not self.game.asteroids:
+            return Strategy.SHOOT_NEAREST, []
 
-        # Check each tick from 1 to EVASION_LOOKAHEAD_TICKS
-        for tick in range(1, self.EVASION_LOOKAHEAD_TICKS + 1):
-            look_ahead_t = self.TICK_DURATION * tick
+        # Use set for O(1) lookup instead of list O(n)
+        dangerous_set = set()
 
-            # Project player position at this tick
-            future_player_pos = Vec2d(
-                self.game.player.geometry.pos.x + self.game.player.vel.x * look_ahead_t,
-                self.game.player.geometry.pos.y + self.game.player.vel.y * look_ahead_t,
-            )
+        # Pre-calculate player data to avoid repeated attribute access
+        player_x = self.game.player.geometry.pos.x
+        player_y = self.game.player.geometry.pos.y
+        player_vx = self.game.player.vel.x
+        player_vy = self.game.player.vel.y
+        player_radius = self.game.player.geometry.radius
 
-            # Check all asteroids at this tick
-            for asteroid in self.game.asteroids:
-                # Skip if already identified as dangerous
-                if asteroid in dangerous_asteroids:
-                    continue
+        # Loop asteroids on outside so we can break early per asteroid
+        for asteroid in self.game.asteroids:
+            # Pre-calculate asteroid data
+            ast_x = asteroid.geometry.pos.x
+            ast_y = asteroid.geometry.pos.y
+            ast_vx = asteroid.vel.x
+            ast_vy = asteroid.vel.y
+            ast_radius = asteroid.geometry.radius
 
-                # Project asteroid position at this tick
-                future_asteroid_pos = Vec2d(
-                    asteroid.geometry.pos.x + asteroid.vel.x * look_ahead_t,
-                    asteroid.geometry.pos.y + asteroid.vel.y * look_ahead_t,
-                )
+            # Pre-calculate combined radius squared (constant for this asteroid)
+            r_sum_sq = (player_radius + ast_radius) ** 2
 
-                # Check collision using both radii
-                distance2 = future_player_pos.distance2(future_asteroid_pos)
-                r = self.game.player.geometry.radius + asteroid.geometry.radius
-                if distance2 <= r * r:
-                    dangerous_asteroids.append(asteroid)
+            # Check each tick for this asteroid
+            for tick in range(1, self.EVASION_LOOKAHEAD_TICKS + 1):
+                look_ahead_t = self.TICK_DURATION * tick
+
+                # Project positions (inline, no Vec2d creation)
+                future_px = player_x + player_vx * look_ahead_t
+                future_py = player_y + player_vy * look_ahead_t
+                future_ax = ast_x + ast_vx * look_ahead_t
+                future_ay = ast_y + ast_vy * look_ahead_t
+
+                # Check collision using squared distance
+                dx = future_px - future_ax
+                dy = future_py - future_ay
+                dist_sq = dx * dx + dy * dy
+
+                if dist_sq <= r_sum_sq:
+                    dangerous_set.add(asteroid)
+                    break  # Found collision, check next asteroid
+
+        # Convert set to list
+        dangerous_asteroids = list(dangerous_set)
 
         # Return strategy based on prediction
         if dangerous_asteroids:
