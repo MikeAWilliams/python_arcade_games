@@ -55,6 +55,7 @@ class RandomAIInput(InputMethod):
 
 class Strategy(Enum):
     """Enumeration of AI strategies"""
+
     EVASIVE_ACTION = "evasive_action"
     SPEED_CONTROL = "speed_control"
     SHOOT_NEAREST = "shoot_nearest"
@@ -123,15 +124,17 @@ class SmartAIInput(InputMethod):
 
         # Find closest asteroid
         if asteroids:
-            closest_asteroid = min(asteroids,
-                                  key=lambda a: ((a.geometry.pos.x - player_pos.x)**2 +
-                                                (a.geometry.pos.y - player_pos.y)**2))
+            closest_asteroid = min(
+                asteroids,
+                key=lambda a: (
+                    (a.geometry.pos.x - player_pos.x) ** 2
+                    + (a.geometry.pos.y - player_pos.y) ** 2
+                ),
+            )
 
             # Calculate predicted intercept angle
             target_angle = self.predict_intercept(
-                player_pos,
-                closest_asteroid.geometry.pos,
-                closest_asteroid.vel
+                player_pos, closest_asteroid.geometry.pos, closest_asteroid.vel
             )
 
             # Normalize angle difference
@@ -182,7 +185,7 @@ class SmartAIInput(InputMethod):
                 # Direction vector from player to asteroid (normalized)
                 direction = Vec2d(
                     asteroid.geometry.pos.x - self.game.player.geometry.pos.x,
-                    asteroid.geometry.pos.y - self.game.player.geometry.pos.y
+                    asteroid.geometry.pos.y - self.game.player.geometry.pos.y,
                 )
                 normalized_direction = direction.multiply(1.0 / distance)
 
@@ -197,8 +200,7 @@ class SmartAIInput(InputMethod):
 
         # Compute average threat direction
         threat_vector = Vec2d(
-            weighted_vector.x / total_weight,
-            weighted_vector.y / total_weight
+            weighted_vector.x / total_weight, weighted_vector.y / total_weight
         )
         threat_angle = math.atan2(threat_vector.y, threat_vector.x)
 

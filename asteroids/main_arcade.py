@@ -13,7 +13,7 @@ WINDOW_TITLE = "Asteroids!"
 
 
 class GameView(arcade.View):
-    """ Main application class. """
+    """Main application class."""
 
     def __init__(self, game, input_method: game.InputMethod):
         super().__init__()
@@ -21,7 +21,7 @@ class GameView(arcade.View):
         self.input_method = input_method
 
     def on_update(self, dt):
-        """ Move everything """
+        """Move everything"""
         # Clear turn and acceleration every frame
         self.game.clear_turn()
         self.game.clear_acc()
@@ -54,12 +54,12 @@ class GameView(arcade.View):
 
     def on_key_press(self, key, modifiers):
         """Delegate key press to input method if it supports it"""
-        if hasattr(self.input_method, 'on_key_press'):
+        if hasattr(self.input_method, "on_key_press"):
             self.input_method.on_key_press(key, modifiers)
 
     def on_key_release(self, key, modifiers):
         """Delegate key release to input method if it supports it"""
-        if hasattr(self.input_method, 'on_key_release'):
+        if hasattr(self.input_method, "on_key_release"):
             self.input_method.on_key_release(key, modifiers)
 
     def draw_player(self, player_geometry):
@@ -77,18 +77,16 @@ class GameView(arcade.View):
         x1 = cx + r * math.cos(theta)
         y1 = cy + r * math.sin(theta)
 
-        theta = 0.8*math.pi+p_angle
+        theta = 0.8 * math.pi + p_angle
         x2 = cx + r * math.cos(theta)
         y2 = cy + r * math.sin(theta)
 
-        theta = 1.2*math.pi+p_angle
+        theta = 1.2 * math.pi + p_angle
         x3 = cx + r * math.cos(theta)
         y3 = cy + r * math.sin(theta)
 
         # Draw the filled triangle using the calculated points
-        arcade.draw_triangle_filled(
-            x1, y1, x2, y2, x3, y3, arcade.color.WHITE
-        )
+        arcade.draw_triangle_filled(x1, y1, x2, y2, x3, y3, arcade.color.WHITE)
 
     def draw_bullets(self, bullets):
         self.draw_circles(bullets)
@@ -107,10 +105,15 @@ class GameView(arcade.View):
         self.draw_asteroids(geometry.asteroids)
         self.draw_bullets(geometry.bullets)
 
+
 def main():
-    parser = argparse.ArgumentParser(description='Asteroids Game')
-    parser.add_argument('--air', action='store_true', help='Use Random AI input instead of keyboard')
-    parser.add_argument('--ais', action='store_true', help='Use Smart AI input instead of keyboard')
+    parser = argparse.ArgumentParser(description="Asteroids Game")
+    parser.add_argument(
+        "--air", action="store_true", help="Use Random AI input instead of keyboard"
+    )
+    parser.add_argument(
+        "--ais", action="store_true", help="Use Smart AI input instead of keyboard"
+    )
     args = parser.parse_args()
 
     g = game.Game(WINDOW_WIDTH, WINDOW_HEIGHT)
@@ -126,6 +129,7 @@ def main():
     game_view = GameView(g, input_method)
     window.show_view(game_view)
     arcade.run()
+
 
 if __name__ == "__main__":
     main()
