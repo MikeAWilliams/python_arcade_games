@@ -164,15 +164,19 @@ class GeneticAlgorithm:
         Returns:
             List of selected individuals
         """
-        # TODO: Implement tournament selection
-        # Tournament size: 3-5 individuals
-        #
-        # For i in range(k):
-        #   1. Randomly select tournament_size individuals from population
-        #   2. Choose the one with highest fitness
-        #   3. Add to selected list
-        # Return selected list
-        pass
+        tournament_size = 3
+        selected = []
+
+        for _ in range(k):
+            # Randomly select tournament_size individuals
+            tournament = random.sample(population, tournament_size)
+
+            # Choose the one with highest fitness
+            winner = max(tournament, key=lambda ind: ind.fitness)
+
+            selected.append(winner)
+
+        return selected
 
     def crossover(self, parent1: Individual, parent2: Individual) -> Individual:
         """
