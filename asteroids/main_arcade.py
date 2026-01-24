@@ -1,8 +1,10 @@
-import arcade
-import game
+import argparse
 import math
 import sys
-import argparse
+
+import arcade
+
+import game
 from game_input_keyboard import KeyboardInput
 from heuristic_ai_input import RandomAIInput, SmartAIInput
 

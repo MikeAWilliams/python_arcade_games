@@ -5,10 +5,11 @@ This demonstrates how to create an alternative input method
 that doesn't rely on keyboard input.
 """
 
-import random
 import math
+import random
 from enum import Enum
-from game import InputMethod, Action, BULLET_SPEED, SHOOT_COOLDOWN, PLAYER_RADIUS, Vec2d
+
+from game import BULLET_SPEED, PLAYER_RADIUS, SHOOT_COOLDOWN, Action, InputMethod, Vec2d
 
 
 class RandomAIInput(InputMethod):
