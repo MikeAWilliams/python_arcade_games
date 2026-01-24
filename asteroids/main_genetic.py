@@ -13,17 +13,6 @@ from concurrent.futures import ProcessPoolExecutor, as_completed
 from typing import Optional
 
 from game_runner import run_single_game
-from heuristic_ai_input import SmartAIInputParameters
-
-# Parameter bounds for each AI parameter
-# Format: {param_name: (min_value, max_value)}
-PARAM_BOUNDS = {
-    "evasion_max_distance": (300, 800),
-    "max_speed": (50, 200),
-    "evasion_lookahead_ticks": (10, 100),
-    "shoot_angle_tolerance": (0.01, 0.2),
-    "movement_angle_tolerance": (0.05, 0.3),
-}
 
 
 class Individual:
@@ -31,11 +20,11 @@ class Individual:
     Represents one candidate solution (set of AI parameters).
 
     Attributes:
-        params: SmartAIInputParameters instance
+        params: AI parameter object (type depends on AI type)
         fitness: Average score from evaluation games (None if not evaluated)
     """
 
-    def __init__(self, params: SmartAIInputParameters):
+    def __init__(self, params):
         self.params = params
         self.fitness: Optional[float] = None
 
@@ -91,7 +80,6 @@ class GeneticAlgorithm:
         Returns:
             List of Individual instances with random parameters
         """
-        # TODO: Implement random parameter generation
         population = []
         for _ in range(self.population_size):
             params = self._random_params()
@@ -99,15 +87,16 @@ class GeneticAlgorithm:
             population.append(individual)
         return population
 
-    def _random_params(self) -> SmartAIInputParameters:
+    def _random_params(self):
         """Generate random AI parameters within bounds"""
-        # TODO: Implement random parameter generation using PARAM_BOUNDS
-        # For each parameter in PARAM_BOUNDS:
-        #   - Get (min_val, max_val) from bounds
-        #   - Generate random value: random.uniform(min_val, max_val)
-        #   - For integer parameters (like evasion_lookahead_ticks), use random.randint
-        # Return SmartAIInputParameters with generated values
-        pass
+        if self.ai_type == "smart":
+            from heuristic_ai_input import smart_ai_random_params
+
+            return smart_ai_random_params()
+        else:
+            raise ValueError(
+                f"No parameter generation function for AI type: {self.ai_type}"
+            )
 
     def evaluate_population(self, population: list[Individual]):
         """
@@ -167,18 +156,13 @@ class GeneticAlgorithm:
         Returns:
             New individual (offspring)
         """
-        # TODO: Implement blend crossover
-        # For each parameter: offspring = alpha * p1 + (1-alpha) * p2
-        # where alpha is random in range [0, 1]
-        #
-        # Example:
-        #   alpha = random.random()
-        #   offspring_evasion = alpha * parent1.params.evasion_max_distance +
-        #                       (1-alpha) * parent2.params.evasion_max_distance
-        #
-        # Create new SmartAIInputParameters with blended values
-        # Return new Individual with blended params
-        pass
+        if self.ai_type == "smart":
+            from heuristic_ai_input import smart_ai_crossover
+
+            offspring_params = smart_ai_crossover(parent1.params, parent2.params)
+            return Individual(offspring_params)
+        else:
+            raise ValueError(f"No crossover function for AI type: {self.ai_type}")
 
     def mutate(self, individual: Individual) -> Individual:
         """
@@ -194,19 +178,13 @@ class GeneticAlgorithm:
         Returns:
             Mutated individual (new instance)
         """
-        # TODO: Implement Gaussian mutation
-        # sigma = (max - min) * 0.1  # 10% of range
-        #
-        # For each parameter:
-        #   if random.random() < self.mutation_rate:
-        #     1. Get bounds from PARAM_BOUNDS
-        #     2. Calculate sigma = (max - min) * 0.1
-        #     3. Add Gaussian noise: param += random.gauss(0, sigma)
-        #     4. Clamp to bounds: param = max(min_val, min(max_val, param))
-        #
-        # Create new SmartAIInputParameters with mutated values
-        # Return new Individual
-        pass
+        if self.ai_type == "smart":
+            from heuristic_ai_input import smart_ai_mutate
+
+            mutated_params = smart_ai_mutate(individual.params, self.mutation_rate)
+            return Individual(mutated_params)
+        else:
+            raise ValueError(f"No mutation function for AI type: {self.ai_type}")
 
     def evolve(self) -> Individual:
         """
@@ -303,27 +281,25 @@ class GeneticAlgorithm:
         Returns:
             Diversity metric (0-1, higher = more diverse)
         """
-        # TODO: Implement diversity calculation
-        # Could use std dev of each parameter, normalized
-        #
-        # For each parameter:
-        #   1. Collect values across all individuals
-        #   2. Calculate standard deviation
-        #   3. Normalize by parameter range: std_dev / (max - min)
-        #   4. Average normalized std_devs across all parameters
-        #
-        # Return average normalized diversity
-        return 0.0
+        if self.ai_type == "smart":
+            from heuristic_ai_input import smart_ai_calculate_diversity
+
+            params_list = [ind.params for ind in self.population]
+            return smart_ai_calculate_diversity(params_list)
+        else:
+            # Return 0 for unknown AI types
+            return 0.0
 
 
 def print_best_parameters(
-    individual: Individual, baseline_fitness: Optional[float] = None
+    individual: Individual, ai_type: str, baseline_fitness: Optional[float] = None
 ):
     """
     Print the best parameters found.
 
     Args:
         individual: Best individual
+        ai_type: AI type being optimized
         baseline_fitness: Optional baseline fitness for comparison
     """
     print("\n" + "=" * 60)
@@ -332,13 +308,19 @@ def print_best_parameters(
     print(f"Best fitness: {individual.fitness:.1f}")
     print()
     print("Best parameters:")
-    print(f"  evasion_max_distance:     {individual.params.evasion_max_distance}")
-    print(f"  max_speed:                {individual.params.max_speed}")
-    print(f"  evasion_lookahead_ticks:  {individual.params.evasion_lookahead_ticks}")
-    print(f"  shoot_angle_tolerance:    {individual.params.shoot_angle_tolerance:.3f}")
-    print(
-        f"  movement_angle_tolerance: {individual.params.movement_angle_tolerance:.3f}"
-    )
+
+    # Print parameters based on AI type
+    if ai_type == "smart":
+        params = individual.params
+        print(f"  evasion_max_distance:     {params.evasion_max_distance}")
+        print(f"  max_speed:                {params.max_speed}")
+        print(f"  evasion_lookahead_ticks:  {params.evasion_lookahead_ticks}")
+        print(f"  shoot_angle_tolerance:    {params.shoot_angle_tolerance:.3f}")
+        print(f"  movement_angle_tolerance: {params.movement_angle_tolerance:.3f}")
+    else:
+        # Generic fallback - print all attributes
+        for attr, value in vars(individual.params).items():
+            print(f"  {attr}: {value}")
 
     if baseline_fitness is not None:
         improvement = ((individual.fitness - baseline_fitness) / baseline_fitness) * 100
@@ -464,7 +446,7 @@ def main():
     elapsed = time.time() - start_time
 
     print(f"\nTotal evolution time: {elapsed:.1f} seconds")
-    print_best_parameters(best, args.baseline_fitness)
+    print_best_parameters(best, args.ai_type, args.baseline_fitness)
 
 
 if __name__ == "__main__":

@@ -82,6 +82,120 @@ class SmartAIInputParameters:
         self.movement_angle_tolerance = movement_angle_tolerance
 
 
+# Genetic Algorithm Functions for SmartAI Parameter Optimization
+
+
+# Parameter bounds for SmartAI genetic algorithm
+# Format: {param_name: (min_value, max_value)}
+SMART_AI_PARAM_BOUNDS = {
+    "evasion_max_distance": (300, 800),
+    "max_speed": (50, 200),
+    "evasion_lookahead_ticks": (10, 100),
+    "shoot_angle_tolerance": (0.01, 0.2),
+    "movement_angle_tolerance": (0.05, 0.3),
+}
+
+
+def smart_ai_random_params() -> SmartAIInputParameters:
+    """
+    Generate random SmartAI parameters within bounds.
+
+    Returns:
+        SmartAIInputParameters with random values
+    """
+    # TODO: Implement random parameter generation using SMART_AI_PARAM_BOUNDS
+    # For each parameter in SMART_AI_PARAM_BOUNDS:
+    #   - Get (min_val, max_val) from bounds
+    #   - Generate random value: random.uniform(min_val, max_val)
+    #   - For integer parameters (like evasion_lookahead_ticks), use random.randint
+    # Return SmartAIInputParameters with generated values
+    pass
+
+
+def smart_ai_crossover(
+    params1: SmartAIInputParameters, params2: SmartAIInputParameters
+) -> SmartAIInputParameters:
+    """
+    Create offspring parameters by blending two parents.
+
+    Uses blend crossover: for each parameter, offspring value is
+    randomly chosen using: offspring = alpha * p1 + (1-alpha) * p2
+    where alpha is random in range [0, 1]
+
+    Args:
+        params1: First parent parameters
+        params2: Second parent parameters
+
+    Returns:
+        New SmartAIInputParameters (offspring)
+    """
+    # TODO: Implement blend crossover
+    # For each parameter:
+    #   alpha = random.random()
+    #   offspring_param = alpha * params1.param + (1-alpha) * params2.param
+    #
+    # For integer parameters, round the result: int(offspring_param)
+    #
+    # Create new SmartAIInputParameters with blended values
+    pass
+
+
+def smart_ai_mutate(
+    params: SmartAIInputParameters, mutation_rate: float
+) -> SmartAIInputParameters:
+    """
+    Mutate parameters with Gaussian noise.
+
+    For each parameter, with probability mutation_rate:
+    - Add Gaussian noise: param += N(0, sigma)
+    - Clamp to parameter bounds
+    - sigma = (max - min) * 0.1  # 10% of range
+
+    Args:
+        params: Parameters to mutate
+        mutation_rate: Probability of mutating each parameter
+
+    Returns:
+        New SmartAIInputParameters (mutated)
+    """
+    # TODO: Implement Gaussian mutation
+    # For each parameter:
+    #   if random.random() < mutation_rate:
+    #     1. Get bounds from SMART_AI_PARAM_BOUNDS
+    #     2. Calculate sigma = (max - min) * 0.1
+    #     3. Add Gaussian noise: param += random.gauss(0, sigma)
+    #     4. Clamp to bounds: param = max(min_val, min(max_val, param))
+    #     5. For integer parameters, round: int(param)
+    #
+    # Create new SmartAIInputParameters with mutated values
+    pass
+
+
+def smart_ai_calculate_diversity(params_list: list[SmartAIInputParameters]) -> float:
+    """
+    Calculate population diversity for SmartAI parameters.
+
+    Computes normalized standard deviation across all parameters
+    and returns the average as a diversity metric.
+
+    Args:
+        params_list: List of SmartAIInputParameters from population
+
+    Returns:
+        Diversity metric (0-1, higher = more diverse)
+    """
+    # TODO: Implement diversity calculation
+    # For each parameter:
+    #   1. Collect values across all individuals in params_list
+    #   2. Calculate standard deviation (can use statistics.stdev)
+    #   3. Get bounds from SMART_AI_PARAM_BOUNDS
+    #   4. Normalize by parameter range: std_dev / (max - min)
+    #   5. Average normalized std_devs across all parameters
+    #
+    # Return average normalized diversity
+    return 0.0
+
+
 class SmartAIInput(InputMethod):
     """
     A more intelligent AI that analyzes game state.
