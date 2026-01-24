@@ -70,11 +70,11 @@ class SmartAIInputParameters:
 
     def __init__(
         self,
-        evasion_max_distance: float = 550,
-        max_speed: float = 100,
-        evasion_lookahead_ticks: int = 60,
-        shoot_angle_tolerance: float = 0.05,
-        movement_angle_tolerance: float = 0.1,
+        evasion_max_distance: float = 579,
+        max_speed: float = 765,
+        evasion_lookahead_ticks: int = 49,
+        shoot_angle_tolerance: float = 0.425,
+        movement_angle_tolerance: float = 0.682,
     ):
         self.evasion_max_distance = evasion_max_distance
         self.max_speed = max_speed
