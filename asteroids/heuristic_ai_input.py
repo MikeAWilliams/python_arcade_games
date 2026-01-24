@@ -64,6 +64,24 @@ class Strategy(Enum):
     SHOOT_NEAREST = "shoot_nearest"
 
 
+class SmartAIInputParameters:
+    """Configuration parameters for SmartAIInput"""
+
+    def __init__(
+        self,
+        evasion_max_distance: float = 550,
+        max_speed: float = 100,
+        evasion_lookahead_ticks: int = 60,
+        shoot_angle_tolerance: float = 0.05,
+        movement_angle_tolerance: float = 0.1,
+    ):
+        self.evasion_max_distance = evasion_max_distance
+        self.max_speed = max_speed
+        self.evasion_lookahead_ticks = evasion_lookahead_ticks
+        self.shoot_angle_tolerance = shoot_angle_tolerance
+        self.movement_angle_tolerance = movement_angle_tolerance
+
+
 class SmartAIInput(InputMethod):
     """
     A more intelligent AI that analyzes game state.
@@ -77,21 +95,18 @@ class SmartAIInput(InputMethod):
     TICK_DURATION = 1 / 60
     MIN_VELOCITY_THRESHOLD = 1
 
-    def __init__(
-        self,
-        game,
-        evasion_max_distance: float = 550,
-        max_speed: float = 100,
-        evasion_lookahead_ticks: int = 60,
-        shoot_angle_tolerance: float = 0.05,
-        movement_angle_tolerance: float = 0.1,
-    ):
+    def __init__(self, game, parameters: SmartAIInputParameters = None):
         self.game = game
-        self.EVASION_MAX_DISTANCE = evasion_max_distance
-        self.MAX_SPEED = max_speed
-        self.EVASION_LOOKAHEAD_TICKS = evasion_lookahead_ticks
-        self.SHOOT_ANGLE_TOLERANCE = shoot_angle_tolerance
-        self.MOVEMENT_ANGLE_TOLERANCE = movement_angle_tolerance
+
+        # Use default parameters if none provided
+        if parameters is None:
+            parameters = SmartAIInputParameters()
+
+        self.EVASION_MAX_DISTANCE = parameters.evasion_max_distance
+        self.MAX_SPEED = parameters.max_speed
+        self.EVASION_LOOKAHEAD_TICKS = parameters.evasion_lookahead_ticks
+        self.SHOOT_ANGLE_TOLERANCE = parameters.shoot_angle_tolerance
+        self.MOVEMENT_ANGLE_TOLERANCE = parameters.movement_angle_tolerance
 
     def predict_intercept(self, player_pos, asteroid_pos, asteroid_vel):
         """
