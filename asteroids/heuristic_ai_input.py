@@ -9,6 +9,8 @@ import math
 import random
 from enum import Enum
 
+from pyglet.math import Vec2
+
 from game import BULLET_SPEED, PLAYER_RADIUS, SHOOT_COOLDOWN, Action, InputMethod, Vec2d
 
 
@@ -70,9 +72,11 @@ class SmartAIInput(InputMethod):
     """
 
     # Class-level constants for evasive action
-    DANGER_RADIUS = PLAYER_RADIUS * 10
-    EVASION_MAX_DISTANCE = 300  # Maximum distance to consider for evasion weighting
+    DANGER_RADIUS = PLAYER_RADIUS * 6
+    EVASION_MAX_DISTANCE = 550  # Maximum distance to consider for evasion weighting
     MAX_SPEED = 100  # Maximum velocity magnitude before speed control activates
+    TICK_DURATION = 1 / 60
+    EVASION_LOOKAHEAD_TICKS = 2
 
     def __init__(self, game):
         self.game = game
@@ -171,12 +175,25 @@ class SmartAIInput(InputMethod):
         # Compute weighted threat vector using Vec2d
         weighted_vector = Vec2d(0.0, 0.0)
         total_weight = 0.0
+        look_ahead_t = self.TICK_DURATION * self.EVASION_LOOKAHEAD_TICKS
+        player_pos = Vec2d(
+            self.game.player.geometry.pos.x + self.game.player.vel.x * look_ahead_t,
+            self.game.player.geometry.pos.y + self.game.player.vel.y * look_ahead_t,
+        )
 
         for asteroid in self.game.asteroids:
-            distance = math.dist(self.game.player.geometry.pos, asteroid.geometry.pos)
+            asteroid_pos = Vec2d(
+                asteroid.geometry.pos.x + asteroid.vel.x * look_ahead_t,
+                asteroid.geometry.pos.y + asteroid.vel.y * look_ahead_t,
+            )
+            distance = math.dist(player_pos, asteroid_pos)
+            distance -= self.game.player.geometry.radius
+            distance -= asteroid.geometry.radius
+            if distance <= 0:
+                distance = 0.0001
 
             # Only consider asteroids within max distance
-            if distance < self.EVASION_MAX_DISTANCE and distance > 0:
+            if distance < self.EVASION_MAX_DISTANCE:
                 # Weight is inversely proportional to distance
                 weight = self.EVASION_MAX_DISTANCE - distance
 
