@@ -109,16 +109,49 @@ class GeneticAlgorithm:
         Args:
             population: List of individuals to evaluate
         """
-        # TODO: Implement parallel evaluation using ProcessPoolExecutor
-        # Similar to run_parallel_games in main_headless, but with different params per individual
-        #
-        # For each individual in population:
-        #   1. Create game_args list with games_per_individual games
-        #   2. Each game should use individual.params as ai_params
-        #   3. Submit all games to executor
-        #   4. Collect results and calculate average score
-        #   5. Set individual.fitness to average score
-        pass
+        # Prepare all game arguments
+        all_game_args = []
+        individual_game_counts = []
+
+        game_id = 0
+        for individual in population:
+            # Create games for this individual
+            for _ in range(self.games_per_individual):
+                args = (
+                    game_id,
+                    self.width,
+                    self.height,
+                    self.ai_type,
+                    self.seed,
+                    individual.params,
+                )
+                all_game_args.append(args)
+                game_id += 1
+            individual_game_counts.append(self.games_per_individual)
+
+        # Run all games in parallel
+        results = []
+        with ProcessPoolExecutor(max_workers=self.num_threads) as executor:
+            futures = [executor.submit(run_single_game, args) for args in all_game_args]
+            for future in as_completed(futures):
+                result = future.result()
+                results.append(result)
+
+        # Sort results by game_id to match with individuals
+        results.sort(key=lambda r: r["game_id"])
+
+        # Calculate fitness for each individual
+        result_idx = 0
+        for i, individual in enumerate(population):
+            # Get results for this individual's games
+            individual_results = results[
+                result_idx : result_idx + individual_game_counts[i]
+            ]
+            result_idx += individual_game_counts[i]
+
+            # Calculate average score as fitness
+            scores = [r["score"] for r in individual_results]
+            individual.fitness = sum(scores) / len(scores)
 
     def selection(self, population: list[Individual], k: int) -> list[Individual]:
         """
