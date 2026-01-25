@@ -5,7 +5,11 @@ AI input method using neural network
 import math
 import random
 import statistics
+from asyncio.unix_events import SelectorEventLoop
 from enum import Enum
+
+import torch
+from torch import nn
 
 from game import Action, InputMethod, Vec2d
 
@@ -14,7 +18,20 @@ class NNAIParameters:
     """Configuration parameters for NNAI"""
 
     def __init__(self):
-        pass
+        player_state_count = 6  # x,y, vx,vy,theta, shot_cooldown
+        per_asteroid_count = 5  # x,y, vx,vy, active
+        possible_asteroids = 27  # 3+6+18 for each generation
+        num_inputs = player_state_count + per_asteroid_count * possible_asteroids
+        self.num_actions = len(Action)
+        middle_dim = 128
+        # for now try a single hidden layer
+        self.model = torch.nn.Sequential(
+            torch.nn.Linear(num_inputs, middle_dim, bias=False, dtype=torch.float32),
+            torch.nn.ReLU(),
+            torch.nn.Linear(middle_dim, num_actions, bias=False, dtype=torch.float32),
+            # dim=1 because batch size is 1
+            torch.nn.Softmax(dim=1),
+        )
 
 
 # Genetic Algorithm Functions for NNAI Parameter Optimization
@@ -111,15 +128,33 @@ class NNAIInputMethod(InputMethod):
     A Neural Network based AI.
     """
 
-    def __init__(self, game, parameters: NNAIParameters = None):
+    def __init__(self, game, parameters: NNAIParameters = None, keep_data=False):
         self.game = game
-
-        # Use default parameters if none provided
+        self.keep_data = keep_data
         if parameters is None:
             parameters = NNAIParameters()
+        self.parameters = parameters
+
+        self.states = [] if keep_data else None
+        self.actions_taken = [] if keep_data else None
+        self.probabilities = [] if keep_data else None
+        self.scores = [] if keep_data else None
+
+    def compute_state(self):
+        return []
+
+    def compute_action(self, state):
+        return Action.NO_ACTION, []
 
     def get_move(self) -> Action:
         """
         Return the game action predicted by the Neural Network
         """
-        return Action.NO_ACTION
+        state = self.compute_state()
+        action, prob = self.compute_action(state)
+        if self.keep_data:
+            self.states.append(state)
+            self.actions_taken.append(action)
+            self.probabilities.append(prob)
+            self.scores.append(self.game.score)
+        return action
