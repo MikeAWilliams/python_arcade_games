@@ -6,7 +6,8 @@ import arcade
 
 import game
 from game_input_keyboard import KeyboardInput
-from heuristic_ai_input import RandomAIInput, SmartAIInput
+from heuristic_ai_input import HeuristicAIInput
+from nn_ai_input import NNAIInputMethod
 
 # constants
 WINDOW_WIDTH = 1280
@@ -111,19 +112,21 @@ class GameView(arcade.View):
 def main():
     parser = argparse.ArgumentParser(description="Asteroids Game")
     parser.add_argument(
-        "--air", action="store_true", help="Use Random AI input instead of keyboard"
+        "--aih", action="store_true", help="Use Heuristic AI input instead of keyboard"
     )
     parser.add_argument(
-        "--ais", action="store_true", help="Use Smart AI input instead of keyboard"
+        "--ain",
+        action="store_true",
+        help="Use Neural Network AI input instead of keyboard",
     )
     args = parser.parse_args()
 
     g = game.Game(WINDOW_WIDTH, WINDOW_HEIGHT)
 
-    if args.air:
-        input_method = RandomAIInput()
-    elif args.ais:
-        input_method = SmartAIInput(g)
+    if args.aih:
+        input_method = HeuristicAIInput(g)
+    elif args.ain:
+        input_method = NNAIInputMethod(g)
     else:
         input_method = KeyboardInput()
 

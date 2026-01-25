@@ -12,48 +12,6 @@ from pyglet.math import Vec2
 from game import BULLET_SPEED, PLAYER_RADIUS, SHOOT_COOLDOWN, Action, InputMethod, Vec2d
 
 
-class RandomAIInput(InputMethod):
-    """
-    Simple AI input that makes random decisions.
-    This is just a demonstration - a real AI would analyze game state.
-    """
-
-    def __init__(self):
-        self.current_action = Action.NO_ACTION
-        self.action_duration = 0
-
-    def get_move(self) -> Action:
-        """
-        Returns a random action periodically.
-        In a real AI, this would analyze the game state and make intelligent decisions.
-        """
-        # Continue current action if it has duration remaining
-        if self.action_duration > 0:
-            self.action_duration -= 1
-            if self.action_duration == 0:
-                self.current_action = Action.NO_ACTION
-            return self.current_action
-
-        # Randomly decide whether to take a new action
-        if random.random() < 0.1:
-            # Random chance to shoot
-            if random.random() < 0.3:
-                return Action.SHOOT
-
-            # Choose a continuous action
-            actions = [
-                Action.TURN_LEFT,
-                Action.TURN_RIGHT,
-                Action.ACCELERATE,
-                Action.DECELERATE,
-            ]
-            self.current_action = random.choice(actions)
-            self.action_duration = random.randint(10, 60)
-            return self.current_action
-
-        return self.current_action
-
-
 class Strategy(Enum):
     """Enumeration of AI strategies"""
 
@@ -62,8 +20,8 @@ class Strategy(Enum):
     SHOOT_NEAREST = "shoot_nearest"
 
 
-class SmartAIInputParameters:
-    """Configuration parameters for SmartAIInput"""
+class HeuristicAIInputParameters:
+    """Configuration parameters for HeuristicAIInput"""
 
     def __init__(
         self,
@@ -80,12 +38,12 @@ class SmartAIInputParameters:
         self.movement_angle_tolerance = movement_angle_tolerance
 
 
-# Genetic Algorithm Functions for SmartAI Parameter Optimization
+# Genetic Algorithm Functions for HeuristicAI Parameter Optimization
 
 
-# Parameter bounds for SmartAI genetic algorithm
+# Parameter bounds for HeuristicAI genetic algorithm
 # Format: {param_name: (min_value, max_value)}
-SMART_AI_PARAM_BOUNDS = {
+HEURISTIC_AI_PARAM_BOUNDS = {
     "evasion_max_distance": (10, 1100),
     "max_speed": (50, 1000),
     "evasion_lookahead_ticks": (10, 120),
@@ -94,38 +52,39 @@ SMART_AI_PARAM_BOUNDS = {
 }
 
 
-def smart_ai_random_params() -> SmartAIInputParameters:
+def heuristic_ai_random_params() -> HeuristicAIInputParameters:
     """
-    Generate random SmartAI parameters within bounds.
+    Generate random HeuristicAI parameters within bounds.
 
     Returns:
-        SmartAIInputParameters with random values
+        HeuristicAIInputParameters with random values
     """
-    # TODO: Implement random parameter generation using SMART_AI_PARAM_BOUNDS
-    # For each parameter in SMART_AI_PARAM_BOUNDS:
+    # TODO: Implement random parameter generation using HEURISTIC_AI_PARAM_BOUNDS
+    # For each parameter in HEURISTIC_AI_PARAM_BOUNDS:
     #   - Get (min_val, max_val) from bounds
     #   - Generate random value: random.uniform(min_val, max_val)
     #   - For integer parameters (like evasion_lookahead_ticks), use random.randint
-    # Return SmartAIInputParameters with generated values
-    return SmartAIInputParameters(
+    # Return HeuristicAIInputParameters with generated values
+    return HeuristicAIInputParameters(
         shoot_angle_tolerance=random.uniform(
-            SMART_AI_PARAM_BOUNDS["shoot_angle_tolerance"][0],
-            SMART_AI_PARAM_BOUNDS["shoot_angle_tolerance"][1],
+            HEURISTIC_AI_PARAM_BOUNDS["shoot_angle_tolerance"][0],
+            HEURISTIC_AI_PARAM_BOUNDS["shoot_angle_tolerance"][1],
         ),
         movement_angle_tolerance=random.uniform(
-            SMART_AI_PARAM_BOUNDS["movement_angle_tolerance"][0],
-            SMART_AI_PARAM_BOUNDS["movement_angle_tolerance"][1],
+            HEURISTIC_AI_PARAM_BOUNDS["movement_angle_tolerance"][0],
+            HEURISTIC_AI_PARAM_BOUNDS["movement_angle_tolerance"][1],
         ),
         evasion_max_distance=random.randint(
-            SMART_AI_PARAM_BOUNDS["evasion_max_distance"][0],
-            SMART_AI_PARAM_BOUNDS["evasion_max_distance"][1],
+            HEURISTIC_AI_PARAM_BOUNDS["evasion_max_distance"][0],
+            HEURISTIC_AI_PARAM_BOUNDS["evasion_max_distance"][1],
         ),
         max_speed=random.randint(
-            SMART_AI_PARAM_BOUNDS["max_speed"][0], SMART_AI_PARAM_BOUNDS["max_speed"][1]
+            HEURISTIC_AI_PARAM_BOUNDS["max_speed"][0],
+            HEURISTIC_AI_PARAM_BOUNDS["max_speed"][1],
         ),
         evasion_lookahead_ticks=random.randint(
-            SMART_AI_PARAM_BOUNDS["evasion_lookahead_ticks"][0],
-            SMART_AI_PARAM_BOUNDS["evasion_lookahead_ticks"][1],
+            HEURISTIC_AI_PARAM_BOUNDS["evasion_lookahead_ticks"][0],
+            HEURISTIC_AI_PARAM_BOUNDS["evasion_lookahead_ticks"][1],
         ),
     )
 
@@ -136,9 +95,9 @@ def crossover_parameter(parent1, parent2):
     return offspring_value
 
 
-def smart_ai_crossover(
-    params1: SmartAIInputParameters, params2: SmartAIInputParameters
-) -> SmartAIInputParameters:
+def heuristic_ai_crossover(
+    params1: HeuristicAIInputParameters, params2: HeuristicAIInputParameters
+) -> HeuristicAIInputParameters:
     """
     Create offspring parameters by blending two parents.
 
@@ -151,9 +110,9 @@ def smart_ai_crossover(
         params2: Second parent parameters
 
     Returns:
-        New SmartAIInputParameters (offspring)
+        New HeuristicAIInputParameters (offspring)
     """
-    return SmartAIInputParameters(
+    return HeuristicAIInputParameters(
         shoot_angle_tolerance=crossover_parameter(
             params1.shoot_angle_tolerance, params2.shoot_angle_tolerance
         ),
@@ -182,9 +141,9 @@ def mutate_param(val, min_val, max_val, rate):
     return val
 
 
-def smart_ai_mutate(
-    params: SmartAIInputParameters, mutation_rate: float
-) -> SmartAIInputParameters:
+def heuristic_ai_mutate(
+    params: HeuristicAIInputParameters, mutation_rate: float
+) -> HeuristicAIInputParameters:
     """
     Mutate parameters with Gaussian noise.
 
@@ -198,57 +157,59 @@ def smart_ai_mutate(
         mutation_rate: Probability of mutating each parameter
 
     Returns:
-        New SmartAIInputParameters (mutated)
+        New HeuristicAIInputParameters (mutated)
     """
-    return SmartAIInputParameters(
+    return HeuristicAIInputParameters(
         shoot_angle_tolerance=mutate_param(
             params.shoot_angle_tolerance,
-            SMART_AI_PARAM_BOUNDS["shoot_angle_tolerance"][0],
-            SMART_AI_PARAM_BOUNDS["shoot_angle_tolerance"][1],
+            HEURISTIC_AI_PARAM_BOUNDS["shoot_angle_tolerance"][0],
+            HEURISTIC_AI_PARAM_BOUNDS["shoot_angle_tolerance"][1],
             mutation_rate,
         ),
         movement_angle_tolerance=mutate_param(
             params.movement_angle_tolerance,
-            SMART_AI_PARAM_BOUNDS["movement_angle_tolerance"][0],
-            SMART_AI_PARAM_BOUNDS["movement_angle_tolerance"][1],
+            HEURISTIC_AI_PARAM_BOUNDS["movement_angle_tolerance"][0],
+            HEURISTIC_AI_PARAM_BOUNDS["movement_angle_tolerance"][1],
             mutation_rate,
         ),
         evasion_max_distance=int(
             mutate_param(
                 params.evasion_max_distance,
-                SMART_AI_PARAM_BOUNDS["evasion_max_distance"][0],
-                SMART_AI_PARAM_BOUNDS["evasion_max_distance"][1],
+                HEURISTIC_AI_PARAM_BOUNDS["evasion_max_distance"][0],
+                HEURISTIC_AI_PARAM_BOUNDS["evasion_max_distance"][1],
                 mutation_rate,
             )
         ),
         max_speed=int(
             mutate_param(
                 params.max_speed,
-                SMART_AI_PARAM_BOUNDS["max_speed"][0],
-                SMART_AI_PARAM_BOUNDS["max_speed"][1],
+                HEURISTIC_AI_PARAM_BOUNDS["max_speed"][0],
+                HEURISTIC_AI_PARAM_BOUNDS["max_speed"][1],
                 mutation_rate,
             )
         ),
         evasion_lookahead_ticks=int(
             mutate_param(
                 params.evasion_lookahead_ticks,
-                SMART_AI_PARAM_BOUNDS["evasion_lookahead_ticks"][0],
-                SMART_AI_PARAM_BOUNDS["evasion_lookahead_ticks"][1],
+                HEURISTIC_AI_PARAM_BOUNDS["evasion_lookahead_ticks"][0],
+                HEURISTIC_AI_PARAM_BOUNDS["evasion_lookahead_ticks"][1],
                 mutation_rate,
             )
         ),
     )
 
 
-def smart_ai_calculate_diversity(params_list: list[SmartAIInputParameters]) -> float:
+def heuristic_ai_calculate_diversity(
+    params_list: list[HeuristicAIInputParameters],
+) -> float:
     """
-    Calculate population diversity for SmartAI parameters.
+    Calculate population diversity for HeuristicAI parameters.
 
     Computes normalized standard deviation across all parameters
     and returns the average as a diversity metric.
 
     Args:
-        params_list: List of SmartAIInputParameters from population
+        params_list: List of HeuristicAIInputParameters from population
 
     Returns:
         Diversity metric (0-1, higher = more diverse)
@@ -261,7 +222,7 @@ def smart_ai_calculate_diversity(params_list: list[SmartAIInputParameters]) -> f
     normalized_diversities = []
 
     # For each parameter, calculate normalized standard deviation
-    for param_name, (min_val, max_val) in SMART_AI_PARAM_BOUNDS.items():
+    for param_name, (min_val, max_val) in HEURISTIC_AI_PARAM_BOUNDS.items():
         # Collect values for this parameter across all individuals
         values = [getattr(p, param_name) for p in params_list]
 
@@ -285,9 +246,9 @@ def smart_ai_calculate_diversity(params_list: list[SmartAIInputParameters]) -> f
         return 0.0
 
 
-class SmartAIInput(InputMethod):
+class HeuristicAIInput(InputMethod):
     """
-    A more intelligent AI that analyzes game state.
+    A heuristic-based AI that analyzes game state.
     This implementation predicts asteroid position based on velocity and aims ahead.
     It does not account for the time it would take to turn and point at the asteroid
     """
@@ -298,12 +259,12 @@ class SmartAIInput(InputMethod):
     TICK_DURATION = 1 / 60
     MIN_VELOCITY_THRESHOLD = 1
 
-    def __init__(self, game, parameters: SmartAIInputParameters = None):
+    def __init__(self, game, parameters: HeuristicAIInputParameters = None):
         self.game = game
 
         # Use default parameters if none provided
         if parameters is None:
-            parameters = SmartAIInputParameters()
+            parameters = HeuristicAIInputParameters()
 
         self.EVASION_MAX_DISTANCE = parameters.evasion_max_distance
         self.MAX_SPEED = parameters.max_speed

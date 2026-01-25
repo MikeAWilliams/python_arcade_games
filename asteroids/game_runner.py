@@ -10,7 +10,8 @@ import random
 from typing import Optional
 
 from game import Action, Game
-from heuristic_ai_input import RandomAIInput, SmartAIInput, SmartAIInputParameters
+from heuristic_ai_input import HeuristicAIInput, HeuristicAIInputParameters
+from nn_ai_input import NNAIInputMethod, NNAIParameters
 
 
 class GameRunner:
@@ -80,18 +81,19 @@ def create_ai_input(ai_type: str, game, ai_params=None):
     Factory function to create AI input method.
 
     Args:
-        ai_type: "smart", "random", or future AI types
+        ai_type: "heuristic", "neural", or future AI types
         game: Game instance
-        ai_params: Optional parameters (SmartAIInputParameters, etc.)
+        ai_params: Optional parameters (HeuristicAIInputParameters, NNAIParameters, etc.)
 
     Returns:
         InputMethod instance
     """
-    if ai_type == "smart":
-        params = ai_params if ai_params else SmartAIInputParameters()
-        return SmartAIInput(game, params)
-    elif ai_type == "random":
-        return RandomAIInput()
+    if ai_type == "heuristic":
+        params = ai_params if ai_params else HeuristicAIInputParameters()
+        return HeuristicAIInput(game, params)
+    elif ai_type == "neural":
+        params = ai_params if ai_params else NNAIParameters()
+        return NNAIInputMethod(game, params)
     else:
         raise ValueError(f"Unknown AI type: {ai_type}")
 

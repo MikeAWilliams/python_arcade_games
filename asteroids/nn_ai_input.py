@@ -25,7 +25,7 @@ class NNAIParameters:
 NN_AI_PARAM_BOUNDS = {}
 
 
-def smart_ai_random_params() -> SmartAIInputParameters:
+def nn_ai_random_params() -> NNAIParameters:
     """
     Generate random NNAI parameters within bounds.
 
@@ -81,20 +81,20 @@ def nn_ai_mutate(params: NNAIParameters, mutation_rate: float) -> NNAIParameters
         mutation_rate: Probability of mutating each parameter
 
     Returns:
-        New SmartAIInputParameters (mutated)
+        New NNAIParameters (mutated)
     """
     pass
 
 
 def nn_ai_calculate_diversity(params_list: list[NNAIParameters]) -> float:
     """
-    Calculate population diversity for SmartAI parameters.
+    Calculate population diversity for NNAI parameters.
 
     Computes normalized standard deviation across all parameters
     and returns the average as a diversity metric.
 
     Args:
-        params_list: List of SmartAIInputParameters from population
+        params_list: List of NNAIParameters from population
 
     Returns:
         Diversity metric (0-1, higher = more diverse)
@@ -108,7 +108,7 @@ def nn_ai_calculate_diversity(params_list: list[NNAIParameters]) -> float:
 
 class NNAIInputMethod(InputMethod):
     """
-    A Neural Network basedAI.
+    A Neural Network based AI.
     """
 
     def __init__(self, game, parameters: NNAIParameters = None):
@@ -116,10 +116,10 @@ class NNAIInputMethod(InputMethod):
 
         # Use default parameters if none provided
         if parameters is None:
-            parameters = NNAIInputMethod()
+            parameters = NNAIParameters()
 
     def get_move(self) -> Action:
         """
         Return the game action predicted by the Neural Network
         """
-        pass
+        return Action.NO_ACTION

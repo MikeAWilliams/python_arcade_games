@@ -89,10 +89,14 @@ class GeneticAlgorithm:
 
     def _random_params(self):
         """Generate random AI parameters within bounds"""
-        if self.ai_type == "smart":
-            from heuristic_ai_input import smart_ai_random_params
+        if self.ai_type == "heuristic":
+            from heuristic_ai_input import heuristic_ai_random_params
 
-            return smart_ai_random_params()
+            return heuristic_ai_random_params()
+        elif self.ai_type == "neural":
+            from nn_ai_input import nn_ai_random_params
+
+            return nn_ai_random_params()
         else:
             raise ValueError(
                 f"No parameter generation function for AI type: {self.ai_type}"
@@ -193,10 +197,15 @@ class GeneticAlgorithm:
         Returns:
             New individual (offspring)
         """
-        if self.ai_type == "smart":
-            from heuristic_ai_input import smart_ai_crossover
+        if self.ai_type == "heuristic":
+            from heuristic_ai_input import heuristic_ai_crossover
 
-            offspring_params = smart_ai_crossover(parent1.params, parent2.params)
+            offspring_params = heuristic_ai_crossover(parent1.params, parent2.params)
+            return Individual(offspring_params)
+        elif self.ai_type == "neural":
+            from nn_ai_input import nn_ai_crossover
+
+            offspring_params = nn_ai_crossover(parent1.params, parent2.params)
             return Individual(offspring_params)
         else:
             raise ValueError(f"No crossover function for AI type: {self.ai_type}")
@@ -215,10 +224,15 @@ class GeneticAlgorithm:
         Returns:
             Mutated individual (new instance)
         """
-        if self.ai_type == "smart":
-            from heuristic_ai_input import smart_ai_mutate
+        if self.ai_type == "heuristic":
+            from heuristic_ai_input import heuristic_ai_mutate
 
-            mutated_params = smart_ai_mutate(individual.params, self.mutation_rate)
+            mutated_params = heuristic_ai_mutate(individual.params, self.mutation_rate)
+            return Individual(mutated_params)
+        elif self.ai_type == "neural":
+            from nn_ai_input import nn_ai_mutate
+
+            mutated_params = nn_ai_mutate(individual.params, self.mutation_rate)
             return Individual(mutated_params)
         else:
             raise ValueError(f"No mutation function for AI type: {self.ai_type}")
@@ -324,11 +338,16 @@ class GeneticAlgorithm:
         Returns:
             Diversity metric (0-1, higher = more diverse)
         """
-        if self.ai_type == "smart":
-            from heuristic_ai_input import smart_ai_calculate_diversity
+        if self.ai_type == "heuristic":
+            from heuristic_ai_input import heuristic_ai_calculate_diversity
 
             params_list = [ind.params for ind in self.population]
-            return smart_ai_calculate_diversity(params_list)
+            return heuristic_ai_calculate_diversity(params_list)
+        elif self.ai_type == "neural":
+            from nn_ai_input import nn_ai_calculate_diversity
+
+            params_list = [ind.params for ind in self.population]
+            return nn_ai_calculate_diversity(params_list)
         else:
             # Return 0 for unknown AI types
             return 0.0
@@ -353,7 +372,7 @@ def print_best_parameters(
     print("Best parameters:")
 
     # Print parameters based on AI type
-    if ai_type == "smart":
+    if ai_type == "heuristic":
         params = individual.params
         print(f"  evasion_max_distance:     {params.evasion_max_distance}")
         print(f"  max_speed:                {params.max_speed}")
@@ -420,8 +439,8 @@ def main():
     parser.add_argument(
         "--ai-type",
         type=str,
-        default="smart",
-        help="AI type to optimize (default: smart)",
+        default="heuristic",
+        help="AI type to optimize (default: heuristic)",
     )
     parser.add_argument(
         "--width",

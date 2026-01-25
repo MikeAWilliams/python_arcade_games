@@ -111,7 +111,7 @@ def run_parallel_games(
         num_threads: Number of worker processes
         width: Game world width
         height: Game world height
-        ai_type: Type of AI to use ('smart' or 'random')
+        ai_type: Type of AI to use ('heuristic' or 'neural')
         seed: Optional random seed for reproducibility
         show_progress: Whether to show progress updates
 
@@ -194,9 +194,9 @@ def main():
 
     parser.add_argument(
         "--ai-type",
-        choices=["smart", "random"],
-        default="smart",
-        help="Type of AI to use (default: smart)",
+        choices=["heuristic", "neural"],
+        default="heuristic",
+        help="Type of AI to use (default: heuristic)",
     )
 
     # Game configuration
