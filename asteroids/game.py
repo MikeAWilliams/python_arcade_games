@@ -2,6 +2,7 @@ import math
 import random
 from abc import ABC, abstractmethod
 from enum import Enum
+from gc import callbacks
 
 
 class Action(Enum):
@@ -185,10 +186,33 @@ class Player:
         pass
 
 
+def calc_asteroid_id(parent_id: int, child_number: int):
+    """
+    Calculate the unique ID for an asteroid.
+    The 3 in first 2x in second and 3x in third generation is hard coded here
+    """
+    if parent_id < 3:
+        children_per_parent = 2
+    else:
+        children_per_parent = 3
+
+    if parent_id < 3:
+        offset = 2 * parent_id
+    else:
+        offset = 6 + 3 * (parent_id - 3)
+
+    if child_number < 0 or child_number > children_per_parent:
+        raise ValueError("Invalid child_number for this parent")
+
+    return offset + child_number + 3
+
+
 class Asteroid:
-    def __init__(self, geometry: GeometryObject, vel: Vec2d):
+    def __init__(self, geometry: GeometryObject, vel: Vec2d, id: int):
         self.geometry = geometry
         self.vel = vel
+        # cary a unique id for the sake of encoding state in the nn ai
+        self.id = id
 
     def update(self, dt):
         self.geometry.pos.x += self.vel.x * dt
@@ -231,8 +255,9 @@ class Game:
             Asteroid(
                 geo,
                 Vec2d.random_size(ASTEROID_BASE_SPEED * self.asteroid_speed_multiplier),
+                id=i,
             )
-            for geo in asteroid_centers
+            for i, geo in enumerate(asteroid_centers)
         ]
         self.time_alive = 0
         self.player_alive = True
@@ -261,12 +286,14 @@ class Game:
                 Asteroid(
                     GeometryObject(parent.geometry.pos.copy(), MEDIUM_ASTEROID_RADIUS),
                     Vec2d.random_size(current_speed),
+                    calc_asteroid_id(parent.id, 0),
                 )
             )
             self.asteroids.append(
                 Asteroid(
                     GeometryObject(parent.geometry.pos.copy(), MEDIUM_ASTEROID_RADIUS),
                     Vec2d.random_size(current_speed),
+                    calc_asteroid_id(parent.id, 1),
                 )
             )
         elif parent.geometry.radius == MEDIUM_ASTEROID_RADIUS:
@@ -274,18 +301,21 @@ class Game:
                 Asteroid(
                     GeometryObject(parent.geometry.pos.copy(), SMALL_ASTEROID_RADIUS),
                     Vec2d.random_size(current_speed),
+                    calc_asteroid_id(parent.id, 0),
                 )
             )
             self.asteroids.append(
                 Asteroid(
                     GeometryObject(parent.geometry.pos.copy(), SMALL_ASTEROID_RADIUS),
                     Vec2d.random_size(current_speed),
+                    calc_asteroid_id(parent.id, 1),
                 )
             )
             self.asteroids.append(
                 Asteroid(
                     GeometryObject(parent.geometry.pos.copy(), SMALL_ASTEROID_RADIUS),
                     Vec2d.random_size(current_speed),
+                    calc_asteroid_id(parent.id, 2),
                 )
             )
 
@@ -395,7 +425,8 @@ class Game:
             GeometryObject(self.player.geometry.pos, PLAYER_EXCLUSION_RADIUS),
         )
         self.asteroids = [
-            Asteroid(geo, Vec2d.random_size(current_speed)) for geo in asteroid_centers
+            Asteroid(geo, Vec2d.random_size(current_speed), id)
+            for id, geo in enumerate(asteroid_centers)
         ]
 
         # Clear bullets
