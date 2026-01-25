@@ -1,8 +1,5 @@
 """
-Example AI input method implementation.
-
-This demonstrates how to create an alternative input method
-that doesn't rely on keyboard input.
+AI input method using heuristics to play.
 """
 
 import math
