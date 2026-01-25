@@ -103,7 +103,7 @@ def nn_ai_calculate_diversity(params_list: list[NNAIParameters]) -> float:
     if len(params_list) < 2:
         return 0.0
 
-    pass
+    return 0.0
 
 
 class NNAIInputMethod(InputMethod):

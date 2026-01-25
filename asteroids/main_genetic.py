@@ -438,7 +438,7 @@ def main():
     # AI and game parameters
     parser.add_argument(
         "--ai-type",
-        type=str,
+        choices=["heuristic", "neural"],
         default="heuristic",
         help="AI type to optimize (default: heuristic)",
     )
