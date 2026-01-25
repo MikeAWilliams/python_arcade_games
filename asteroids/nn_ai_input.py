@@ -28,7 +28,9 @@ class NNAIParameters:
         self.model = torch.nn.Sequential(
             torch.nn.Linear(num_inputs, middle_dim, bias=False, dtype=torch.float32),
             torch.nn.ReLU(),
-            torch.nn.Linear(middle_dim, num_actions, bias=False, dtype=torch.float32),
+            torch.nn.Linear(
+                middle_dim, self.num_actions, bias=False, dtype=torch.float32
+            ),
             # dim=1 because batch size is 1
             torch.nn.Softmax(dim=1),
         )

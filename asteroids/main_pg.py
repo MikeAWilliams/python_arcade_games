@@ -1,3 +1,6 @@
+"""
+Trains a Neural Network AI Input Method using policy gradient
+"""
 import argparse
 
 import numpy as np
