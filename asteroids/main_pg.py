@@ -92,8 +92,9 @@ def train_model(width, height):
     opt = torch.optim.Adam(model.parameters(), lr=0.0001)
     alpha = 1e-4
     max_score = 0
-    total_epochs = 8000
-    intermediate_save_frequency = 1000
+    total_epochs = 100000
+    print_frequency = 500
+    intermediate_save_frequency = total_epochs / 10
     start_time = time.time()
     for epoch in range(total_epochs):
         states, actions, probs, rewards = run_game(width, height, params)
@@ -121,7 +122,7 @@ def train_model(width, height):
         train_on_game_results(model, opt, states, target)
         if epoch % intermediate_save_frequency == 0:
             torch.save(model.state_dict(), f"model_epoch_{epoch}.pth")
-        if epoch % 100 == 0:
+        if epoch % print_frequency == 0:
             elapsed_time = time.time() - start_time
             progress = (epoch + 1) / total_epochs
             estimated_total_time = elapsed_time / progress if progress > 0 else 0
