@@ -185,7 +185,7 @@ class NNAIInputMethod(InputMethod):
 
     def compute_action(self, state):
         action_probs = self.parameters.model(
-            torch.from_numpy(np.expand_dims(state, 0))
+            torch.from_numpy(np.expand_dims(state, 0)).float()
         )[0]
         action = np.random.choice(
             self.parameters.num_actions, p=np.squeeze(action_probs.detach().numpy())
@@ -200,7 +200,7 @@ class NNAIInputMethod(InputMethod):
         action, prob = self.compute_action(state)
         if self.keep_data:
             self.states.append(state)
-            self.actions_taken.append(int(action))
+            self.actions_taken.append(action.value)
             self.probabilities.append(prob)
-            self.scores.append(self.game.score)
+            self.scores.append(self.game.player_score)
         return action

@@ -13,6 +13,7 @@ from nn_ai_input import NNAIInputMethod, NNAIParameters
 
 
 def discounted_rewards(rewards, gamma=0.99, normalize=True):
+    eps = 0.0001
     ret = []
     s = 0
     for r in rewards[::-1]:
@@ -24,8 +25,8 @@ def discounted_rewards(rewards, gamma=0.99, normalize=True):
 
 
 def train_on_game_results(model, optimizer, x, y):
-    x = torch.from_numpy(x)
-    y = torch.from_numpy(y)
+    x = torch.from_numpy(x).float()
+    y = torch.from_numpy(y).float()
     optimizer.zero_grad()
     predictions = model(x)
     loss = -torch.mean(torch.log(predictions) * y)
@@ -56,7 +57,14 @@ def run_game(width, height, params):
         # Update game state
         game.update(dt)
 
-    return [], [], [], []
+    states = np.array(input_method.states)
+    actions = np.array(input_method.actions_taken)
+    probs = np.array(input_method.probabilities)
+    # diff will make the score into score per frame
+    # consider adding a small bonus for number of frames survived,
+    # consider that my heuristic ai gets a max score of 236 and lives for a max of 164 seconds
+    rewards = np.diff(input_method.scores, prepend=0)
+    return states, actions, probs, rewards
 
 
 # need to refactor and use game_runner.py. But being lazy to get it to work now
@@ -95,7 +103,7 @@ def train_model(width, height):
         gradients = one_hot_actions - probs
         dr = discounted_rewards(rewards)
         # weight the gradient by dicsounted rewards
-        gradients *= dr
+        gradients *= dr[:, np.newaxis]
         # target here is not a labeled correct value, just a nudge to the model
         # because alpha is small it will take some big rewards to make target much different than the initial probs
         # so when the rewards are small we don't change thigns much

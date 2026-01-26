@@ -8,12 +8,12 @@ from gc import callbacks
 class Action(Enum):
     """Enumeration of possible game actions"""
 
-    TURN_LEFT = "turn_left"
-    TURN_RIGHT = "turn_right"
-    ACCELERATE = "accelerate"
-    DECELERATE = "decelerate"
-    SHOOT = "shoot"
-    NO_ACTION = "no_action"
+    TURN_LEFT = 0
+    TURN_RIGHT = 1
+    ACCELERATE = 2
+    DECELERATE = 3
+    SHOOT = 4
+    NO_ACTION = 5
 
 
 class InputMethod(ABC):
