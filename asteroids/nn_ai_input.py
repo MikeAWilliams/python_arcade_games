@@ -18,7 +18,10 @@ from game import SHOOT_COOLDOWN, Action, InputMethod
 class NNAIParameters:
     """Configuration parameters for NNAI"""
 
-    def __init__(self):
+    def __init__(self, device=None):
+        if device is None:
+            device = "cpu"
+        self.device = device
         player_state_count = 6  # x,y, vx,vy,theta, shot_cooldown
         per_asteroid_count = 5  # x,y, vx,vy, active
         possible_asteroids = 27  # 3+6+18 for each generation
@@ -36,7 +39,7 @@ class NNAIParameters:
             ),
             # dim=1 because batch size is 1
             torch.nn.Softmax(dim=1),
-        )
+        ).to(device)
 
 
 # Genetic Algorithm Functions for NNAI Parameter Optimization
@@ -185,12 +188,13 @@ class NNAIInputMethod(InputMethod):
 
     def compute_action(self, state):
         action_probs = self.parameters.model(
-            torch.from_numpy(np.expand_dims(state, 0)).float()
+            torch.from_numpy(np.expand_dims(state, 0)).float().to(self.parameters.device)
         )[0]
+        action_probs_cpu = action_probs.detach().cpu().numpy()
         action = np.random.choice(
-            self.parameters.num_actions, p=np.squeeze(action_probs.detach().numpy())
+            self.parameters.num_actions, p=np.squeeze(action_probs_cpu)
         )
-        return Action(action), action_probs.detach().numpy()
+        return Action(action), action_probs_cpu
 
     def get_move(self) -> Action:
         """

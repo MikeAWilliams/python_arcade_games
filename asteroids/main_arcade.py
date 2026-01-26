@@ -129,11 +129,17 @@ def main():
     if args.aih:
         input_method = HeuristicAIInput(g)
     elif args.ain:
+        # Detect device (GPU if available, else CPU)
+        device = (
+            torch.accelerator.current_accelerator().type
+            if torch.accelerator.is_available()
+            else "cpu"
+        )
         # Load the trained model
-        params = NNAIParameters()
-        params.model.load_state_dict(torch.load(args.ain))
+        params = NNAIParameters(device=device)
+        params.model.load_state_dict(torch.load(args.ain, map_location=device))
         params.model.eval()
-        print("Model loaded from", args.ain)
+        print(f"Model loaded from {args.ain} on device: {device}")
         input_method = NNAIInputMethod(g, parameters=params)
     else:
         input_method = KeyboardInput()
