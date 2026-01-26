@@ -8,10 +8,11 @@ import statistics
 from asyncio.unix_events import SelectorEventLoop
 from enum import Enum
 
+import numpy as np
 import torch
 from torch import nn
 
-from game import Action, InputMethod, Vec2d
+from game import SHOOT_COOLDOWN, Action, InputMethod
 
 
 class NNAIParameters:
@@ -21,12 +22,14 @@ class NNAIParameters:
         player_state_count = 6  # x,y, vx,vy,theta, shot_cooldown
         per_asteroid_count = 5  # x,y, vx,vy, active
         possible_asteroids = 27  # 3+6+18 for each generation
-        num_inputs = player_state_count + per_asteroid_count * possible_asteroids
+        self.num_inputs = player_state_count + per_asteroid_count * possible_asteroids
         self.num_actions = len(Action)
         middle_dim = 128
         # for now try a single hidden layer
         self.model = torch.nn.Sequential(
-            torch.nn.Linear(num_inputs, middle_dim, bias=False, dtype=torch.float32),
+            torch.nn.Linear(
+                self.num_inputs, middle_dim, bias=False, dtype=torch.float32
+            ),
             torch.nn.ReLU(),
             torch.nn.Linear(
                 middle_dim, self.num_actions, bias=False, dtype=torch.float32
@@ -142,11 +145,52 @@ class NNAIInputMethod(InputMethod):
         self.probabilities = [] if keep_data else None
         self.scores = [] if keep_data else None
 
+    def get_asteroid_id_map(self):
+        asteroid_id_map = {}
+        for asteroid in self.game.asteroids:
+            asteroid_id_map[asteroid.id] = asteroid
+        return asteroid_id_map
+
     def compute_state(self):
-        return []
+        # state vecotor should have the form
+        # player_state x,y, vx,vy,theta, shot_cooldown
+        # the for each asteroid
+        # per_asteroid_state x,y, vx,vy, active
+        # with a total_possible_asteroids = 27  # 3+6+18 for each generation
+        # Note this is totally hard coded to the generation rules and will need to change if I change that
+        result = []
+        # encode the player state
+        result.append(float(self.game.player.geometry.pos.x / self.game.width))
+        result.append(float(self.game.player.geometry.pos.y / self.game.height))
+        result.append(float(self.game.player.vel.x / self.game.width))
+        result.append(float(self.game.player.vel.y / self.game.height))
+        result.append(float(self.game.player.geometry.angle / (2 * math.pi)))
+        result.append(float(self.game.shoot_cooldown / SHOOT_COOLDOWN))
+
+        # encode the asteroid state
+        id_map = self.get_asteroid_id_map()
+        for id in range(27):
+            if id in id_map:
+                asteroid = id_map[id]
+                result.append(float(asteroid.geometry.pos.x / self.game.width))
+                result.append(float(asteroid.geometry.pos.y / self.game.height))
+                result.append(float(asteroid.vel.x / self.game.width))
+                result.append(float(asteroid.vel.y / self.game.height))
+                result.append(float(1))
+            else:
+                result.extend([float(0), float(0), float(0), float(0), float(0)])
+
+        assert len(result) == self.parameters.num_inputs
+        return result
 
     def compute_action(self, state):
-        return Action.NO_ACTION, []
+        action_probs = self.parameters.model(
+            torch.from_numpy(np.expand_dims(state, 0))
+        )[0]
+        action = np.random.choice(
+            self.parameters.num_actions, p=np.squeeze(action_probs.detach().numpy())
+        )
+        return Action(action), action_probs.detach().numpy()
 
     def get_move(self) -> Action:
         """
@@ -156,7 +200,7 @@ class NNAIInputMethod(InputMethod):
         action, prob = self.compute_action(state)
         if self.keep_data:
             self.states.append(state)
-            self.actions_taken.append(action)
+            self.actions_taken.append(int(action))
             self.probabilities.append(prob)
             self.scores.append(self.game.score)
         return action

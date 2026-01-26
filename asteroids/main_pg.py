@@ -1,13 +1,14 @@
 """
 Trains a Neural Network AI Input Method using policy gradient
 """
+
 import argparse
 
 import numpy as np
 import torch
 from torch import nn
 
-from game import Game, Action
+from game import Action, Game
 from nn_ai_input import NNAIInputMethod, NNAIParameters
 
 
@@ -32,6 +33,7 @@ def train_on_game_results(model, optimizer, x, y):
     optimizer.step()
     return loss
 
+
 # copies to much from game_runner.py refactor later after it works
 def run_game(width, height, params):
     """
@@ -41,7 +43,7 @@ def run_game(width, height, params):
     """
     game = Game(width, height)
     input_method = NNAIInputMethod(game=game, parameters=params, keep_data=True)
-    dt = 1/60
+    dt = 1 / 60
     while game.player_alive:
         # Clear turn and acceleration every frame
         game.clear_turn()
@@ -55,6 +57,7 @@ def run_game(width, height, params):
         game.update(dt)
 
     return [], [], [], []
+
 
 # need to refactor and use game_runner.py. But being lazy to get it to work now
 def execute_action(game, action):
@@ -72,12 +75,13 @@ def execute_action(game, action):
     elif action == Action.NO_ACTION:
         game.no_action()
 
+
 def train_model(width, height):
     params = NNAIParameters()
     model = params.model
     opt = torch.optim.Adam(model.parameters(), lr=0.01)
     alpha = 1e-4
-    for epoch in range(600)
+    for epoch in range(600):
         states, actions, probs, rewards = run_game(width, height, params)
         # recall that an action is 0 or 1 based on the index of the model output selected by probability sample
         # we had an array of actions but we ran np.vstack(action) which makde it into a list of lists where each internal list had one element
