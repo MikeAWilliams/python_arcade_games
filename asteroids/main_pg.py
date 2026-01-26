@@ -90,8 +90,12 @@ def train_model(width, height):
     model = params.model
     opt = torch.optim.Adam(model.parameters(), lr=0.0001)
     alpha = 1e-4
-    for epoch in range(1800):
+    max_score = 0
+    for epoch in range(4000):
         states, actions, probs, rewards = run_game(width, height, params)
+        score = np.sum(rewards)
+        if score > max_score:
+            max_score = score
         rewards = np.vstack(rewards)
         # recall that an action is 0 or 1 based on the index of the model output selected by probability sample
         # we had an array of actions but we ran np.vstack(action) which makde it into a list of lists where each internal list had one element
@@ -112,7 +116,11 @@ def train_model(width, height):
         target = alpha * np.vstack([gradients]) + probs
         train_on_game_results(model, opt, states, target)
         if epoch % 100 == 0:
-            print(f"{epoch} -> {np.sum(rewards)}")
+            print(f"{epoch} -> {score},{max_score}")
+
+    # Save the trained model
+    torch.save(model.state_dict(), "nn_model.pth")
+    print("Model saved to nn_model.pth")
 
 
 def main():

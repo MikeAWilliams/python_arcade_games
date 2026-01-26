@@ -3,11 +3,12 @@ import math
 import sys
 
 import arcade
+import torch
 
 import game
 from game_input_keyboard import KeyboardInput
 from heuristic_ai_input import HeuristicAIInput
-from nn_ai_input import NNAIInputMethod
+from nn_ai_input import NNAIInputMethod, NNAIParameters
 
 # constants
 WINDOW_WIDTH = 1280
@@ -116,8 +117,10 @@ def main():
     )
     parser.add_argument(
         "--ain",
-        action="store_true",
-        help="Use Neural Network AI input instead of keyboard",
+        type=str,
+        nargs="?",
+        const="nn_model.pth",
+        help="Use Neural Network AI input, optionally specify model file path (default: nn_model.pth)",
     )
     args = parser.parse_args()
 
@@ -126,7 +129,12 @@ def main():
     if args.aih:
         input_method = HeuristicAIInput(g)
     elif args.ain:
-        input_method = NNAIInputMethod(g)
+        # Load the trained model
+        params = NNAIParameters()
+        params.model.load_state_dict(torch.load(args.ain))
+        params.model.eval()
+        print("Model loaded from", args.ain)
+        input_method = NNAIInputMethod(g, parameters=params)
     else:
         input_method = KeyboardInput()
 
