@@ -29,8 +29,9 @@ def train_on_game_results(model, optimizer, x, y):
     y = torch.from_numpy(y).float()
     optimizer.zero_grad()
     predictions = model(x)
-    loss = -torch.mean(torch.log(predictions) * y)
+    loss = -torch.mean(torch.log(predictions + 1e-8) * y)
     loss.backward()
+    torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
     optimizer.step()
     return loss
 
@@ -87,10 +88,11 @@ def execute_action(game, action):
 def train_model(width, height):
     params = NNAIParameters()
     model = params.model
-    opt = torch.optim.Adam(model.parameters(), lr=0.01)
+    opt = torch.optim.Adam(model.parameters(), lr=0.0001)
     alpha = 1e-4
-    for epoch in range(600):
+    for epoch in range(1800):
         states, actions, probs, rewards = run_game(width, height, params)
+        rewards = np.vstack(rewards)
         # recall that an action is 0 or 1 based on the index of the model output selected by probability sample
         # we had an array of actions but we ran np.vstack(action) which makde it into a list of lists where each internal list had one element
         # T transposes the array making it into a list with one list inside and all the elements in that
@@ -103,7 +105,7 @@ def train_model(width, height):
         gradients = one_hot_actions - probs
         dr = discounted_rewards(rewards)
         # weight the gradient by dicsounted rewards
-        gradients *= dr[:, np.newaxis]
+        gradients *= dr
         # target here is not a labeled correct value, just a nudge to the model
         # because alpha is small it will take some big rewards to make target much different than the initial probs
         # so when the rewards are small we don't change thigns much
