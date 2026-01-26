@@ -3,6 +3,7 @@ Trains a Neural Network AI Input Method using policy gradient
 """
 
 import argparse
+import time
 
 import numpy as np
 import torch
@@ -91,7 +92,10 @@ def train_model(width, height):
     opt = torch.optim.Adam(model.parameters(), lr=0.0001)
     alpha = 1e-4
     max_score = 0
-    for epoch in range(4000):
+    total_epochs = 8000
+    intermediate_save_frequency = 1000
+    start_time = time.time()
+    for epoch in range(total_epochs):
         states, actions, probs, rewards = run_game(width, height, params)
         score = np.sum(rewards)
         if score > max_score:
@@ -115,11 +119,30 @@ def train_model(width, height):
         # so when the rewards are small we don't change thigns much
         target = alpha * np.vstack([gradients]) + probs
         train_on_game_results(model, opt, states, target)
+        if epoch % intermediate_save_frequency == 0:
+            torch.save(model.state_dict(), f"model_epoch_{epoch}.pth")
         if epoch % 100 == 0:
-            print(f"{epoch} -> {score},{max_score}")
+            elapsed_time = time.time() - start_time
+            progress = (epoch + 1) / total_epochs
+            estimated_total_time = elapsed_time / progress if progress > 0 else 0
+            estimated_remaining_time = estimated_total_time - elapsed_time
+
+            # Format times as HH:MM:SS
+            elapsed_str = time.strftime("%H:%M:%S", time.gmtime(elapsed_time))
+            total_str = time.strftime("%H:%M:%S", time.gmtime(estimated_total_time))
+            remaining_str = time.strftime(
+                "%H:%M:%S", time.gmtime(estimated_remaining_time)
+            )
+
+            print(
+                f"{epoch}/{total_epochs} -> score:{score}, max:{max_score} | elapsed:{elapsed_str}, total:{total_str}, remaining:{remaining_str}"
+            )
 
     # Save the trained model
     torch.save(model.state_dict(), "nn_model.pth")
+    total_time = time.time() - start_time
+    total_time_str = time.strftime("%H:%M:%S", time.gmtime(total_time))
+    print(f"Training completed in {total_time_str}")
     print("Model saved to nn_model.pth")
 
 
