@@ -93,10 +93,6 @@ class GeneticAlgorithm:
             from heuristic_ai_input import heuristic_ai_random_params
 
             return heuristic_ai_random_params()
-        elif self.ai_type == "neural":
-            from nn_ai_input import nn_ai_random_params
-
-            return nn_ai_random_params()
         else:
             raise ValueError(
                 f"No parameter generation function for AI type: {self.ai_type}"
@@ -202,11 +198,6 @@ class GeneticAlgorithm:
 
             offspring_params = heuristic_ai_crossover(parent1.params, parent2.params)
             return Individual(offspring_params)
-        elif self.ai_type == "neural":
-            from nn_ai_input import nn_ai_crossover
-
-            offspring_params = nn_ai_crossover(parent1.params, parent2.params)
-            return Individual(offspring_params)
         else:
             raise ValueError(f"No crossover function for AI type: {self.ai_type}")
 
@@ -228,11 +219,6 @@ class GeneticAlgorithm:
             from heuristic_ai_input import heuristic_ai_mutate
 
             mutated_params = heuristic_ai_mutate(individual.params, self.mutation_rate)
-            return Individual(mutated_params)
-        elif self.ai_type == "neural":
-            from nn_ai_input import nn_ai_mutate
-
-            mutated_params = nn_ai_mutate(individual.params, self.mutation_rate)
             return Individual(mutated_params)
         else:
             raise ValueError(f"No mutation function for AI type: {self.ai_type}")
@@ -343,11 +329,6 @@ class GeneticAlgorithm:
 
             params_list = [ind.params for ind in self.population]
             return heuristic_ai_calculate_diversity(params_list)
-        elif self.ai_type == "neural":
-            from nn_ai_input import nn_ai_calculate_diversity
-
-            params_list = [ind.params for ind in self.population]
-            return nn_ai_calculate_diversity(params_list)
         else:
             # Return 0 for unknown AI types
             return 0.0
@@ -438,7 +419,7 @@ def main():
     # AI and game parameters
     parser.add_argument(
         "--ai-type",
-        choices=["heuristic", "neural"],
+        choices=["heuristic"],
         default="heuristic",
         help="AI type to optimize (default: heuristic)",
     )

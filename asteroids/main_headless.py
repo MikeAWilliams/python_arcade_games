@@ -102,6 +102,7 @@ def run_parallel_games(
     ai_type: str,
     seed: Optional[int] = None,
     show_progress: bool = True,
+    model_path: Optional[str] = None,
 ) -> StatisticsCollector:
     """
     Run multiple games in parallel using process pool
@@ -114,15 +115,32 @@ def run_parallel_games(
         ai_type: Type of AI to use ('heuristic' or 'neural')
         seed: Optional random seed for reproducibility
         show_progress: Whether to show progress updates
+        model_path: Path to trained model weights (for neural AI)
 
     Returns:
         StatisticsCollector with all results
     """
     collector = StatisticsCollector()
 
+    # Load neural network model if needed
+    ai_params = None
+    if ai_type == "neural":
+        import torch
+        from nn_ai_input import NNAIParameters
+
+        # Default to nn_model.pth if no path specified
+        if model_path is None:
+            model_path = "nn_model.pth"
+
+        params = NNAIParameters(device="cpu")
+        params.model.load_state_dict(torch.load(model_path, map_location="cpu"))
+        params.model.eval()
+        ai_params = params
+
     # Prepare arguments for each game
     game_args = [
-        (game_id, width, height, ai_type, seed, None) for game_id in range(num_games)
+        (game_id, width, height, ai_type, seed, ai_params)
+        for game_id in range(num_games)
     ]
 
     print(f"Running {num_games} games on {num_threads} processes...")
@@ -199,6 +217,13 @@ def main():
         help="Type of AI to use (default: heuristic)",
     )
 
+    parser.add_argument(
+        "--model-path",
+        type=str,
+        default=None,
+        help="Path to trained model weights file (for neural AI, default: nn_model.pth)",
+    )
+
     # Game configuration
     parser.add_argument(
         "--width",
@@ -246,6 +271,7 @@ def main():
         ai_type=args.ai_type,
         seed=args.seed,
         show_progress=not args.no_progress,
+        model_path=args.model_path,
     )
 
     # Print summary
