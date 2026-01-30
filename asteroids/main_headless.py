@@ -133,6 +133,7 @@ def run_parallel_games(
             model_path = "nn_model.pth"
 
         params = NNAIParameters(device="cpu")
+        print(f"loading model file {model_path}")
         params.model.load_state_dict(torch.load(model_path, map_location="cpu"))
         params.model.eval()
         ai_params = params

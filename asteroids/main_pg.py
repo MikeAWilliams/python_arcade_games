@@ -27,16 +27,40 @@ def discounted_rewards(rewards, gamma=0.99, normalize=True):
     return ret
 
 
-def train_on_game_results(model, optimizer, x, y, device):
-    x = torch.from_numpy(x).float().to(device)
-    y = torch.from_numpy(y).float().to(device)
+def train_on_game_results(model, optimizer, states, actions, advantages, device):
+    """
+    Train model using REINFORCE policy gradient.
+
+    Args:
+        states: (N, state_dim) array of states
+        actions: (N,) array of action indices taken
+        advantages: (N,) array of advantage values (discounted rewards)
+    """
+    # Convert to tensors
+    states = torch.from_numpy(states).float().to(device)
+    actions = torch.from_numpy(actions).long().to(device)
+    advantages = torch.from_numpy(advantages).float().to(device)
+
     optimizer.zero_grad()
-    predictions = model(x)
-    loss = -torch.mean(torch.log(predictions + 1e-8) * y)
+
+    # Forward pass - get action probabilities
+    action_probs = model(states)  # (N, num_actions)
+
+    # Get log probability of actions that were actually taken
+    # action_probs[i, actions[i]] gives probability of action taken in state i
+    log_probs = torch.log(
+        action_probs.gather(1, actions.unsqueeze(1)).squeeze(1) + 1e-8
+    )
+
+    # Policy gradient loss: -E[log π(a|s) * A(s,a)]
+    loss = -torch.mean(log_probs * advantages)
+
+    # Backpropagate
     loss.backward()
     torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
     optimizer.step()
-    return loss
+
+    return loss.item()
 
 
 def run_games_batch_worker(args):
@@ -49,7 +73,7 @@ def run_games_batch_worker(args):
         args: Tuple of (worker_id, num_games, width, height, model_state_dict)
 
     Returns:
-        List of dicts, one per game with states, actions, probs, discounted_rewards, score
+        List of dicts, one per game with states, actions, discounted_rewards, score
     """
     worker_id, num_games, width, height, model_state_dict = args
 
@@ -75,7 +99,7 @@ def run_games_batch_worker(args):
         # Collect data
         states = np.array(input_method.states)
         actions = np.array(input_method.actions_taken)
-        probs = np.array(input_method.probabilities)
+        # Note: probs no longer needed for REINFORCE
         rewards = np.diff(input_method.scores, prepend=0)
 
         # Add small survival bonus per frame (0.001 per frame)
@@ -94,7 +118,7 @@ def run_games_batch_worker(args):
                 "game_id": game_id,
                 "states": states,
                 "actions": actions,
-                "probs": probs,
+                # probs removed - not needed for REINFORCE
                 "discounted_rewards": dr,  # Already computed
                 "score": np.sum(rewards),
             }
@@ -127,7 +151,6 @@ def run_games_parallel(
 
     all_states = []
     all_actions = []
-    all_probs = []
     all_discounted_rewards = []
     total_score = 0
 
@@ -141,20 +164,17 @@ def run_games_parallel(
             # Discounted rewards already computed in worker!
             all_states.append(result["states"])
             all_actions.append(result["actions"])
-            all_probs.append(result["probs"])
             all_discounted_rewards.append(result["discounted_rewards"])
             total_score += result["score"]
 
     # Concatenate all games into single batches
     states_batch = np.concatenate(all_states, axis=0)
     actions_batch = np.concatenate(all_actions, axis=0)
-    probs_batch = np.concatenate(all_probs, axis=0)
     discounted_rewards_batch = np.concatenate(all_discounted_rewards, axis=0)
 
     return (
         states_batch,
         actions_batch,
-        probs_batch,
         discounted_rewards_batch,
         total_score,
     )
@@ -196,10 +216,10 @@ def train_model(width, height, batch_size=32, num_workers=None):
     params = NNAIParameters(device=device)
     model = params.model
     opt = torch.optim.Adam(model.parameters(), lr=0.0001)
-    alpha = 1e-4
+    # alpha removed - not needed for REINFORCE
     max_score = 0
-    total_epochs = 2000
-    print_frequency = 100
+    total_epochs = 60000
+    print_frequency = 500
     intermediate_save_frequency = total_epochs / 10
     start_time = time.time()
 
@@ -212,7 +232,7 @@ def train_model(width, height, batch_size=32, num_workers=None):
 
             # Run games in parallel using persistent executor
             sim_start = time.time()
-            states, actions, probs, dr, total_score = run_games_parallel(
+            states, actions, dr, total_score = run_games_parallel(
                 width, height, model_state_dict, batch_size, num_workers, executor
             )
             sim_time = time.time() - sim_start
@@ -223,23 +243,10 @@ def train_model(width, height, batch_size=32, num_workers=None):
 
             # Training computation
             train_start = time.time()
-            # recall that an action is 0 or 1 based on the index of the model output selected by probability sample
-            # we had an array of actions but we ran np.vstack(action) which makde it into a list of lists where each internal list had one element
-            # T transposes the array making it into a list with one list inside and all the elements in that
-            # taking out the 0 element grabs that internal list
-            # np.eye(2) converts a numeric value with 2 possible values into a 2x2 matrix one hot encoded
-            # value of 0 to [1, 0] and value of 1 to [0, 1]
-            one_hot_actions = np.eye(params.num_actions)[actions.T][0]
-            # a probability row is a list of two probabilities, after 1 hot encoding above we end up
-            # with the action taken as a 1. so a single subtraction is like [1, 0] - [0.7, 0.3] = [0.3, -0.3]
-            gradients = one_hot_actions - probs
-            # weight the gradient by dicsounted rewards (already computed per game in run_games_batch)
-            gradients *= dr
-            # target here is not a labeled correct value, just a nudge to the model
-            # because alpha is small it will take some big rewards to make target much different than the initial probs
-            # so when the rewards are small we don't change thigns much
-            target = alpha * np.vstack([gradients]) + probs
-            train_on_game_results(model, opt, states, target, device)
+            # Advantages are the discounted rewards (already computed per game)
+            # Shape: actions is (N,), dr is (N, 1) -> squeeze to (N,)
+            advantages = dr.squeeze()
+            loss = train_on_game_results(model, opt, states, actions, advantages, device)
             train_time = time.time() - train_start
             if epoch % intermediate_save_frequency == 0:
                 torch.save(model.state_dict(), f"model_epoch_{epoch}.pth")
@@ -257,7 +264,7 @@ def train_model(width, height, batch_size=32, num_workers=None):
                 )
 
                 print(
-                    f"{epoch}/{total_epochs} -> avg_score:{avg_score:.2f}, max:{max_score:.2f} | "
+                    f"{epoch}/{total_epochs} -> avg_score:{avg_score:.2f}, max:{max_score:.2f}, loss:{loss:.4f} | "
                     f"sim:{sim_time:.2f}s, train:{train_time:.2f}s | "
                     f"elapsed:{elapsed_str}, total:{total_str}, remaining:{remaining_str}"
                 )
