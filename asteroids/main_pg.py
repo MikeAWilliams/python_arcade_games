@@ -246,7 +246,9 @@ def train_model(width, height, batch_size=32, num_workers=None):
             # Advantages are the discounted rewards (already computed per game)
             # Shape: actions is (N,), dr is (N, 1) -> squeeze to (N,)
             advantages = dr.squeeze()
-            loss = train_on_game_results(model, opt, states, actions, advantages, device)
+            loss = train_on_game_results(
+                model, opt, states, actions, advantages, device
+            )
             train_time = time.time() - train_start
             if epoch % intermediate_save_frequency == 0:
                 torch.save(model.state_dict(), f"model_epoch_{epoch}.pth")

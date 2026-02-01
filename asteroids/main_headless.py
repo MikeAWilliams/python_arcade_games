@@ -103,6 +103,8 @@ def run_parallel_games(
     seed: Optional[int] = None,
     show_progress: bool = True,
     model_path: Optional[str] = None,
+    record: bool = False,
+    record_base_name: Optional[str] = None,
 ) -> StatisticsCollector:
     """
     Run multiple games in parallel using process pool
@@ -116,11 +118,22 @@ def run_parallel_games(
         seed: Optional random seed for reproducibility
         show_progress: Whether to show progress updates
         model_path: Path to trained model weights (for neural AI)
+        record: Whether to record game state and actions to individual NPZ files
+        record_base_name: Base name for recording files (saved to ./data/{base_name}_{game_id}.npz)
 
     Returns:
         StatisticsCollector with all results
     """
     collector = StatisticsCollector()
+
+    # Create data directory if recording is enabled
+    if record:
+        if record_base_name is None:
+            raise ValueError("record_base_name must be provided when record=True")
+        os.makedirs("./data", exist_ok=True)
+        print(
+            f"Recording enabled. Files will be saved to ./data/{record_base_name}_<game_id>.npz"
+        )
 
     # Load neural network model if needed
     ai_params = None
@@ -140,7 +153,7 @@ def run_parallel_games(
 
     # Prepare arguments for each game
     game_args = [
-        (game_id, width, height, ai_type, seed, ai_params)
+        (game_id, width, height, ai_type, seed, ai_params, record_base_name)
         for game_id in range(num_games)
     ]
 
@@ -255,6 +268,15 @@ def main():
         help="Disable progress output",
     )
 
+    parser.add_argument(
+        "--record",
+        nargs="?",
+        const="game_recordings",
+        default=None,
+        metavar="BASENAME",
+        help="Record game state and actions to ./data/<basename>_<game_id>.npz files (default: game_recordings)",
+    )
+
     args = parser.parse_args()
 
     # Validate arguments
@@ -273,6 +295,8 @@ def main():
         seed=args.seed,
         show_progress=not args.no_progress,
         model_path=args.model_path,
+        record=args.record is not None,
+        record_base_name=args.record,
     )
 
     # Print summary

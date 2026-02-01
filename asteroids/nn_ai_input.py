@@ -15,6 +15,51 @@ from torch import nn
 from game import SHOOT_COOLDOWN, Action, InputMethod
 
 
+def compute_state(game):
+    """
+    Compute the game state vector for neural network input.
+
+    State vector has the form:
+    - player_state: x, y, vx, vy, theta, shot_cooldown
+    - per_asteroid_state: x, y, vx, vy, active (for up to 27 asteroids)
+
+    Total possible asteroids = 27 (3 + 6 + 18 for each generation)
+
+    Args:
+        game: Game instance
+
+    Returns:
+        List of floats representing the game state
+    """
+    result = []
+
+    # Encode the player state
+    result.append(float(game.player.geometry.pos.x / game.width))
+    result.append(float(game.player.geometry.pos.y / game.height))
+    result.append(float(game.player.vel.x / game.width))
+    result.append(float(game.player.vel.y / game.height))
+    result.append(float(game.player.geometry.angle / (2 * math.pi)))
+    result.append(float(game.shoot_cooldown / SHOOT_COOLDOWN))
+
+    # Encode the asteroid state
+    asteroid_id_map = {}
+    for asteroid in game.asteroids:
+        asteroid_id_map[asteroid.id] = asteroid
+
+    for id in range(27):
+        if id in asteroid_id_map:
+            asteroid = asteroid_id_map[id]
+            result.append(float(asteroid.geometry.pos.x / game.width))
+            result.append(float(asteroid.geometry.pos.y / game.height))
+            result.append(float(asteroid.vel.x / game.width))
+            result.append(float(asteroid.vel.y / game.height))
+            result.append(float(1))
+        else:
+            result.extend([float(0), float(0), float(0), float(0), float(0)])
+
+    return result
+
+
 class NNAIParameters:
     """Configuration parameters for NNAI"""
 
@@ -59,41 +104,9 @@ class NNAIInputMethod(InputMethod):
         self.probabilities = [] if keep_data else None
         self.scores = [] if keep_data else None
 
-    def get_asteroid_id_map(self):
-        asteroid_id_map = {}
-        for asteroid in self.game.asteroids:
-            asteroid_id_map[asteroid.id] = asteroid
-        return asteroid_id_map
-
     def compute_state(self):
-        # state vecotor should have the form
-        # player_state x,y, vx,vy,theta, shot_cooldown
-        # the for each asteroid
-        # per_asteroid_state x,y, vx,vy, active
-        # with a total_possible_asteroids = 27  # 3+6+18 for each generation
-        # Note this is totally hard coded to the generation rules and will need to change if I change that
-        result = []
-        # encode the player state
-        result.append(float(self.game.player.geometry.pos.x / self.game.width))
-        result.append(float(self.game.player.geometry.pos.y / self.game.height))
-        result.append(float(self.game.player.vel.x / self.game.width))
-        result.append(float(self.game.player.vel.y / self.game.height))
-        result.append(float(self.game.player.geometry.angle / (2 * math.pi)))
-        result.append(float(self.game.shoot_cooldown / SHOOT_COOLDOWN))
-
-        # encode the asteroid state
-        id_map = self.get_asteroid_id_map()
-        for id in range(27):
-            if id in id_map:
-                asteroid = id_map[id]
-                result.append(float(asteroid.geometry.pos.x / self.game.width))
-                result.append(float(asteroid.geometry.pos.y / self.game.height))
-                result.append(float(asteroid.vel.x / self.game.width))
-                result.append(float(asteroid.vel.y / self.game.height))
-                result.append(float(1))
-            else:
-                result.extend([float(0), float(0), float(0), float(0), float(0)])
-
+        """Compute state vector using the free function"""
+        result = compute_state(self.game)
         assert len(result) == self.parameters.num_inputs
         return result
 
