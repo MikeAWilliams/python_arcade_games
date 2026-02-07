@@ -1,8 +1,9 @@
 <!--
 Sync Impact Report:
-- Version change: 1.0.0 → 1.1.0
-- Added principle: VI. User-Written AI Algorithms
+- Version change: 1.1.0 → 1.2.0
+- Added section: Project Structure (Spec File Location)
 - Principles defined: 6 (Learning Focus, Code Simplicity, No Packaging, Documentation Balance, Permission-First Operations, User-Written AI Algorithms)
+- Project structure: Specs must be in /home/mike/source/python_arcade_games/asteroids/specs/
 - Templates requiring updates: N/A
 - Follow-up TODOs: None
 -->
@@ -41,6 +42,13 @@ Agent MUST NOT write new core AI algorithms. The user writes AI implementations 
 
 **Rationale**: The learning value is in writing the algorithms. Agent writing them defeats the educational purpose. Debugging assistance preserves learning while reducing frustration.
 
+## Project Structure
+
+### Spec File Location
+Specification files MUST be located in `/home/mike/source/python_arcade_games/asteroids/specs/` directory, NOT in the root repository folder. This project lives within a larger repository, and specs should be colocated with the project code.
+
+**Rationale**: Keeps all project artifacts (code, specs, documentation) together in the asteroids subfolder, maintaining clear boundaries within the larger repository.
+
 ## Testing Policy
 
 No unit tests required. Testing happens through:
@@ -72,4 +80,4 @@ All code contributions must align with the Core Principles. When principles conf
 
 Violations should be caught in review, not after merge. If complexity is creeping in, simplify.
 
-**Version**: 1.1.0 | **Ratified**: 2026-02-07 | **Last Amended**: 2026-02-07
+**Version**: 1.2.0 | **Ratified**: 2026-02-07 | **Last Amended**: 2026-02-07
