@@ -78,13 +78,13 @@ As a user running headless benchmarking with recording enabled, I need to see ga
 
 **Why this priority**: Essential for tracking data collection runs and debugging recording issues.
 
-**Independent Test**: Run `main_headless.py --record` with some games, observe progress on screen, verify `headless_recording.log` in `data/` directory contains all output.
+**Independent Test**: Run `main_headless.py --record test_run` with some games, observe progress on screen, verify `test_run.log` in `data/` directory contains all output.
 
 **Acceptance Scenarios**:
 
 1. **Given** headless recording has started, **When** games complete, **Then** progress updates and statistics are displayed on screen
-2. **Given** headless recording is running with `--record` option, **When** I check the `data/` directory, **Then** `headless_recording.log` file exists and contains all console output
-3. **Given** I start a new headless recording run, **When** `headless_recording.log` already exists, **Then** it is overwritten with the new run's output
+2. **Given** headless recording is running with `--record <basename>` option, **When** I check the `data/` directory, **Then** `<basename>.log` file exists and contains all console output
+3. **Given** I start a new headless recording run with the same basename, **When** `<basename>.log` already exists, **Then** it is overwritten with the new run's output
 
 ---
 
@@ -110,8 +110,8 @@ As a user running headless benchmarking with recording enabled, I need to see ga
 - **FR-009**: Neural network training log file naming MUST include date/time to distinguish between multiple training runs
 - **FR-010**: Genetic algorithm training (main_genetic.py) MUST save log file as `genetic.log` in the project root directory
 - **FR-011**: Genetic algorithm log file MUST be overwritten on each new run (no timestamp needed)
-- **FR-012**: Headless benchmarking (main_headless.py) MUST save log file as `headless_recording.log` in the `data/` directory when `--record` option is used
-- **FR-013**: Headless recording log file MUST be overwritten on each new run (no timestamp needed)
+- **FR-012**: Headless benchmarking (main_headless.py) MUST save log file as `<basename>.log` in the `data/` directory when `--record <basename>` option is used
+- **FR-013**: Headless recording log file MUST be overwritten on each new run with the same basename (no timestamp needed)
 - **FR-014**: System MUST create `data/` directory automatically if it doesn't exist when headless recording is enabled
 
 ### Key Entities

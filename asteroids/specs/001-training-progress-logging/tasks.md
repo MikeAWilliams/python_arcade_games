@@ -118,17 +118,17 @@ No setup tasks required. Proceeding directly to user story implementation.
 
 ## Phase 5: User Story 6 - Headless Recording Logging (Priority: P1)
 
-**Goal**: Enable dual logging (screen + file) for headless benchmarking with recording enabled, with `headless_recording.log` in `data/` directory
+**Goal**: Enable dual logging (screen + file) for headless benchmarking with recording enabled, with `<basename>.log` in `data/` directory
 
-**Independent Test**: Run `python main_headless.py --record -n 5`, verify console output appears AND `headless_recording.log` is created in `data/` with matching content
+**Independent Test**: Run `python main_headless.py --record test_run -n 5`, verify console output appears AND `test_run.log` is created in `data/` with matching content
 
 ### Implementation for User Story 6
 
 - [ ] T024 [P] [US6] Add logging import to main_headless.py
-- [ ] T025 [US6] Create setup_headless_logging() function in main_headless.py to configure dual output (console + headless_recording.log in data/, overwrite mode)
+- [ ] T025 [US6] Create setup_headless_logging(base_name) function in main_headless.py to configure dual output (console + <base_name>.log in data/, overwrite mode)
 - [ ] T026 [US6] Modify run_parallel_games() to accept optional logger parameter in main_headless.py
 - [ ] T027 [US6] Modify StatisticsCollector.print_summary() to accept optional logger parameter in main_headless.py
-- [ ] T028 [US6] In main() function, when args.record is not None, call setup_headless_logging() to get logger in main_headless.py
+- [ ] T028 [US6] In main() function, when args.record is not None, call setup_headless_logging(args.record) to get logger in main_headless.py
 - [ ] T029 [US6] Pass logger to run_parallel_games() when recording is enabled in main_headless.py
 - [ ] T030 [US6] Replace print() on line 134 (progress output) with logger.info() when logger is available in main_headless.py
 - [ ] T031 [US6] Replace print() on line 149 (model loading) with logger.info() when logger is available in main_headless.py
@@ -137,16 +137,16 @@ No setup tasks required. Proceeding directly to user story implementation.
 - [ ] T034 [US6] Replace print() on lines 199-200 (completion message) with logger.info() when logger is available in main_headless.py
 - [ ] T035 [US6] Update StatisticsCollector.print_summary() to use logger.info() when logger is provided in main_headless.py
 
-**Checkpoint**: Headless benchmarking with recording now logs to both console and headless_recording.log file.
+**Checkpoint**: Headless benchmarking with recording now logs to both console and <basename>.log file.
 
 **Test Steps**:
-1. Run: `python main_headless.py --record -n 10`
+1. Run: `python main_headless.py --record test_data -n 10`
 2. Let complete
 3. Verify: Console shows progress and statistics
-4. Verify: `data/headless_recording.log` created (not in root, in data/)
-5. Verify: `data/headless_recording.log` contains all console output (run info, progress, statistics)
-6. Run again: `python main_headless.py --record -n 5`
-7. Verify: `data/headless_recording.log` contains only second run's output (overwritten, not appended)
+4. Verify: `data/test_data.log` created (not in root, in data/)
+5. Verify: `data/test_data.log` contains all console output (run info, progress, statistics)
+6. Run again: `python main_headless.py --record test_data -n 5`
+7. Verify: `data/test_data.log` contains only second run's output (overwritten, not appended)
 8. Run without record: `python main_headless.py -n 5`
 9. Verify: Console shows output but no log file created
 

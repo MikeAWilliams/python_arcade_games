@@ -74,16 +74,17 @@ python main_headless.py -n 10 --record heuristic_data
 
 #### Recording Outputs
 
-When using the `--record` option, headless benchmarking creates:
+When using the `--record <basename>` option, headless benchmarking creates:
 
 - **Recording Files**: `data/<basename>_<game_id>.npz`
   - Individual game recordings with state and action data
   - Used for training data collection
 
-- **Log File**: `data/headless_recording.log`
+- **Log File**: `data/<basename>.log`
   - Complete console output from the recording session
   - Includes run configuration, progress updates, and final statistics
-  - Overwritten on each new recording run (no timestamp)
+  - Overwritten on each new recording run with the same basename (no timestamp)
+  - Example: `--record heuristic_data` creates `data/heuristic_data.log`
 
 ### Training
 

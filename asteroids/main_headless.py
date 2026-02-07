@@ -18,13 +18,17 @@ from typing import Optional
 from asteroids.core.game_runner import run_single_game
 
 
-def setup_headless_logging():
+def setup_headless_logging(base_name):
     """
     Set up dual logging (console + file) for headless recording.
-    Log file saved to data directory as headless_recording.log (overwritten each run).
+    Log file saved to data directory as <base_name>.log (overwritten each run).
+
+    Args:
+        base_name: Base name for the log file (e.g., "game_recordings" -> "data/game_recordings.log")
+
     Returns: logger instance
     """
-    log_file = "data/headless_recording.log"
+    log_file = f"data/{base_name}.log"
 
     # Ensure data directory exists
     os.makedirs("data", exist_ok=True)
@@ -330,7 +334,7 @@ def main():
     # Set up logging if recording is enabled
     logger = None
     if args.record is not None:
-        logger = setup_headless_logging()
+        logger = setup_headless_logging(args.record)
 
     # Run simulations
     collector = run_parallel_games(
