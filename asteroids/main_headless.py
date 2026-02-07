@@ -7,13 +7,50 @@ bypass the Python GIL and achieve true parallel execution across all CPU cores.
 """
 
 import argparse
+import logging
 import os
 import statistics
+import sys
 import time
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from typing import Optional
 
 from asteroids.core.game_runner import run_single_game
+
+
+def setup_headless_logging():
+    """
+    Set up dual logging (console + file) for headless recording.
+    Log file saved to data directory as headless_recording.log (overwritten each run).
+    Returns: logger instance
+    """
+    log_file = "data/headless_recording.log"
+
+    # Ensure data directory exists
+    os.makedirs("data", exist_ok=True)
+
+    # Configure logger
+    logger = logging.getLogger("headless")
+    logger.setLevel(logging.INFO)
+    logger.handlers = []  # Clear any existing handlers
+
+    # Console handler
+    console_handler = logging.StreamHandler(sys.stdout)
+    console_handler.setLevel(logging.INFO)
+
+    # File handler (overwrite mode)
+    file_handler = logging.FileHandler(log_file, mode="w")
+    file_handler.setLevel(logging.INFO)
+
+    # Simple format (no logger name prefix)
+    formatter = logging.Formatter("%(message)s")
+    console_handler.setFormatter(formatter)
+    file_handler.setFormatter(formatter)
+
+    logger.addHandler(console_handler)
+    logger.addHandler(file_handler)
+
+    return logger
 
 
 class StatisticsCollector:
@@ -70,28 +107,30 @@ class StatisticsCollector:
             },
         }
 
-    def print_summary(self):
+    def print_summary(self, logger=None):
         """Print formatted statistics summary"""
         stats = self.compute_statistics()
 
-        print("\n" + "=" * 60)
-        print("GAME STATISTICS SUMMARY")
-        print("=" * 60)
-        print(f"Total Games: {stats['total_games']}")
-        print()
-        print("SCORE:")
-        print(f"  Min:       {stats['score']['min']:>6}")
-        print(f"  Max:       {stats['score']['max']:>6}")
-        print(f"  Average:   {stats['score']['avg']:>6.1f}")
-        print(f"  Median:    {stats['score']['median']:>6.1f}")
-        print(f"  Std Dev:   {stats['score']['std_dev']:>6.1f}")
-        print()
-        print("SURVIVAL TIME (seconds):")
-        print(f"  Min:       {stats['time_alive']['min']:>6.2f}")
-        print(f"  Max:       {stats['time_alive']['max']:>6.2f}")
-        print(f"  Average:   {stats['time_alive']['avg']:>6.2f}")
-        print(f"  Median:    {stats['time_alive']['median']:>6.2f}")
-        print("=" * 60)
+        log = logger.info if logger else print
+
+        log("\n" + "=" * 60)
+        log("GAME STATISTICS SUMMARY")
+        log("=" * 60)
+        log(f"Total Games: {stats['total_games']}")
+        log("")
+        log("SCORE:")
+        log(f"  Min:       {stats['score']['min']:>6}")
+        log(f"  Max:       {stats['score']['max']:>6}")
+        log(f"  Average:   {stats['score']['avg']:>6.1f}")
+        log(f"  Median:    {stats['score']['median']:>6.1f}")
+        log(f"  Std Dev:   {stats['score']['std_dev']:>6.1f}")
+        log("")
+        log("SURVIVAL TIME (seconds):")
+        log(f"  Min:       {stats['time_alive']['min']:>6.2f}")
+        log(f"  Max:       {stats['time_alive']['max']:>6.2f}")
+        log(f"  Average:   {stats['time_alive']['avg']:>6.2f}")
+        log(f"  Median:    {stats['time_alive']['median']:>6.2f}")
+        log("=" * 60)
 
 
 def run_parallel_games(
@@ -105,6 +144,7 @@ def run_parallel_games(
     model_path: Optional[str] = None,
     record: bool = False,
     record_base_name: Optional[str] = None,
+    logger=None,
 ) -> StatisticsCollector:
     """
     Run multiple games in parallel using process pool
@@ -120,18 +160,20 @@ def run_parallel_games(
         model_path: Path to trained model weights (for neural AI)
         record: Whether to record game state and actions to individual NPZ files
         record_base_name: Base name for recording files (saved to ./data/{base_name}_{game_id}.npz)
+        logger: Optional logger instance for dual output
 
     Returns:
         StatisticsCollector with all results
     """
     collector = StatisticsCollector()
+    log = logger.info if logger else print
 
     # Create data directory if recording is enabled
     if record:
         if record_base_name is None:
             raise ValueError("record_base_name must be provided when record=True")
         os.makedirs("./data", exist_ok=True)
-        print(
+        log(
             f"Recording enabled. Files will be saved to ./data/{record_base_name}_<game_id>.npz"
         )
 
@@ -146,7 +188,7 @@ def run_parallel_games(
             model_path = "nn_model.pth"
 
         params = NNAIParameters(device="cpu")
-        print(f"loading model file {model_path}")
+        log(f"loading model file {model_path}")
         params.model.load_state_dict(torch.load(model_path, map_location="cpu"))
         params.model.eval()
         ai_params = params
@@ -157,11 +199,11 @@ def run_parallel_games(
         for game_id in range(num_games)
     ]
 
-    print(f"Running {num_games} games on {num_threads} processes...")
-    print(f"AI Type: {ai_type}")
+    log(f"Running {num_games} games on {num_threads} processes...")
+    log(f"AI Type: {ai_type}")
     if seed is not None:
-        print(f"Random Seed: {seed}")
-    print()
+        log(f"Random Seed: {seed}")
+    log("")
 
     # Use ProcessPoolExecutor for parallel execution (bypasses GIL)
     with ProcessPoolExecutor(max_workers=num_threads) as executor:
@@ -187,7 +229,7 @@ def run_parallel_games(
                     collector.results
                 )
 
-                print(
+                log(
                     f"Progress: {completed}/{num_games} "
                     f"({100*completed/num_games:.0f}%) - "
                     f"Avg Score: {current_avg:.1f} - "
@@ -196,8 +238,8 @@ def run_parallel_games(
                 )
 
     elapsed_total = time.time() - start_time
-    print(f"\nCompleted {num_games} games in {elapsed_total:.1f} seconds")
-    print(f"Average rate: {num_games/elapsed_total:.1f} games/second")
+    log(f"\nCompleted {num_games} games in {elapsed_total:.1f} seconds")
+    log(f"Average rate: {num_games/elapsed_total:.1f} games/second")
 
     return collector
 
@@ -285,6 +327,11 @@ def main():
     if args.threads < 1:
         parser.error("Number of threads must be at least 1")
 
+    # Set up logging if recording is enabled
+    logger = None
+    if args.record is not None:
+        logger = setup_headless_logging()
+
     # Run simulations
     collector = run_parallel_games(
         num_games=args.num_games,
@@ -297,10 +344,11 @@ def main():
         model_path=args.model_path,
         record=args.record is not None,
         record_base_name=args.record,
+        logger=logger,
     )
 
     # Print summary
-    collector.print_summary()
+    collector.print_summary(logger)
 
 
 if __name__ == "__main__":

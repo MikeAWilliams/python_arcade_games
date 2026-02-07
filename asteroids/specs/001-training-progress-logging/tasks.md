@@ -116,20 +116,55 @@ No setup tasks required. Proceeding directly to user story implementation.
 
 ---
 
-## Phase 5: Polish & Documentation
+## Phase 5: User Story 6 - Headless Recording Logging (Priority: P1)
+
+**Goal**: Enable dual logging (screen + file) for headless benchmarking with recording enabled, with `headless_recording.log` in `data/` directory
+
+**Independent Test**: Run `python main_headless.py --record -n 5`, verify console output appears AND `headless_recording.log` is created in `data/` with matching content
+
+### Implementation for User Story 6
+
+- [ ] T024 [P] [US6] Add logging import to main_headless.py
+- [ ] T025 [US6] Create setup_headless_logging() function in main_headless.py to configure dual output (console + headless_recording.log in data/, overwrite mode)
+- [ ] T026 [US6] Modify run_parallel_games() to accept optional logger parameter in main_headless.py
+- [ ] T027 [US6] Modify StatisticsCollector.print_summary() to accept optional logger parameter in main_headless.py
+- [ ] T028 [US6] In main() function, when args.record is not None, call setup_headless_logging() to get logger in main_headless.py
+- [ ] T029 [US6] Pass logger to run_parallel_games() when recording is enabled in main_headless.py
+- [ ] T030 [US6] Replace print() on line 134 (progress output) with logger.info() when logger is available in main_headless.py
+- [ ] T031 [US6] Replace print() on line 149 (model loading) with logger.info() when logger is available in main_headless.py
+- [ ] T032 [US6] Replace print() on lines 160-164 (run info) with logger.info() when logger is available in main_headless.py
+- [ ] T033 [US6] Replace print() on line 190 (progress updates) with logger.info() when logger is available in main_headless.py
+- [ ] T034 [US6] Replace print() on lines 199-200 (completion message) with logger.info() when logger is available in main_headless.py
+- [ ] T035 [US6] Update StatisticsCollector.print_summary() to use logger.info() when logger is provided in main_headless.py
+
+**Checkpoint**: Headless benchmarking with recording now logs to both console and headless_recording.log file.
+
+**Test Steps**:
+1. Run: `python main_headless.py --record -n 10`
+2. Let complete
+3. Verify: Console shows progress and statistics
+4. Verify: `data/headless_recording.log` created (not in root, in data/)
+5. Verify: `data/headless_recording.log` contains all console output (run info, progress, statistics)
+6. Run again: `python main_headless.py --record -n 5`
+7. Verify: `data/headless_recording.log` contains only second run's output (overwritten, not appended)
+8. Run without record: `python main_headless.py -n 5`
+9. Verify: Console shows output but no log file created
+
+---
+
+## Phase 6: Polish & Documentation
 
 **Goal**: Format code and update documentation
 
 ### Polish Tasks
 
-- [ ] T024 Run ./format.sh to format all Python files with Black
-- [ ] T025 Update README.md Training section with neural network training outputs documentation
-- [ ] T026 Update README.md Training section with genetic algorithm training outputs documentation
+- [ ] T036 Run ./format.sh to format all Python files with Black
+- [ ] T037 Update README.md Headless Benchmarking section with recording outputs documentation
 
 **Test Steps**:
 1. Run: `./format.sh`
 2. Verify: All files formatted successfully
-3. Read README.md and verify Training Outputs section is clear and accurate
+3. Read README.md and verify documentation sections are clear and accurate
 
 ---
 
@@ -145,6 +180,8 @@ US1+US2 (P1) ← Independent MVP - can ship this alone
 US3 (P2) ← Builds on US1+US2 checkpoint infrastructure
 
 US5 (P1) ← Completely independent, can be done in parallel with US1+US2
+
+US6 (P1) ← Completely independent, can be done in parallel with all others
 ```
 
 ### Parallel Execution Opportunities
@@ -157,7 +194,9 @@ US5 (P1) ← Completely independent, can be done in parallel with US1+US2
 
 **Phase 4 (US5)**: All tasks sequential (same file modifications)
 
-**Phase 5 (Polish)**: T024 (format) must run before T025-T026 (documentation)
+**Phase 5 (US6)**: All tasks sequential (same file modifications)
+
+**Phase 6 (Polish)**: T036 (format) can run anytime, T037 (documentation) after US6 complete
 
 ### MVP Strategy
 
@@ -170,29 +209,33 @@ US5 (P1) ← Completely independent, can be done in parallel with US1+US2
 **Recommended Delivery Order**:
 1. Ship US1+US2 (neural network logging) - test and validate
 2. Add US5 (genetic logging) in parallel or after US1+US2
-3. Add US3 (enhanced checkpoints) when resume capability needed
-4. Polish (format + docs) after all functionality complete
+3. Add US6 (headless recording logging) - completely independent
+4. Add US3 (enhanced checkpoints) when resume capability needed
+5. Polish (format + docs) after all functionality complete
 
 ---
 
 ## Task Summary
 
-**Total Tasks**: 26
+**Total Tasks**: 37
 
 **Breakdown by User Story**:
 - Setup: 0 tasks
 - US1+US2 (Neural Training Logging): 12 tasks
 - US3 (Checkpoint Management): 3 tasks
 - US5 (Genetic Logging): 8 tasks
-- Polish: 3 tasks
+- US6 (Headless Recording Logging): 12 tasks
+- Polish: 2 tasks
 
 **Parallel Opportunities**:
 - T016 (US5 import) can start in parallel with US1+US2 if using separate working copies
-- After US1+US2 complete: US3 and US5 can proceed in parallel
+- T024 (US6 import) can start in parallel with any other phase
+- After US1+US2 complete: US3, US5, and US6 are all independent
 
 **Independent Test Criteria Met**:
 - ✅ US1+US2: Run training, see console + log file
 - ✅ US3: Load checkpoints, verify state
 - ✅ US5: Run genetic, see console + genetic.log
+- ✅ US6: Run headless with --record, see console + headless_recording.log
 
-**Format Validation**: ✅ All 26 tasks follow checklist format with ID, Story label, and file paths
+**Format Validation**: ✅ All 37 tasks follow checklist format with ID, Story label, and file paths

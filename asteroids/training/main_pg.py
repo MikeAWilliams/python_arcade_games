@@ -3,10 +3,13 @@ Trains a Neural Network AI Input Method using policy gradient
 """
 
 import argparse
+import logging
 import os
 import sys
 import time
 from concurrent.futures import ProcessPoolExecutor, as_completed
+from datetime import datetime
+from pathlib import Path
 
 import numpy as np
 import torch
@@ -18,6 +21,42 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from asteroids.core.game import Action, Game
 from asteroids.ai.neural import NNAIInputMethod, NNAIParameters
 from asteroids.core.game_runner import execute_action
+
+
+def setup_logging(log_dir="nn_checkpoints"):
+    """
+    Set up dual logging (console + file).
+    Returns: logger instance, timestamp for filenames
+    """
+    # Create directory if needed
+    os.makedirs(log_dir, exist_ok=True)
+
+    # Generate timestamp for this run
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    log_file = os.path.join(log_dir, f"training_{timestamp}.log")
+
+    # Configure logger
+    logger = logging.getLogger("training")
+    logger.setLevel(logging.INFO)
+    logger.handlers = []  # Clear any existing handlers
+
+    # Console handler
+    console_handler = logging.StreamHandler(sys.stdout)
+    console_handler.setLevel(logging.INFO)
+
+    # File handler
+    file_handler = logging.FileHandler(log_file, mode="w")
+    file_handler.setLevel(logging.INFO)
+
+    # Simple format (no logger name prefix)
+    formatter = logging.Formatter("%(message)s")
+    console_handler.setFormatter(formatter)
+    file_handler.setFormatter(formatter)
+
+    logger.addHandler(console_handler)
+    logger.addHandler(file_handler)
+
+    return logger, timestamp
 
 
 def discounted_rewards(rewards, gamma=0.99, normalize=True):
@@ -186,6 +225,9 @@ def run_games_parallel(
 
 
 def train_model(width, height, batch_size=32, num_workers=None):
+    # Set up logging
+    logger, timestamp = setup_logging()
+
     # Detect device (GPU if available, else CPU)
     device = (
         torch.accelerator.current_accelerator().type
@@ -193,13 +235,13 @@ def train_model(width, height, batch_size=32, num_workers=None):
         else "cpu"
     )
     device = "cpu"
-    print(f"Using device: {device}")
+    logger.info(f"Using device: {device}")
 
     # Default to all CPU cores
     if num_workers is None:
         num_workers = os.cpu_count() or 4
-    print(f"Using {num_workers} worker processes for game simulation")
-    print(f"Batch size: {batch_size} games per training update")
+    logger.info(f"Using {num_workers} worker processes for game simulation")
+    logger.info(f"Batch size: {batch_size} games per training update")
 
     params = NNAIParameters(device=device)
     model = params.model
@@ -212,7 +254,7 @@ def train_model(width, height, batch_size=32, num_workers=None):
     start_time = time.time()
 
     # Create persistent process pool to avoid recreation overhead
-    print("Creating persistent worker pool...")
+    logger.info("Creating persistent worker pool...")
     with ProcessPoolExecutor(max_workers=num_workers) as executor:
         for epoch in range(total_epochs):
             # Get model state dict for subprocess (CPU version)
@@ -239,7 +281,19 @@ def train_model(width, height, batch_size=32, num_workers=None):
             )
             train_time = time.time() - train_start
             if epoch % intermediate_save_frequency == 0:
-                torch.save(model.state_dict(), f"model_epoch_{epoch}.pth")
+                checkpoint_path = os.path.join(
+                    "nn_checkpoints", f"checkpoint_{timestamp}_epoch_{epoch}.pth"
+                )
+                torch.save(
+                    {
+                        "epoch": epoch,
+                        "model_state_dict": model.state_dict(),
+                        "optimizer_state_dict": opt.state_dict(),
+                        "max_score": max_score,
+                        "loss": loss,
+                    },
+                    checkpoint_path,
+                )
             if epoch % print_frequency == 0:
                 elapsed_time = time.time() - start_time
                 progress = (epoch + 1) / total_epochs
@@ -253,18 +307,30 @@ def train_model(width, height, batch_size=32, num_workers=None):
                     "%H:%M:%S", time.gmtime(estimated_remaining_time)
                 )
 
-                print(
+                logger.info(
                     f"{epoch}/{total_epochs} -> avg_score:{avg_score:.2f}, max:{max_score:.2f}, loss:{loss:.4f} | "
                     f"sim:{sim_time:.2f}s, train:{train_time:.2f}s | "
                     f"elapsed:{elapsed_str}, total:{total_str}, remaining:{remaining_str}"
                 )
 
     # Save the trained model
-    torch.save(model.state_dict(), "nn_model.pth")
+    final_checkpoint_path = os.path.join(
+        "nn_checkpoints", f"checkpoint_{timestamp}_final.pth"
+    )
+    torch.save(
+        {
+            "epoch": total_epochs - 1,
+            "model_state_dict": model.state_dict(),
+            "optimizer_state_dict": opt.state_dict(),
+            "max_score": max_score,
+            "loss": loss,
+        },
+        final_checkpoint_path,
+    )
     total_time = time.time() - start_time
     total_time_str = time.strftime("%H:%M:%S", time.gmtime(total_time))
-    print(f"Training completed in {total_time_str}")
-    print("Model saved to nn_model.pth")
+    logger.info(f"Training completed in {total_time_str}")
+    logger.info(f"Model saved to {final_checkpoint_path}")
 
 
 def main():
