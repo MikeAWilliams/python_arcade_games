@@ -12,9 +12,9 @@ from typing import Optional
 
 import numpy as np
 
-from game import Action, Game
-from heuristic_ai_input import HeuristicAIInput, HeuristicAIInputParameters
-from nn_ai_input import NNAIInputMethod, NNAIParameters, compute_state
+from asteroids.core.game import Action, Game
+from asteroids.ai.heuristic import HeuristicAIInput, HeuristicAIInputParameters
+from asteroids.ai.neural import NNAIInputMethod, NNAIParameters, compute_state
 
 
 class GameRunner:

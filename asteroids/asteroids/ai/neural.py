@@ -12,7 +12,7 @@ import numpy as np
 import torch
 from torch import nn
 
-from game import SHOOT_COOLDOWN, Action, InputMethod
+from asteroids.core.game import Action, InputMethod, SHOOT_COOLDOWN
 
 
 def compute_state(game):

@@ -1,2 +1,39 @@
-.venv
-__pycache__
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+*.egg-info/
+dist/
+build/
+
+# Model directories (keep .gitkeep)
+nn_checkpoints/*
+!nn_checkpoints/.gitkeep
+nn_weights/*
+!nn_weights/.gitkeep
+
+# Data directory (keep .gitkeep)
+data/*
+!data/.gitkeep
+
+# Old model files in root (if migrating)
+/*.pth
+/*.npz
+/*.h5
+/*.json
+
+# Logs
+*.log
+out.log
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store

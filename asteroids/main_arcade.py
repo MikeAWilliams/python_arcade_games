@@ -5,10 +5,8 @@ import sys
 import arcade
 import torch
 
-import game
-from game_input_keyboard import KeyboardInput
-from heuristic_ai_input import HeuristicAIInput
-from nn_ai_input import NNAIInputMethod, NNAIParameters
+from asteroids.core import Game, KeyboardInput, Action, InputMethod
+from asteroids.ai import HeuristicAIInput, NNAIInputMethod, NNAIParameters
 
 # constants
 WINDOW_WIDTH = 1280
@@ -19,7 +17,7 @@ WINDOW_TITLE = "Asteroids!"
 class GameView(arcade.View):
     """Main application class."""
 
-    def __init__(self, game, input_method: game.InputMethod):
+    def __init__(self, game, input_method: InputMethod):
         super().__init__()
         self.game = game
         self.input_method = input_method
@@ -41,19 +39,19 @@ class GameView(arcade.View):
             print("Game Over!")
             sys.exit(0)
 
-    def execute_action(self, action: game.Action):
+    def execute_action(self, action: Action):
         """Execute the given action on the game"""
-        if action == game.Action.TURN_LEFT:
+        if action == Action.TURN_LEFT:
             self.game.turning_left()
-        elif action == game.Action.TURN_RIGHT:
+        elif action == Action.TURN_RIGHT:
             self.game.turning_right()
-        elif action == game.Action.ACCELERATE:
+        elif action == Action.ACCELERATE:
             self.game.accelerate()
-        elif action == game.Action.DECELERATE:
+        elif action == Action.DECELERATE:
             self.game.decelerate()
-        elif action == game.Action.SHOOT:
+        elif action == Action.SHOOT:
             self.game.shoot()
-        elif action == game.Action.NO_ACTION:
+        elif action == Action.NO_ACTION:
             self.game.no_action()
 
     def on_key_press(self, key, modifiers):
@@ -124,7 +122,7 @@ def main():
     )
     args = parser.parse_args()
 
-    g = game.Game(WINDOW_WIDTH, WINDOW_HEIGHT)
+    g = Game(WINDOW_WIDTH, WINDOW_HEIGHT)
 
     if args.aih:
         input_method = HeuristicAIInput(g)

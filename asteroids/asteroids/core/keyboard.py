@@ -1,5 +1,5 @@
 import arcade
-from game import InputMethod, Action
+from asteroids.core.game import InputMethod, Action
 
 
 class KeyboardInput(InputMethod):

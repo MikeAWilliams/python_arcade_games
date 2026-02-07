@@ -13,7 +13,7 @@ import time
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from typing import Optional
 
-from game_runner import run_single_game
+from asteroids.core.game_runner import run_single_game
 
 
 class StatisticsCollector:
@@ -139,7 +139,7 @@ def run_parallel_games(
     ai_params = None
     if ai_type == "neural":
         import torch
-        from nn_ai_input import NNAIParameters
+        from asteroids.ai import NNAIParameters
 
         # Default to nn_model.pth if no path specified
         if model_path is None:

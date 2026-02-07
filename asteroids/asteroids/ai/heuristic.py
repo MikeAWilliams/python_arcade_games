@@ -9,7 +9,14 @@ from enum import Enum
 
 from pyglet.math import Vec2
 
-from game import BULLET_SPEED, PLAYER_RADIUS, SHOOT_COOLDOWN, Action, InputMethod, Vec2d
+from asteroids.core.game import (
+    Action,
+    InputMethod,
+    BULLET_SPEED,
+    PLAYER_RADIUS,
+    SHOOT_COOLDOWN,
+    Vec2d,
+)
 
 
 class Strategy(Enum):

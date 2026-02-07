@@ -4,6 +4,7 @@ Trains a Neural Network AI Input Method using policy gradient
 
 import argparse
 import os
+import sys
 import time
 from concurrent.futures import ProcessPoolExecutor, as_completed
 
@@ -11,8 +12,12 @@ import numpy as np
 import torch
 from torch import nn
 
-from game import Action, Game
-from nn_ai_input import NNAIInputMethod, NNAIParameters
+# Add parent directory to path so we can import asteroids package
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+
+from asteroids.core.game import Action, Game
+from asteroids.ai.neural import NNAIInputMethod, NNAIParameters
+from asteroids.core.game_runner import execute_action
 
 
 def discounted_rewards(rewards, gamma=0.99, normalize=True):
@@ -178,23 +183,6 @@ def run_games_parallel(
         discounted_rewards_batch,
         total_score,
     )
-
-
-# need to refactor and use game_runner.py. But being lazy to get it to work now
-def execute_action(game, action):
-    """Execute action on game"""
-    if action == Action.TURN_LEFT:
-        game.turning_left()
-    elif action == Action.TURN_RIGHT:
-        game.turning_right()
-    elif action == Action.ACCELERATE:
-        game.accelerate()
-    elif action == Action.DECELERATE:
-        game.decelerate()
-    elif action == Action.SHOOT:
-        game.shoot()
-    elif action == Action.NO_ACTION:
-        game.no_action()
 
 
 def train_model(width, height, batch_size=32, num_workers=None):

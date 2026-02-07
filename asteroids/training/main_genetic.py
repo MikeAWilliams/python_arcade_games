@@ -8,11 +8,15 @@ using selection, crossover, and mutation to find optimal configurations.
 import argparse
 import os
 import random
+import sys
 import time
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from typing import Optional
 
-from game_runner import run_single_game
+# Add parent directory to path so we can import asteroids package
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+
+from asteroids.core.game_runner import run_single_game
 
 
 class Individual:
@@ -90,7 +94,7 @@ class GeneticAlgorithm:
     def _random_params(self):
         """Generate random AI parameters within bounds"""
         if self.ai_type == "heuristic":
-            from heuristic_ai_input import heuristic_ai_random_params
+            from asteroids.ai.heuristic import heuristic_ai_random_params
 
             return heuristic_ai_random_params()
         else:
@@ -194,7 +198,7 @@ class GeneticAlgorithm:
             New individual (offspring)
         """
         if self.ai_type == "heuristic":
-            from heuristic_ai_input import heuristic_ai_crossover
+            from asteroids.ai.heuristic import heuristic_ai_crossover
 
             offspring_params = heuristic_ai_crossover(parent1.params, parent2.params)
             return Individual(offspring_params)
@@ -216,7 +220,7 @@ class GeneticAlgorithm:
             Mutated individual (new instance)
         """
         if self.ai_type == "heuristic":
-            from heuristic_ai_input import heuristic_ai_mutate
+            from asteroids.ai.heuristic import heuristic_ai_mutate
 
             mutated_params = heuristic_ai_mutate(individual.params, self.mutation_rate)
             return Individual(mutated_params)
@@ -325,7 +329,7 @@ class GeneticAlgorithm:
             Diversity metric (0-1, higher = more diverse)
         """
         if self.ai_type == "heuristic":
-            from heuristic_ai_input import heuristic_ai_calculate_diversity
+            from asteroids.ai.heuristic import heuristic_ai_calculate_diversity
 
             params_list = [ind.params for ind in self.population]
             return heuristic_ai_calculate_diversity(params_list)
