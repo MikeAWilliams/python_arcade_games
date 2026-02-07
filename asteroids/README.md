@@ -17,7 +17,8 @@ asteroids/
 │
 ├── training/              # Training scripts
 │   ├── policy_gradient.py # Policy gradient (REINFORCE) training
-│   └── genetic.py         # Genetic algorithm optimization
+│   ├── genetic.py         # Genetic algorithm optimization
+│   └── cross_entropy.py   # Supervised learning (cross-entropy)
 │
 ├── tools/                 # Utility scripts
 │   └── compact_recordings.py  # Consolidate game recordings
@@ -93,6 +94,11 @@ When using the `--record <basename>` option, headless benchmarking creates:
 python training/policy_gradient.py --batch-size 32 --workers 8
 ```
 
+**Train with Supervised Learning (Cross-Entropy):**
+```bash
+python training/cross_entropy.py --base-name heuristic_data --batch-size 64 --epochs 200
+```
+
 **Optimize Heuristic AI (Genetic Algorithm):**
 ```bash
 python training/genetic.py --population 50 --generations 20
@@ -125,6 +131,20 @@ Log file saved to root directory:
   - Complete console output from optimization run
   - Includes generation progress and best parameters
   - Overwritten on each new run
+
+**Cross-Entropy Training** (`training/cross_entropy.py`):
+
+All artifacts saved to `nn_checkpoints/`:
+
+- **Log Files**: `<basename>_YYYYMMDD_HHMMSS.log`
+  - Complete console output from training run
+  - Includes data loading, training progress, errors
+
+- **Checkpoints**: `<basename>_YYYYMMDD_HHMMSS_*.pth`
+  - Saved during training (user implements checkpoint logic)
+  - Final model saved as `<basename>_YYYYMMDD_HHMMSS_final.pth`
+
+**Note**: Core training algorithm not implemented - user implements cross-entropy loss and training loop.
 
 ### Utilities
 
