@@ -107,7 +107,6 @@ nn_checkpoints/
 ├── training_20260207_123045.log
 ├── checkpoint_20260207_123045_epoch_0.pth
 ├── checkpoint_20260207_123045_epoch_6000.pth
-├── checkpoint_20260207_123045_best.pth
 └── checkpoint_20260207_123045_final.pth
 ```
 
@@ -201,19 +200,6 @@ torch.save({
     'max_score': max_score,
     'loss': loss,
 }, checkpoint_path)
-
-# Best model (when new best score achieved)
-best_checkpoint_path = os.path.join(
-    "nn_checkpoints",
-    f"checkpoint_{timestamp}_best.pth"
-)
-torch.save({
-    'epoch': epoch,
-    'model_state_dict': model.state_dict(),
-    'optimizer_state_dict': opt.state_dict(),
-    'max_score': max_score,
-    'loss': loss,
-}, best_checkpoint_path)
 
 # Final model (at end of training)
 final_checkpoint_path = os.path.join(
@@ -319,7 +305,6 @@ def setup_genetic_logging():
    - Call `setup_logging()` at start, get logger and timestamp
    - Replace all `print()` calls with `logger.info()`
    - Update checkpoint save paths to use `nn_checkpoints/` and timestamp
-   - Add best model checkpoint save when `avg_score > max_score`
    - Update final model save to use new checkpoint format
 
 #### For training/main_genetic.py:
@@ -399,15 +384,7 @@ python training/main_pg.py --batch-size 2 --workers 2
 # Check: can load checkpoint with torch.load()
 ```
 
-**Test 3: Verify Best Model Tracking**
-```bash
-python training/main_pg.py --batch-size 2 --workers 2
-# Watch console for score improvements
-# Check: best checkpoint updates when score improves
-# Check: best checkpoint has higher score than later checkpoints
-```
-
-**Test 4: Verify Directory Creation**
+**Test 3: Verify Directory Creation**
 ```bash
 rm -rf nn_checkpoints/  # Remove directory
 python training/main_pg.py --batch-size 2 --workers 2
@@ -459,7 +436,6 @@ All artifacts saved to `nn_checkpoints/`:
 
 - **Checkpoints**: `checkpoint_YYYYMMDD_HHMMSS_*.pth`
   - `epoch_N.pth`: Periodic checkpoints (every 6000 epochs)
-  - `best.pth`: Best-performing model during training
   - `final.pth`: Final model after all epochs
 
 - **Checkpoint Contents**:
@@ -507,7 +483,6 @@ The `CLAUDE.md` already documents the training scripts. No updates needed since 
 - [ ] Call `setup_logging()` in `train_model()`
 - [ ] Replace all print() with logger.info()
 - [ ] Update checkpoint save paths
-- [ ] Add best model checkpoint save
 - [ ] Update final model save
 
 ### main_genetic.py:

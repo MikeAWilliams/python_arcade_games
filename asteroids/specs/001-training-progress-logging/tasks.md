@@ -64,16 +64,15 @@ No setup tasks required. Proceeding directly to user story implementation.
 
 ## Phase 3: User Story 3 - Checkpoint Management (Priority: P2)
 
-**Goal**: Save full training state in organized checkpoint files (periodic, best, final) to enable future resume capability
+**Goal**: Save full training state in organized checkpoint files (periodic, final) to enable future resume capability
 
 **Independent Test**: Run training for multiple epochs, verify checkpoint files appear in `nn_checkpoints/` with proper naming and can be loaded with torch.load()
 
 ### Implementation for User Story 3
 
-- [ ] T013 [US3] Add best model checkpoint save when avg_score > max_score in training/main_pg.py (save to nn_checkpoints/checkpoint_{timestamp}_best.pth)
-- [ ] T014 [US3] Update checkpoint dict to include full state (model_state_dict, optimizer_state_dict, epoch, max_score, loss) in training/main_pg.py
-- [ ] T015 [US3] Update periodic checkpoint save (line 241-242) to use new checkpoint format with full state in training/main_pg.py
-- [ ] T016 [US3] Update final checkpoint save (added in T012) to use full state format in training/main_pg.py
+- [ ] T013 [US3] Update checkpoint dict to include full state (model_state_dict, optimizer_state_dict, epoch, max_score, loss) in training/main_pg.py
+- [ ] T014 [US3] Update periodic checkpoint save (line 241-242) to use new checkpoint format with full state in training/main_pg.py
+- [ ] T015 [US3] Update final checkpoint save (added in T012) to use full state format in training/main_pg.py
 
 **Checkpoint**: All checkpoints now save complete training state for potential resume.
 
@@ -84,8 +83,6 @@ No setup tasks required. Proceeding directly to user story implementation.
 4. Verify: Filename format is checkpoint_YYYYMMDD_HHMMSS_epoch_6000.pth
 5. Verify: Can load checkpoint: `torch.load('nn_checkpoints/checkpoint_*.pth')`
 6. Verify: Checkpoint contains keys: epoch, model_state_dict, optimizer_state_dict, max_score, loss
-7. Watch for best score improvement and verify best checkpoint is saved
-8. Verify best checkpoint has higher score than later checkpoints if overfitting occurs
 
 ---
 
@@ -97,14 +94,14 @@ No setup tasks required. Proceeding directly to user story implementation.
 
 ### Implementation for User Story 5
 
-- [ ] T017 [P] [US5] Add logging import to training/main_genetic.py
-- [ ] T018 [US5] Create setup_genetic_logging() function in training/main_genetic.py to configure dual output (console + genetic.log in root, overwrite mode)
-- [ ] T019 [US5] Call setup_genetic_logging() at start of run() method in GeneticAlgorithm class in training/main_genetic.py
-- [ ] T020 [US5] Store logger as instance variable self.logger in training/main_genetic.py
-- [ ] T021 [US5] Replace print() on lines 237-239 (algorithm config) with self.logger.info() in training/main_genetic.py
-- [ ] T022 [US5] Replace print() on line 240 (empty line) with self.logger.info('') in training/main_genetic.py
-- [ ] T023 [US5] Replace print() on line 315 (generation progress) with self.logger.info() in training/main_genetic.py
-- [ ] T024 [US5] Replace print() on lines 352-376 (final results) with logger.info() in main() function of training/main_genetic.py
+- [ ] T016 [P] [US5] Add logging import to training/main_genetic.py
+- [ ] T017 [US5] Create setup_genetic_logging() function in training/main_genetic.py to configure dual output (console + genetic.log in root, overwrite mode)
+- [ ] T018 [US5] Call setup_genetic_logging() at start of run() method in GeneticAlgorithm class in training/main_genetic.py
+- [ ] T019 [US5] Store logger as instance variable self.logger in training/main_genetic.py
+- [ ] T020 [US5] Replace print() on lines 237-239 (algorithm config) with self.logger.info() in training/main_genetic.py
+- [ ] T021 [US5] Replace print() on line 240 (empty line) with self.logger.info('') in training/main_genetic.py
+- [ ] T022 [US5] Replace print() on line 315 (generation progress) with self.logger.info() in training/main_genetic.py
+- [ ] T023 [US5] Replace print() on lines 352-376 (final results) with logger.info() in main() function of training/main_genetic.py
 
 **Checkpoint**: Genetic algorithm now logs to both console and genetic.log file.
 
@@ -125,9 +122,9 @@ No setup tasks required. Proceeding directly to user story implementation.
 
 ### Polish Tasks
 
-- [ ] T025 Run ./format.sh to format all Python files with Black
-- [ ] T026 Update README.md Training section with neural network training outputs documentation
-- [ ] T027 Update README.md Training section with genetic algorithm training outputs documentation
+- [ ] T024 Run ./format.sh to format all Python files with Black
+- [ ] T025 Update README.md Training section with neural network training outputs documentation
+- [ ] T026 Update README.md Training section with genetic algorithm training outputs documentation
 
 **Test Steps**:
 1. Run: `./format.sh`
@@ -160,7 +157,7 @@ US5 (P1) ← Completely independent, can be done in parallel with US1+US2
 
 **Phase 4 (US5)**: All tasks sequential (same file modifications)
 
-**Phase 5 (Polish)**: T025 (format) must run before T026-T027 (documentation)
+**Phase 5 (Polish)**: T024 (format) must run before T025-T026 (documentation)
 
 ### MVP Strategy
 
@@ -180,17 +177,17 @@ US5 (P1) ← Completely independent, can be done in parallel with US1+US2
 
 ## Task Summary
 
-**Total Tasks**: 27
+**Total Tasks**: 26
 
 **Breakdown by User Story**:
 - Setup: 0 tasks
 - US1+US2 (Neural Training Logging): 12 tasks
-- US3 (Checkpoint Management): 4 tasks
+- US3 (Checkpoint Management): 3 tasks
 - US5 (Genetic Logging): 8 tasks
 - Polish: 3 tasks
 
 **Parallel Opportunities**:
-- T017 (US5 import) can start in parallel with US1+US2 if using separate working copies
+- T016 (US5 import) can start in parallel with US1+US2 if using separate working copies
 - After US1+US2 complete: US3 and US5 can proceed in parallel
 
 **Independent Test Criteria Met**:
@@ -198,4 +195,4 @@ US5 (P1) ← Completely independent, can be done in parallel with US1+US2
 - ✅ US3: Load checkpoints, verify state
 - ✅ US5: Run genetic, see console + genetic.log
 
-**Format Validation**: ✅ All tasks follow checklist format with ID, Story label, and file paths
+**Format Validation**: ✅ All 26 tasks follow checklist format with ID, Story label, and file paths
