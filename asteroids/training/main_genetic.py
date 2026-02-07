@@ -6,6 +6,7 @@ using selection, crossover, and mutation to find optimal configurations.
 """
 
 import argparse
+import logging
 import os
 import random
 import sys
@@ -17,6 +18,38 @@ from typing import Optional
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from asteroids.core.game_runner import run_single_game
+
+
+def setup_genetic_logging():
+    """
+    Set up dual logging (console + file) for genetic algorithm.
+    Log file saved to root directory as genetic.log (overwritten each run).
+    Returns: logger instance
+    """
+    log_file = "genetic.log"
+
+    # Configure logger
+    logger = logging.getLogger("genetic")
+    logger.setLevel(logging.INFO)
+    logger.handlers = []  # Clear any existing handlers
+
+    # Console handler
+    console_handler = logging.StreamHandler(sys.stdout)
+    console_handler.setLevel(logging.INFO)
+
+    # File handler (overwrite mode)
+    file_handler = logging.FileHandler(log_file, mode="w")
+    file_handler.setLevel(logging.INFO)
+
+    # Simple format (no logger name prefix)
+    formatter = logging.Formatter("%(message)s")
+    console_handler.setFormatter(formatter)
+    file_handler.setFormatter(formatter)
+
+    logger.addHandler(console_handler)
+    logger.addHandler(file_handler)
+
+    return logger
 
 
 class Individual:
@@ -234,10 +267,15 @@ class GeneticAlgorithm:
         Returns:
             Best individual found across all generations
         """
-        print(f"Genetic Algorithm: Optimizing {self.ai_type} AI Parameters")
-        print(f"Population: {self.population_size}, Generations: {self.generations}")
-        print(f"Games per individual: {self.games_per_individual}")
-        print()
+        # Set up logging
+        self.logger = setup_genetic_logging()
+
+        self.logger.info(f"Genetic Algorithm: Optimizing {self.ai_type} AI Parameters")
+        self.logger.info(
+            f"Population: {self.population_size}, Generations: {self.generations}"
+        )
+        self.logger.info(f"Games per individual: {self.games_per_individual}")
+        self.logger.info("")
 
         # Initialize population
         self.population = self.initialize_population()
@@ -312,7 +350,7 @@ class GeneticAlgorithm:
         # Calculate diversity (standard deviation of parameters)
         diversity = self._calculate_diversity()
 
-        print(
+        self.logger.info(
             f"Generation {self.generation}/{self.generations} - "
             f"Best: {best:.1f} - Avg: {avg:.1f} - Worst: {worst:.1f} - "
             f"Diversity: {diversity:.2f} - "
@@ -339,7 +377,10 @@ class GeneticAlgorithm:
 
 
 def print_best_parameters(
-    individual: Individual, ai_type: str, baseline_fitness: Optional[float] = None
+    individual: Individual,
+    ai_type: str,
+    baseline_fitness: Optional[float] = None,
+    logger=None,
 ):
     """
     Print the best parameters found.
@@ -348,33 +389,36 @@ def print_best_parameters(
         individual: Best individual
         ai_type: AI type being optimized
         baseline_fitness: Optional baseline fitness for comparison
+        logger: Logger instance to use (if None, uses print)
     """
-    print("\n" + "=" * 60)
-    print("EVOLUTION COMPLETE")
-    print("=" * 60)
-    print(f"Best fitness: {individual.fitness:.1f}")
-    print()
-    print("Best parameters:")
+    log = logger.info if logger else print
+
+    log("\n" + "=" * 60)
+    log("EVOLUTION COMPLETE")
+    log("=" * 60)
+    log(f"Best fitness: {individual.fitness:.1f}")
+    log("")
+    log("Best parameters:")
 
     # Print parameters based on AI type
     if ai_type == "heuristic":
         params = individual.params
-        print(f"  evasion_max_distance:     {params.evasion_max_distance}")
-        print(f"  max_speed:                {params.max_speed}")
-        print(f"  evasion_lookahead_ticks:  {params.evasion_lookahead_ticks}")
-        print(f"  shoot_angle_tolerance:    {params.shoot_angle_tolerance:.3f}")
-        print(f"  movement_angle_tolerance: {params.movement_angle_tolerance:.3f}")
+        log(f"  evasion_max_distance:     {params.evasion_max_distance}")
+        log(f"  max_speed:                {params.max_speed}")
+        log(f"  evasion_lookahead_ticks:  {params.evasion_lookahead_ticks}")
+        log(f"  shoot_angle_tolerance:    {params.shoot_angle_tolerance:.3f}")
+        log(f"  movement_angle_tolerance: {params.movement_angle_tolerance:.3f}")
     else:
         # Generic fallback - print all attributes
         for attr, value in vars(individual.params).items():
-            print(f"  {attr}: {value}")
+            log(f"  {attr}: {value}")
 
     if baseline_fitness is not None:
         improvement = ((individual.fitness - baseline_fitness) / baseline_fitness) * 100
-        print()
-        print(f"Baseline fitness: {baseline_fitness:.1f}")
-        print(f"Improvement: {improvement:+.1f}%")
-    print("=" * 60)
+        log("")
+        log(f"Baseline fitness: {baseline_fitness:.1f}")
+        log(f"Improvement: {improvement:+.1f}%")
+    log("=" * 60)
 
 
 def main():
@@ -492,8 +536,8 @@ def main():
     best = ga.evolve()
     elapsed = time.time() - start_time
 
-    print(f"\nTotal evolution time: {elapsed:.1f} seconds")
-    print_best_parameters(best, args.ai_type, args.baseline_fitness)
+    ga.logger.info(f"\nTotal evolution time: {elapsed:.1f} seconds")
+    print_best_parameters(best, args.ai_type, args.baseline_fitness, ga.logger)
 
 
 if __name__ == "__main__":
