@@ -16,8 +16,8 @@ asteroids/
 │       └── neural.py      # Neural network AI
 │
 ├── training/              # Training scripts
-│   ├── main_pg.py         # Policy gradient (REINFORCE) training
-│   └── main_genetic.py    # Genetic algorithm optimization
+│   ├── policy_gradient.py # Policy gradient (REINFORCE) training
+│   └── genetic.py         # Genetic algorithm optimization
 │
 ├── tools/                 # Utility scripts
 │   └── compact_recordings.py  # Consolidate game recordings
@@ -90,17 +90,17 @@ When using the `--record <basename>` option, headless benchmarking creates:
 
 **Train Neural Network (Policy Gradient):**
 ```bash
-python training/main_pg.py --batch-size 32 --workers 8
+python training/policy_gradient.py --batch-size 32 --workers 8
 ```
 
 **Optimize Heuristic AI (Genetic Algorithm):**
 ```bash
-python training/main_genetic.py --population 50 --generations 20
+python training/genetic.py --population 50 --generations 20
 ```
 
 #### Training Outputs
 
-**Neural Network Training** (`training/main_pg.py`):
+**Neural Network Training** (`training/policy_gradient.py`):
 
 All artifacts saved to `nn_checkpoints/`:
 
@@ -117,7 +117,7 @@ All artifacts saved to `nn_checkpoints/`:
   - Optimizer state (`optimizer_state_dict`)
   - Training metadata (epoch, max_score, loss)
 
-**Genetic Algorithm Training** (`training/main_genetic.py`):
+**Genetic Algorithm Training** (`training/genetic.py`):
 
 Log file saved to root directory:
 
