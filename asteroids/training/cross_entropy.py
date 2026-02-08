@@ -26,6 +26,7 @@ from torch.nn import functional as F
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from asteroids.ai.neural import NNAIParameters
+from asteroids.core.game import Action
 
 
 class ModelWrap(nn.Module):
@@ -37,7 +38,9 @@ class ModelWrap(nn.Module):
     def forward(self, x, y=None):
         logits = self.model(x)
         if y is not None:
-            loss = F.cross_entropy(logits, y)
+            # y is one-hot encoded, so compute cross-entropy manually
+            log_probs = F.log_softmax(logits, dim=1)
+            loss = -torch.mean(torch.sum(y * log_probs, dim=1))
         else:
             loss = None
         return logits, loss
@@ -50,6 +53,7 @@ class DataLoader:
         self.batch_per_file = batch_per_file
         self.batch_size = 1
         self.device = device
+        self.num_actions = len(Action)
 
         # Find all matching files
         pattern = f"data/{base_name}_*.npz"
@@ -99,6 +103,9 @@ class DataLoader:
         # Convert to tensors
         states = torch.from_numpy(states).float().to(self.device)
         labels = torch.from_numpy(labels).long().to(self.device)
+
+        # Convert labels to one-hot encoding
+        labels = F.one_hot(labels, num_classes=self.num_actions).float()
 
         self.batch_index += 1
         return states, labels
