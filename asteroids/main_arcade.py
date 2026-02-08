@@ -5,8 +5,8 @@ import sys
 import arcade
 import torch
 
-from asteroids.core import Game, KeyboardInput, Action, InputMethod
 from asteroids.ai import HeuristicAIInput, NNAIInputMethod, NNAIParameters
+from asteroids.core import Action, Game, InputMethod, KeyboardInput
 
 # constants
 WINDOW_WIDTH = 1280
@@ -135,7 +135,9 @@ def main():
         )
         # Load the trained model
         params = NNAIParameters(device=device)
-        params.model.load_state_dict(torch.load(args.ain, map_location=device))
+        params.model.load_state_dict(
+            torch.load("nn_weights/" + args.ain, map_location=device)
+        )
         params.model.eval()
         print(f"Model loaded from {args.ain} on device: {device}")
         input_method = NNAIInputMethod(g, parameters=params)

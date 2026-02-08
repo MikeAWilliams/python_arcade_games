@@ -42,10 +42,11 @@ class ModelWrap(nn.Module):
 
 
 class DataLoader:
-    def __init__(self, base_name, logger, batch_size):
+    def __init__(self, base_name, logger, batch_size, device="cpu"):
         self.base_name = base_name
         self.logger = logger
         self.batch_size = batch_size
+        self.device = device
 
         # Find all matching files
         pattern = f"data/{base_name}_*.npz"
@@ -84,6 +85,11 @@ class DataLoader:
         end = start + self.batch_size
         states = self.data["states"][start:end]
         labels = self.data["actions"][start:end]
+
+        # Convert to tensors
+        states = torch.from_numpy(states).float().to(self.device)
+        labels = torch.from_numpy(labels).long().to(self.device)
+
         self.batch_index += 1
         return states, labels
 
@@ -156,7 +162,7 @@ def train_model(
     logger.info("")
 
     logger.info("Loading training data...")
-    data_loader = DataLoader(base_name, logger, batch_size)
+    data_loader = DataLoader(base_name, logger, batch_size, device)
     raw_model = NNAIParameters(device)
     logger.info(f"Model architecture: {raw_model.model}")
     model_wrap = ModelWrap(raw_model.model)
@@ -203,8 +209,8 @@ def main():
     parser.add_argument(
         "--learning-rate",
         type=float,
-        default=0.001,
-        help="Learning rate (default: 0.001)",
+        default=0.0001,
+        help="Learning rate (default: 0.0001)",
     )
     parser.add_argument(
         "--epochs",
