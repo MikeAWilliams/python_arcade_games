@@ -53,7 +53,10 @@ class DataLoader:
 
         # Find all matching files
         pattern = f"data/{base_name}_*.npz"
-        self.files = sorted(glob.glob(pattern))
+        # Sort numerically by the number in filename (not alphabetically)
+        self.files = sorted(
+            glob.glob(pattern), key=lambda x: int(Path(x).stem.split("_")[-1])
+        )
 
         if not self.files:
             raise FileNotFoundError(
@@ -318,8 +321,8 @@ def main():
     parser.add_argument(
         "--checkpoint-interval",
         type=int,
-        default=10,
-        help="Number of iterations between checkpoints (default: 10)",
+        default=50,
+        help="Number of iterations between checkpoints (default: 50)",
     )
 
     parser.add_argument(
