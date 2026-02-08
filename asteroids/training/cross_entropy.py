@@ -144,6 +144,7 @@ def train_model(
     learning_rate,
     max_iterations,
     print_interval,
+    checkpoint_interval,
     eval_interval,
     games_per_eval,
     device,
@@ -188,6 +189,12 @@ def train_model(
         loss.backward()
         optimizer.step()
 
+        if iter and iter % checkpoint_interval == 0:
+            torch.save(
+                model_wrap.state_dict(),
+                f"nn_checkpoints/{base_name}_checkpoint_{iter}.pth",
+            )
+
         if iter % print_interval == 0:
             elapsed_time = time.time() - start_time
             time_per_iter = elapsed_time / (iter + 1)
@@ -204,6 +211,13 @@ def train_model(
                 logger.error("Loss is NaN, terminating")
                 sys.exit(1)
         iter += 1
+
+    # we made it
+    logger.info("Training completed successfully")
+    torch.save(
+        model_wrap.state_dict(),
+        f"nn_checkpoints/{base_name}_final.pth",
+    )
 
 
 def main():
@@ -235,8 +249,8 @@ def main():
     parser.add_argument(
         "--max-iterations",
         type=int,
-        default=100000,
-        help="Number of training iterations (default: 100000)",
+        default=400,  # 400 for now as default batch per file is 3*115(files)=345
+        help="Number of training iterations (default: 400)",
     )
 
     parser.add_argument(
@@ -244,6 +258,13 @@ def main():
         type=int,
         default=10,
         help="Number of iterations between prints (default: 10)",
+    )
+
+    parser.add_argument(
+        "--checkpoint-interval",
+        type=int,
+        default=10,
+        help="Number of iterations between checkpoints (default: 10)",
     )
 
     parser.add_argument(
@@ -278,6 +299,7 @@ def main():
         learning_rate=args.learning_rate,
         max_iterations=args.max_iterations,
         print_interval=args.print_interval,
+        checkpoint_interval=args.checkpoint_interval,
         eval_interval=args.eval_interval,
         games_per_eval=args.games_per_eval,
         device=args.device,
