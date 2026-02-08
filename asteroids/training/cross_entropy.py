@@ -83,7 +83,6 @@ class DataLoader:
         except Exception as e:
             self.logger.error(f"  Failed to load {file}: {e}")
             raise
-        self.logger.info(f"     loaded data from {file}, batch size: {self.batch_size}")
         self.batch_index = 0
 
     def get_batch(self):
@@ -256,7 +255,7 @@ def train_model(
 
         if iter and iter % checkpoint_interval == 0:
             torch.save(
-                model_wrap.state_dict(),
+                raw_model.model.state_dict(),
                 f"nn_checkpoints/{base_name}_checkpoint_{iter}.pth",
             )
 
@@ -278,9 +277,15 @@ def train_model(
         iter += 1
 
     # we made it
-    logger.info("Training completed successfully")
+    elapsed_time = time.time() - start_time
+    time_per_iter = elapsed_time / (iter + 1)
+    logger.info(
+        "Training completed successfully, "
+        f"Elapsed: {elapsed_time:.1f}s, Per-iter: {time_per_iter:.3f}s"
+    )
+
     torch.save(
-        model_wrap.state_dict(),
+        raw_model.model.state_dict(),
         f"nn_checkpoints/{base_name}_final.pth",
     )
 
