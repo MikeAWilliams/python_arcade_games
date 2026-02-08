@@ -264,6 +264,44 @@ This is a problem for the neural network because:
 3. **Non-stationary**: The angle value depends on how long the game has been running
    and how much the player has turned, not just the current heading
 
-**Recommended fix**: Normalize the angle to [0, 2π] before dividing by 2π, or encode
-heading as `(sin(angle), cos(angle))` which is naturally bounded to [-1, 1] and
-wraps correctly.
+### Scalar angle vs (sin, cos) heading encoding
+
+The two options for fixing the angle are:
+1. **Scalar [0, 1]**: wrap angle to [0, 2π], then divide by 2π
+2. **(sin θ, cos θ)**: encode heading as two values, each in [-1, 1]
+
+**(sin θ, cos θ) is significantly better for this model.** Here's why:
+
+The core task the angle serves is deciding "turn left, turn right, or shoot?" — which
+depends on the angular relationship between the player's heading and the direction to
+asteroids. The Smart AI's dominant SHOOT_NEAREST strategy is: compute angle to nearest
+asteroid, compare to heading, turn toward it, shoot when aligned.
+
+**Scalar angle in [0, 1]:**
+- Has a discontinuity at the wrap point: 0.001 and 0.999 are almost the same heading
+  but numerically distant. A linear layer treats them as maximally different.
+- The first linear layer computes `w * angle + ...` — a linear function of a scalar
+  angle cannot represent "am I facing left of the asteroid?" because that relationship
+  is sinusoidal, not linear.
+- The hidden layer must learn sin/cos-like patterns from a single scalar through ReLU.
+  This is possible in theory but wastes hidden layer capacity (neurons spent
+  approximating trig functions rather than learning gameplay strategy).
+
+**(sin θ, cos θ) encoding:**
+- No discontinuity — nearby angles always produce nearby values. Wrapping is natural.
+- A single linear neuron can compute `w1 * cos θ + w2 * sin θ = R * cos(θ - φ)` for
+  some learned magnitude and phase. This is exactly the operation needed to compare
+  headings.
+- To determine if an asteroid at relative position (dx, dy) is to the left or right
+  of heading (cos θ, sin θ), you need the cross product:
+  `dx * sin θ - dy * cos θ`. **A single linear neuron can learn this directly** from
+  the (sin θ, cos θ) inputs combined with asteroid position inputs.
+- With a scalar angle, the network must first reconstruct sin and cos from θ using
+  ReLU activations before it can reason about aiming.
+
+**For this specific model** (141→128→6, no bias, ReLU): the single hidden layer is the
+bottleneck. Spending neurons learning to approximate trig functions from a scalar
+leaves fewer neurons for actual strategy. With (sin, cos), the first linear layer can
+directly compute angular relationships in a single matrix multiply.
+
+The tradeoff is one extra input dimension (142 vs 141), which is negligible.
