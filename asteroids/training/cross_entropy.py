@@ -70,7 +70,8 @@ class DataLoader:
 
         logger.info(f"Found {len(self.files)} data files matching '{base_name}'")
 
-        self.data = []
+        self.states = None
+        self.actions = None
         self.file_index = 0
         self.epoch_number = 0
         self.load_data()
@@ -78,17 +79,17 @@ class DataLoader:
     def load_data(self):
         file = self.files[self.file_index]
         try:
-            self.data = np.load(file)
-            self.batch_size = len(self.data["states"]) // self.batch_per_file
+            raw = np.load(file)
+            self.states = raw["states"]
+            self.actions = raw["actions"]
+            self.batch_size = len(self.states) // self.batch_per_file
         except Exception as e:
             self.logger.error(f"  Failed to load {file}: {e}")
             raise
         self.batch_index = 0
 
     def get_batch(self):
-        if self.batch_index * self.batch_size + self.batch_size >= len(
-            self.data["states"]
-        ):
+        if self.batch_index * self.batch_size + self.batch_size >= len(self.states):
             self.file_index += 1
             if self.file_index >= len(self.files):
                 self.file_index = 0
@@ -96,8 +97,8 @@ class DataLoader:
             self.load_data()
         start = self.batch_index * self.batch_size
         end = start + self.batch_size
-        states = self.data["states"][start:end]
-        labels = self.data["actions"][start:end]
+        states = self.states[start:end]
+        labels = self.actions[start:end]
 
         # Convert to tensors
         states = torch.from_numpy(states).float().to(self.device)
