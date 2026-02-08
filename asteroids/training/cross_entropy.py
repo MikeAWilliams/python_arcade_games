@@ -10,6 +10,7 @@ import glob
 import logging
 import os
 import sys
+import time
 from cmath import e
 from datetime import datetime
 from decimal import DefaultContext
@@ -42,10 +43,11 @@ class ModelWrap(nn.Module):
 
 
 class DataLoader:
-    def __init__(self, base_name, logger, batch_size, device="cpu"):
+    def __init__(self, base_name, logger, batch_per_file, device="cpu"):
         self.base_name = base_name
         self.logger = logger
-        self.batch_size = batch_size
+        self.batch_per_file = batch_per_file
+        self.batch_size = 1
         self.device = device
 
         # Find all matching files
@@ -69,13 +71,17 @@ class DataLoader:
         file = self.files[self.file_index]
         try:
             self.data = np.load(file)
+            self.batch_size = len(self.data["states"]) // self.batch_per_file
         except Exception as e:
             self.logger.error(f"  Failed to load {file}: {e}")
             raise
+        self.logger.info(f"loaded data from {file}, batch size: {self.batch_size}")
         self.batch_index = 0
 
     def get_batch(self):
-        if self.batch_index + self.batch_size >= len(self.data["states"]):
+        if self.batch_index * self.batch_size + self.batch_size >= len(
+            self.data["states"]
+        ):
             self.file_index += 1
             if self.file_index >= len(self.files):
                 self.file_index = 0
@@ -133,9 +139,9 @@ def setup_logging(base_name):
 
 def train_model(
     base_name,
-    batch_size,
+    batch_per_file,
     learning_rate,
-    epochs,
+    max_iterations,
     print_interval,
     eval_interval,
     games_per_eval,
@@ -148,45 +154,52 @@ def train_model(
         base_name: Base name for data files and output files
         batch_size: Training batch size
         learning_rate: Learning rate for optimizer
-        epochs: Number of training epochs
+        max_iterations: Number of training max_iterations
         device: Device to train on ('cpu' or 'cuda')
     """
     logger = setup_logging(base_name)
 
     logger.info(f"Cross-Entropy Supervised Learning")
     logger.info(f"Base name: {base_name}")
-    logger.info(f"Batch size: {batch_size}")
+    logger.info(f"Batch per file: {batch_per_file}")
     logger.info(f"Learning rate: {learning_rate}")
-    logger.info(f"Epochs: {epochs}")
+    logger.info(f"max_iterations: {max_iterations}")
     logger.info(f"Device: {device}")
     logger.info("")
 
     logger.info("Loading training data...")
-    data_loader = DataLoader(base_name, logger, batch_size, device)
+    data_loader = DataLoader(base_name, logger, batch_per_file, device)
     raw_model = NNAIParameters(device)
-    logger.info(f"Model architecture: {raw_model.model}")
     model_wrap = ModelWrap(raw_model.model)
-    logger.info(f"Model parameters: {model_wrap.parameters()}")
     optimizer = torch.optim.AdamW(model_wrap.parameters(), lr=learning_rate)
 
+    logger.info("starting training")
+    start_time = time.time()
     iter = 0
-    while data_loader.epoch_number < epochs:
-        # starting with 1 is off by one, but prevents printing or eval on zero
-        iter += 1
+    while iter < max_iterations:
         if iter % eval_interval == 0:
             # run games-per-eval games and print the average score
             pass
 
         states, labels = data_loader.get_batch()
-        logits, loss = model_wrap(states, labels)
+        _, loss = model_wrap(states, labels)
         optimizer.zero_grad(set_to_none=True)
         loss.backward()
         optimizer.step()
 
         if iter % print_interval == 0:
+            elapsed_time = time.time() - start_time
+            time_per_iter = elapsed_time / (iter + 1)
+            estimated_total = time_per_iter * max_iterations
+            time_remaining = estimated_total - elapsed_time
+
             logger.info(
-                f"Epoch {data_loader.epoch_number}, Iteration {iter}, Loss: {loss.item()}"
+                f"Epoch {data_loader.epoch_number}, "
+                f"Iteration {iter}/{max_iterations}, Loss: {loss.item():.4f} | "
+                f"Elapsed: {elapsed_time:.1f}s, Per-iter: {time_per_iter:.3f}s, "
+                f"Remaining: {time_remaining:.1f}s, Total: {estimated_total:.1f}s"
             )
+        iter += 1
 
 
 def main():
@@ -204,7 +217,10 @@ def main():
 
     # Training hyperparameters
     parser.add_argument(
-        "--batch-size", type=int, default=32, help="Training batch size (default: 32)"
+        "--batch-per-file",
+        type=int,
+        default=3,
+        help="Divide each file into this number of batches (default: 3)",
     )
     parser.add_argument(
         "--learning-rate",
@@ -213,17 +229,17 @@ def main():
         help="Learning rate (default: 0.0001)",
     )
     parser.add_argument(
-        "--epochs",
+        "--max-iterations",
         type=int,
-        default=1,
-        help="Number of training epochs (default: 100)",
+        default=100000,
+        help="Number of training iterations (default: 100000)",
     )
 
     parser.add_argument(
         "--print-interval",
         type=int,
-        default=100,
-        help="Number of iterations between prints (default: 100)",
+        default=10,
+        help="Number of iterations between prints (default: 10)",
     )
 
     parser.add_argument(
@@ -244,9 +260,9 @@ def main():
     parser.add_argument(
         "--device",
         type=str,
-        default="cpu",
+        default="cuda",
         choices=["cpu", "cuda"],
-        help="Device to train on (default: cpu)",
+        help="Device to train on (default: cuda)",
     )
 
     args = parser.parse_args()
@@ -254,9 +270,9 @@ def main():
     # Run training
     train_model(
         base_name=args.base_name,
-        batch_size=args.batch_size,
+        batch_per_file=args.batch_per_file,
         learning_rate=args.learning_rate,
-        epochs=args.epochs,
+        max_iterations=args.max_iterations,
         print_interval=args.print_interval,
         eval_interval=args.eval_interval,
         games_per_eval=args.games_per_eval,
