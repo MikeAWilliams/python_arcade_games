@@ -126,7 +126,14 @@ def setup_logging(base_name):
 
 
 def train_model(
-    base_name, batch_size, learning_rate, epochs, print_interval, eval_interval, device
+    base_name,
+    batch_size,
+    learning_rate,
+    epochs,
+    print_interval,
+    eval_interval,
+    games_per_eval,
+    device,
 ):
     """
     Train model using cross-entropy loss on supervised data.
@@ -161,7 +168,7 @@ def train_model(
         # starting with 1 is off by one, but prevents printing or eval on zero
         iter += 1
         if iter % eval_interval == 0:
-            # run a game and print the score
+            # run games-per-eval games and print the average score
             pass
 
         states, labels = data_loader.get_batch()
@@ -220,6 +227,13 @@ def main():
         help="Number of iterations between evaluations (default: 100)",
     )
 
+    parser.add_argument(
+        "--games-per-eval",
+        type=int,
+        default=100,
+        help="Number of games to play per evaluation (default: 100)",
+    )
+
     # Device selection
     parser.add_argument(
         "--device",
@@ -239,6 +253,7 @@ def main():
         epochs=args.epochs,
         print_interval=args.print_interval,
         eval_interval=args.eval_interval,
+        games_per_eval=args.games_per_eval,
         device=args.device,
     )
 
