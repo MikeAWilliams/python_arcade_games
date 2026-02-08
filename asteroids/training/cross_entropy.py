@@ -76,7 +76,7 @@ class DataLoader:
         except Exception as e:
             self.logger.error(f"  Failed to load {file}: {e}")
             raise
-        self.logger.info(f"loaded data from {file}, batch size: {self.batch_size}")
+        self.logger.info(f"     loaded data from {file}, batch size: {self.batch_size}")
         self.batch_index = 0
 
     def get_batch(self):
