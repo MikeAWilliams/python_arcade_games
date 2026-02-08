@@ -10,14 +10,82 @@ import glob
 import logging
 import os
 import sys
+from cmath import e
 from datetime import datetime
+from decimal import DefaultContext
 from pathlib import Path
 
 import numpy as np
 import torch
+import torch.nn as nn
+from torch.nn import functional as F
 
 # Add parent to path for asteroids imports
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+
+from asteroids.ai.neural import NNAIParameters
+
+
+class ModelWrap(nn.Module):
+    def __init__(self, model):
+        # model is a tensor
+        super().__init__()
+        self.model = model
+
+    def forward(self, x, y=None):
+        logits = self.model(x)
+        if y is not None:
+            loss = F.cross_entropy(logits, y)
+        else:
+            loss = None
+        return logits, loss
+
+
+class DataLoader:
+    def __init__(self, base_name, logger, batch_size):
+        self.base_name = base_name
+        self.logger = logger
+        self.batch_size = batch_size
+
+        # Find all matching files
+        pattern = f"data/{base_name}_*.npz"
+        self.files = sorted(glob.glob(pattern))
+
+        if not self.files:
+            raise FileNotFoundError(
+                f"No data files found matching pattern: {pattern}\n"
+                f"Please ensure data files exist in data/ directory."
+            )
+
+        logger.info(f"Found {len(self.files)} data files matching '{base_name}'")
+
+        self.data = []
+        self.file_index = 0
+        self.epoch_number = 0
+        self.load_data()
+
+    def load_data(self):
+        file = self.files[self.file_index]
+        try:
+            self.data = np.load(file)
+        except Exception as e:
+            self.logger.error(f"  Failed to load {file}: {e}")
+            raise
+        self.batch_index = 0
+
+    def get_batch(self):
+        if self.batch_index + self.batch_size >= len(self.data["states"]):
+            self.file_index += 1
+            if self.file_index >= len(self.files):
+                self.file_index = 0
+                self.epoch_number += 1
+            self.load_data()
+        start = self.batch_index * self.batch_size
+        end = start + self.batch_size
+        states = self.data["states"][start:end]
+        labels = self.data["actions"][start:end]
+        self.batch_index += 1
+        return states, labels
 
 
 def setup_logging(base_name):
@@ -27,15 +95,11 @@ def setup_logging(base_name):
     Args:
         base_name: Base name for log file
 
-    Returns:
-        logger instance, timestamp string
     """
     # Create nn_checkpoints directory
     os.makedirs("nn_checkpoints", exist_ok=True)
 
-    # Generate timestamp
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    log_file = os.path.join("nn_checkpoints", f"{base_name}_{timestamp}.log")
+    log_file = os.path.join("nn_checkpoints", f"{base_name}_cross_entropy.log")
 
     # Configure logger (same pattern as policy_gradient.py)
     logger = logging.getLogger("cross_entropy")
@@ -58,53 +122,12 @@ def setup_logging(base_name):
     logger.addHandler(console_handler)
     logger.addHandler(file_handler)
 
-    return logger, timestamp
+    return logger
 
 
-def load_training_data(base_name, logger):
-    """
-    Load training data from data/<base_name>_*.npz files.
-
-    Args:
-        base_name: Base name pattern for data files
-        logger: Logger instance
-
-    Returns:
-        List of loaded numpy archives (or processed data)
-
-    Raises:
-        FileNotFoundError: If no matching files found
-    """
-    # Find all matching files
-    pattern = f"data/{base_name}_*.npz"
-    files = sorted(glob.glob(pattern))
-
-    if not files:
-        raise FileNotFoundError(
-            f"No data files found matching pattern: {pattern}\n"
-            f"Please ensure data files exist in data/ directory."
-        )
-
-    logger.info(f"Found {len(files)} data files matching '{base_name}'")
-
-    # Load files
-    loaded_data = []
-    for filepath in files:
-        try:
-            data = np.load(filepath)
-            loaded_data.append(data)
-            logger.info(f"  Loaded: {filepath}")
-        except Exception as e:
-            logger.error(f"  Failed to load {filepath}: {e}")
-            raise
-
-    logger.info(f"Successfully loaded {len(loaded_data)} files")
-
-    # TODO: User implements data processing/concatenation
-    return loaded_data
-
-
-def train_model(base_name, batch_size, learning_rate, epochs, device):
+def train_model(
+    base_name, batch_size, learning_rate, epochs, print_interval, eval_interval, device
+):
     """
     Train model using cross-entropy loss on supervised data.
 
@@ -115,8 +138,7 @@ def train_model(base_name, batch_size, learning_rate, epochs, device):
         epochs: Number of training epochs
         device: Device to train on ('cpu' or 'cuda')
     """
-    # Set up logging
-    logger, timestamp = setup_logging(base_name)
+    logger = setup_logging(base_name)
 
     logger.info(f"Cross-Entropy Supervised Learning")
     logger.info(f"Base name: {base_name}")
@@ -126,36 +148,32 @@ def train_model(base_name, batch_size, learning_rate, epochs, device):
     logger.info(f"Device: {device}")
     logger.info("")
 
-    # Load training data
     logger.info("Loading training data...")
-    data = load_training_data(base_name, logger)
+    data_loader = DataLoader(base_name, logger, batch_size)
+    raw_model = NNAIParameters(device)
+    logger.info(f"Model architecture: {raw_model.model}")
+    model_wrap = ModelWrap(raw_model.model)
+    logger.info(f"Model parameters: {model_wrap.parameters()}")
+    optimizer = torch.optim.AdamW(model_wrap.parameters(), lr=learning_rate)
 
-    # TODO: User implements
-    # - Data preprocessing and batching
-    # - Model architecture definition
-    # - Loss function (cross-entropy)
-    # - Optimizer setup
-    # - Training loop
-    # - Checkpoint saving
+    iter = 0
+    while data_loader.epoch_number < epochs:
+        # starting with 1 is off by one, but prevents printing or eval on zero
+        iter += 1
+        if iter % eval_interval == 0:
+            # run a game and print the score
+            pass
 
-    logger.info("TODO: Implement training loop")
-    logger.info("  1. Preprocess data into batches")
-    logger.info("  2. Define neural network model")
-    logger.info("  3. Define cross-entropy loss function")
-    logger.info("  4. Create optimizer (e.g., Adam)")
-    logger.info("  5. Implement training loop:")
-    logger.info("     - Forward pass")
-    logger.info("     - Compute loss")
-    logger.info("     - Backward pass")
-    logger.info("     - Optimizer step")
-    logger.info("  6. Save checkpoints periodically")
-    logger.info(
-        f"  7. Save final model to nn_checkpoints/{base_name}_{timestamp}_final.pth"
-    )
+        states, labels = data_loader.get_batch()
+        logits, loss = model_wrap(states, labels)
+        optimizer.zero_grad(set_to_none=True)
+        loss.backward()
+        optimizer.step()
 
-    # Placeholder return
-    logger.info("")
-    logger.info("Training scaffolding complete. User should implement algorithm.")
+        if iter % print_interval == 0:
+            logger.info(
+                f"Epoch {data_loader.epoch_number}, Iteration {iter}, Loss: {loss.item()}"
+            )
 
 
 def main():
@@ -167,7 +185,7 @@ def main():
     parser.add_argument(
         "--base-name",
         type=str,
-        required=True,
+        default="training_data20k_combinded",
         help="Base name for data files (data/<base_name>_*.npz) and output files",
     )
 
@@ -184,8 +202,22 @@ def main():
     parser.add_argument(
         "--epochs",
         type=int,
-        default=100,
+        default=1,
         help="Number of training epochs (default: 100)",
+    )
+
+    parser.add_argument(
+        "--print-interval",
+        type=int,
+        default=100,
+        help="Number of iterations between prints (default: 100)",
+    )
+
+    parser.add_argument(
+        "--eval-interval",
+        type=int,
+        default=100,
+        help="Number of iterations between evaluations (default: 100)",
     )
 
     # Device selection
@@ -205,6 +237,8 @@ def main():
         batch_size=args.batch_size,
         learning_rate=args.learning_rate,
         epochs=args.epochs,
+        print_interval=args.print_interval,
+        eval_interval=args.eval_interval,
         device=args.device,
     )
 
