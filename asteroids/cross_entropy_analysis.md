@@ -176,93 +176,16 @@ state-conditioning.
 
 ## 8. Epoch Time Estimates by Batch Size
 
-### Baseline measurements
+### Dataset and measurements
 
 - **Total samples per epoch**: ~1.15 billion (115 files, ~10M samples each)
-- **Current batch size**: ~3.3M (10M per file / 3 batches per file)
-- **Current iterations per epoch**: ~345 (115 files × 3 batches)
-- **Observed time**: ~1 hour for 400 iterations (~9s/iter), which is just over 1 epoch
-- **Estimated epoch time at current batch size**: ~300 iterations × 9s ≈ **45 minutes**
+- **Measured per-iteration time** at batch size ~10K: **40 ms** (includes amortized
+  eval overhead)
+- **File load cost**: ~2.5 s per file, 115 files per epoch = ~5 min, amortized
+  across batches from each file
+- For larger batch sizes, GPU data transfer becomes significant (~1.86 GB at 3.3M)
 
-### Empirical finding: per-iteration time is constant
-
-A test run with `--batch-per-file 1000` (batch size ~10K, a 330× reduction) shows
-nearly identical per-iteration time:
-
-| Run | Batch/File | Batch Size | Time/Iter |
-|---|---|---|---|
-| Original | 3 | ~3,300,000 | ~9.1 s |
-| Test | 1,000 | ~10,000 | ~8.0 s |
-
-**Per-iteration time does NOT scale with batch size.** It is dominated by a constant
-overhead: the `NpzFile` decompression in `get_batch()`.
-
-### Root cause: NPZ decompression on every array access
-
-`np.load()` returns a lazy `NpzFile` object. Every access to `self.data["states"]`
-decompresses the full compressed array from disk (~60 MB compressed → ~5.6 GB
-uncompressed). In `get_batch()` this happens multiple times per call:
-
-```python
-# Line 89-90: boundary check — decompresses full "states" array just for len()
-if self.batch_index * self.batch_size + self.batch_size >= len(self.data["states"]):
-
-# Line 99-100: actual slice — decompresses both arrays again
-states = self.data["states"][start:end]
-labels = self.data["actions"][start:end]
-```
-
-This ~8-second decompression cost is paid every iteration regardless of batch size.
-The actual GPU compute for a batch through the 18K-parameter model is negligible
-(< 1 ms even at 3.3M batch size).
-
-### Epoch times before the fix (broken data loader)
-
-With constant ~8 s/iter, epoch time scaled linearly with iteration count.
-Smaller batches were completely impractical.
-
-| Batch Size | Batches/File | Iters / Epoch | Time / Iter | Epoch Time | Gradient Updates |
-|---|---|---|---|---|---|
-| **3,300,000** | 3 | 348 | ~9 s | **~52 min** | 348 |
-| 1,000,000 | 10 | 1,150 | ~8 s | **~2.6 hrs** | 1,150 |
-| 100,000 | 100 | 11,500 | ~8 s | **~26 hrs** | 11,500 |
-| 10,000 | 1,000 | 115,000 | ~8 s | **~11 days** | 115,000 |
-| 1,024 | 9,772 | 1,120,000 | ~8 s | **~104 days** | 1,120,000 |
-| 256 | 39,088 | 4,490,000 | ~8 s | **~1.1 years** | 4,490,000 |
-
-### The fix: cache decompressed arrays
-
-The fix was to decompress each npz file once in `load_data()` and cache the resulting
-numpy arrays, instead of re-decompressing on every `get_batch()` access:
-
-```python
-def load_data(self):
-    file = self.files[self.file_index]
-    raw = np.load(file)
-    self.states = raw["states"]    # decompress once, cache as numpy array
-    self.actions = raw["actions"]  # decompress once, cache as numpy array
-    self.batch_size = len(self.states) // self.batch_per_file
-    self.batch_index = 0
-```
-
-### Measured result: 200× speedup
-
-With the fixed data loader at `--batch-per-file 1000` (batch size ~10K):
-
-| Run | Batch/File | Batch Size | Time/Iter | 400 Iters |
-|---|---|---|---|---|
-| Before fix | 1,000 | ~10,000 | ~8.0 s | ~53 min |
-| **After fix** | 1,000 | ~10,000 | **~40 ms** | **16.1 s** |
-
-Per-iteration time dropped from ~8 seconds to **~40 ms** — a **200× speedup**.
-The 400 iterations completed in 16.1 seconds total (was ~53 minutes).
-
-### Epoch times after the fix
-
-Measured per-iteration time at batch_size ~10K: **40 ms** (includes amortized eval
-overhead). File load cost is ~2.5 s per file, 115 files per epoch = ~5 min, amortized
-across batches from each file. For larger batch sizes, GPU data transfer becomes
-significant (~1.86 GB at 3.3M batch).
+### Estimated epoch times
 
 | Batch Size | Batches/File | Iters / Epoch | Est. Time / Iter | Epoch Time | Gradient Updates |
 |---|---|---|---|---|---|
@@ -279,7 +202,68 @@ Python/PyTorch per-iteration overhead.
 
 ### Key takeaway
 
-**Batch sizes of 100K–1M are now the sweet spot.** They provide 3–33× more gradient
+**Batch sizes of 100K–1M are the sweet spot.** They provide 3–33× more gradient
 updates than the current 3.3M batch at comparable epoch times (9–15 min vs 8 min).
 At batch size 10K, you get 330× more updates but epoch time grows to ~82 min — still
-practical and far better than the 11 days it would have taken before the fix.
+practical for serious training runs.
+
+---
+
+## 9. State Vector Data Range Analysis
+
+Sampled 500K rows (evenly spaced) from file 0 (10M samples total).
+State vector has 141 columns: 6 player features + 27 asteroids × 5 features each.
+
+All values are normalized by game dimensions (1280×720) or relevant constants.
+See `asteroids/ai/neural.py:compute_state()` for the encoding.
+
+### Player state (columns 0–5)
+
+| Col | Feature | Min | Max | Mean | Std | Notes |
+|---|---|---|---|---|---|---|
+| 0 | player_x | 0.016 | 0.984 | 0.498 | 0.143 | Well centered, full range |
+| 1 | player_y | 0.028 | 0.972 | 0.500 | 0.160 | Well centered, full range |
+| 2 | player_vx | -0.163 | 0.163 | 0.000 | 0.028 | Narrow range, centered |
+| 3 | player_vy | -0.295 | 0.292 | 0.000 | 0.052 | Wider than vx (~1.8×) |
+| 4 | **player_angle** | **-4.350** | **3.717** | **0.253** | **0.633** | **PROBLEM: unbounded** |
+| 5 | shoot_cooldown | 0.000 | 0.950 | 0.390 | 0.318 | [0, 1] range as expected |
+
+### Asteroid state (columns 6–140, grouped by type)
+
+Since all 27 asteroid slots follow the same pattern, stats are summarized by
+asteroid generation. Inactive asteroids contribute all-zero rows, pulling means low.
+
+| Group | Slots | Active % | x Mean | y Mean | vx Std | vy Std |
+|---|---|---|---|---|---|---|
+| Big (0–2) | 3 | ~21% | 0.107 | 0.105 | 0.032 | 0.063 |
+| Medium (3–8) | 6 | ~15% | 0.076 | 0.077 | 0.029 | 0.051 |
+| Small (9–26) | 18 | ~19% | 0.095 | 0.095 | 0.032 | 0.056 |
+
+Position means are low (~0.08–0.11) because inactive slots are all zeros.
+When filtering to active-only, positions would center around ~0.5.
+
+Velocity ranges for asteroids:
+- vx: [-0.184, 0.184] (all generations similar)
+- vy: [-0.350, 0.350] (big asteroids slightly wider)
+
+### Key finding: player_angle is not normalized to [0, 1]
+
+The angle is computed as `game.player.geometry.angle / (2 * math.pi)`, which should
+yield values in [0, 1]. However, the data shows a range of **[-4.35, 3.72]**, meaning
+the raw angle spans approximately [-27.3, 23.4] radians.
+
+**The player angle accumulates without wrapping.** The game does not normalize the
+angle to [0, 2π] — it just adds/subtracts the turn rate each frame, so the angle grows
+or shrinks unboundedly over the lifetime of a game.
+
+This is a problem for the neural network because:
+1. **Same physical angle, different values**: An angle of 0 and 2π (normalized: 0 and 1)
+   point in the same direction but the model sees them as completely different inputs
+2. **Unbounded range**: Most features are in [0, 1] but angle spans [-4.35, 3.72],
+   giving it outsized influence on the first linear layer
+3. **Non-stationary**: The angle value depends on how long the game has been running
+   and how much the player has turned, not just the current heading
+
+**Recommended fix**: Normalize the angle to [0, 2π] before dividing by 2π, or encode
+heading as `(sin(angle), cos(angle))` which is naturally bounded to [-1, 1] and
+wraps correctly.
