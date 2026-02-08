@@ -8,6 +8,7 @@ Agent provides: Argument parsing, logging, file I/O scaffolding
 import argparse
 import glob
 import logging
+import math
 import os
 import sys
 import time
@@ -199,6 +200,9 @@ def train_model(
                 f"Elapsed: {elapsed_time:.1f}s, Per-iter: {time_per_iter:.3f}s, "
                 f"Remaining: {time_remaining:.1f}s, Total: {estimated_total:.1f}s"
             )
+            if math.isnan(loss.item()):
+                logger.error("Loss is NaN, terminating")
+                sys.exit(1)
         iter += 1
 
 
