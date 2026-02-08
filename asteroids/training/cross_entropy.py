@@ -138,6 +138,50 @@ def setup_logging(base_name):
     return logger
 
 
+def evaluate_model(raw_model, games_per_eval, eval_threads, width=1280, height=720):
+    """
+    Evaluate current model by running games in parallel.
+
+    Args:
+        raw_model: NNAIParameters instance with trained weights
+        games_per_eval: Number of games to run
+        eval_threads: Number of worker processes
+        width/height: Game dimensions
+
+    Returns:
+        tuple of (avg_score, avg_time_alive)
+    """
+    from concurrent.futures import ProcessPoolExecutor, as_completed
+
+    from asteroids.core.game_runner import run_single_game
+
+    # Serialize model for workers (must be on CPU)
+    model_state_dict = {k: v.cpu() for k, v in raw_model.model.state_dict().items()}
+    eval_params = NNAIParameters(device="cpu")
+    eval_params.model.load_state_dict(model_state_dict)
+    eval_params.model.eval()
+
+    # Prepare game arguments
+    game_args = [
+        (game_id, width, height, "neural", None, eval_params, None)
+        for game_id in range(games_per_eval)
+    ]
+
+    # Run games in parallel
+    results = []
+    with ProcessPoolExecutor(max_workers=eval_threads) as executor:
+        futures = [executor.submit(run_single_game, args) for args in game_args]
+        for future in as_completed(futures):
+            result = future.result()
+            results.append(result)
+
+    # Compute averages
+    avg_score = sum(r["score"] for r in results) / len(results)
+    avg_time_alive = sum(r["time_alive"] for r in results) / len(results)
+
+    return avg_score, avg_time_alive
+
+
 def train_model(
     base_name,
     batch_per_file,
@@ -147,6 +191,7 @@ def train_model(
     checkpoint_interval,
     eval_interval,
     games_per_eval,
+    eval_threads,
     device,
 ):
     """
@@ -166,6 +211,9 @@ def train_model(
     logger.info(f"Batch per file: {batch_per_file}")
     logger.info(f"Learning rate: {learning_rate}")
     logger.info(f"max_iterations: {max_iterations}")
+    logger.info(f"Evaluation interval: {eval_interval}")
+    logger.info(f"Games per evaluation: {games_per_eval}")
+    logger.info(f"Evaluation threads: {eval_threads}")
     logger.info(f"Device: {device}")
     logger.info("")
 
@@ -180,8 +228,15 @@ def train_model(
     iter = 0
     while iter < max_iterations:
         if iter % eval_interval == 0:
-            # run games-per-eval games and print the average score
-            pass
+            avg_score, avg_time_alive = evaluate_model(
+                raw_model=raw_model,
+                games_per_eval=games_per_eval,
+                eval_threads=eval_threads,
+            )
+
+            logger.info(
+                f"Evaluation avg_score={avg_score:.1f}, avg_time_alive={avg_time_alive:.1f}s"
+            )
 
         states, labels = data_loader.get_batch()
         _, loss = model_wrap(states, labels)
@@ -270,8 +325,8 @@ def main():
     parser.add_argument(
         "--eval-interval",
         type=int,
-        default=100,
-        help="Number of iterations between evaluations (default: 100)",
+        default=10,
+        help="Number of iterations between evaluations (default: 10)",
     )
 
     parser.add_argument(
@@ -279,6 +334,13 @@ def main():
         type=int,
         default=100,
         help="Number of games to play per evaluation (default: 100)",
+    )
+
+    parser.add_argument(
+        "--eval-threads",
+        type=int,
+        default=os.cpu_count() // 2 if os.cpu_count() else 2,
+        help=f"Number of threads for evaluation (default: half of CPU cores)",
     )
 
     # Device selection
@@ -302,6 +364,7 @@ def main():
         checkpoint_interval=args.checkpoint_interval,
         eval_interval=args.eval_interval,
         games_per_eval=args.games_per_eval,
+        eval_threads=args.eval_threads,
         device=args.device,
     )
 
