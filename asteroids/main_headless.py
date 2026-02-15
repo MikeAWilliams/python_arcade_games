@@ -185,6 +185,7 @@ def run_parallel_games(
     ai_params = None
     if ai_type == "neural":
         import torch
+
         from asteroids.ai import NNAIParameters
 
         # Default to nn_model.pth if no path specified
@@ -193,7 +194,9 @@ def run_parallel_games(
 
         params = NNAIParameters(device="cpu")
         log(f"loading model file {model_path}")
-        params.model.load_state_dict(torch.load(model_path, map_location="cpu"))
+        params.model.load_state_dict(
+            torch.load("nn_weights/" + model_path, map_location="cpu")
+        )
         params.model.eval()
         ai_params = params
 

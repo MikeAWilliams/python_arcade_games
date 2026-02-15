@@ -82,8 +82,6 @@ class NNAIParameters:
             torch.nn.Linear(
                 middle_dim, self.num_actions, bias=False, dtype=torch.float32
             ),
-            # dim=1 because batch size is 1
-            torch.nn.Softmax(dim=1),
         ).to(device)
 
 
@@ -111,11 +109,13 @@ class NNAIInputMethod(InputMethod):
         return result
 
     def compute_action(self, state):
-        action_probs = self.parameters.model(
+        logits = self.parameters.model(
             torch.from_numpy(np.expand_dims(state, 0))
             .float()
             .to(self.parameters.device)
-        )[0]
+        )
+        # Apply softmax manually to convert logits to probabilities
+        action_probs = torch.nn.functional.softmax(logits, dim=1)[0]
         action_probs_cpu = action_probs.detach().cpu().numpy()
         action = np.random.choice(
             self.parameters.num_actions, p=np.squeeze(action_probs_cpu)
