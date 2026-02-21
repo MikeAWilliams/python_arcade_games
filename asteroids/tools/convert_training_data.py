@@ -11,19 +11,55 @@ Usage:
 
 import argparse
 import glob
+import logging
+import os
 import sys
 from pathlib import Path
 
 import numpy as np
 
 
-def convert_file(input_path: str, output_path: str) -> bool:
+def setup_logging(output_base: str):
+    """
+    Set up dual logging (console + file).
+
+    Log file saved to data directory as <output_base>_convert.log.
+    """
+    os.makedirs("data", exist_ok=True)
+
+    log_file = f"data/{output_base}_convert.log"
+
+    logger = logging.getLogger("convert_training_data")
+    logger.setLevel(logging.INFO)
+    logger.handlers = []
+
+    # Console handler
+    console_handler = logging.StreamHandler(sys.stdout)
+    console_handler.setLevel(logging.INFO)
+
+    # File handler
+    file_handler = logging.FileHandler(log_file, mode="w")
+    file_handler.setLevel(logging.INFO)
+
+    # Simple format
+    formatter = logging.Formatter("%(message)s")
+    console_handler.setFormatter(formatter)
+    file_handler.setFormatter(formatter)
+
+    logger.addHandler(console_handler)
+    logger.addHandler(file_handler)
+
+    return logger
+
+
+def convert_file(input_path: str, output_path: str, logger) -> bool:
     """
     Convert a single NPZ file from old angle format to new bearing format.
 
     Args:
         input_path: Path to input NPZ file
         output_path: Path to output NPZ file
+        logger: Logger instance
 
     Returns:
         True if successful, False if an error occurred
@@ -33,8 +69,8 @@ def convert_file(input_path: str, output_path: str) -> bool:
         states = raw["states"]
 
         if states.shape[1] != 141:
-            print(
-                f"  WARNING: {input_path} has {states.shape[1]} columns (expected 141), skipping"
+            logger.warning(
+                f"  {input_path} has {states.shape[1]} columns (expected 141), skipping"
             )
             return False
 
@@ -59,7 +95,7 @@ def convert_file(input_path: str, output_path: str) -> bool:
         return True
 
     except Exception as e:
-        print(f"  ERROR: Failed to convert {input_path}: {e}")
+        logger.error(f"  Failed to convert {input_path}: {e}")
         return False
 
 
@@ -81,14 +117,18 @@ def main():
     )
     args = parser.parse_args()
 
+    logger = setup_logging(args.output_base)
+
     pattern = f"data/{args.input_base}_*.npz"
-    files = sorted(glob.glob(pattern), key=lambda x: int(Path(x).stem.split("_")[-1]))
+    files = sorted(
+        glob.glob(pattern), key=lambda x: int(Path(x).stem.split("_")[-1])
+    )
 
     if not files:
-        print(f"No data files found matching: {pattern}")
+        logger.error(f"No data files found matching: {pattern}")
         sys.exit(1)
 
-    print(f"Found {len(files)} files matching '{args.input_base}'")
+    logger.info(f"Found {len(files)} files matching '{args.input_base}'")
 
     success_count = 0
     fail_count = 0
@@ -96,14 +136,14 @@ def main():
     for file in files:
         suffix = Path(file).stem.split("_")[-1]
         output_path = f"data/{args.output_base}_{suffix}.npz"
-        print(f"Converting {file} -> {output_path}")
+        logger.info(f"Converting {file} -> {output_path}")
 
-        if convert_file(file, output_path):
+        if convert_file(file, output_path, logger):
             success_count += 1
         else:
             fail_count += 1
 
-    print(f"\nDone: {success_count} converted, {fail_count} failed")
+    logger.info(f"\nDone: {success_count} converted, {fail_count} failed")
 
 
 if __name__ == "__main__":

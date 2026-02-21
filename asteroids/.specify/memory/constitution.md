@@ -1,10 +1,11 @@
 <!--
 Sync Impact Report:
-- Version change: 1.1.0 → 1.2.0
-- Added section: Project Structure (Spec File Location)
-- Principles defined: 6 (Learning Focus, Code Simplicity, No Packaging, Documentation Balance, Permission-First Operations, User-Written AI Algorithms)
-- Project structure: Specs must be in /home/mike/source/python_arcade_games/asteroids/specs/
-- Templates requiring updates: N/A
+- Version change: 1.2.0 → 1.3.0
+- Modified sections: Code Quality Standards (added dual logging requirement)
+- Added sections: None
+- Removed sections: None
+- Principles defined: 6 (unchanged)
+- Templates requiring updates: N/A (plan-template Constitution Check is dynamic)
 - Follow-up TODOs: None
 -->
 
@@ -66,8 +67,9 @@ Empirical validation over test coverage.
 - Clear variable/function names over comments
 - Type hints on function signatures
 - Imports organized: stdlib → third-party → local
+- Long-running scripts (training, data conversion, benchmarking) MUST use dual logging (console + file) instead of bare `print()`. The logging pattern is: `logging.getLogger()` with both a `StreamHandler(sys.stdout)` and a `FileHandler`, using `Formatter("%(message)s")`.
 
-**Rationale**: Consistency aids learning; automated formatting removes bikeshedding.
+**Rationale**: Consistency aids learning; automated formatting removes bikeshedding. Dual logging preserves output from long-running operations that may take hours, allowing review after the fact without re-running.
 
 ## Governance
 
@@ -80,4 +82,4 @@ All code contributions must align with the Core Principles. When principles conf
 
 Violations should be caught in review, not after merge. If complexity is creeping in, simplify.
 
-**Version**: 1.2.0 | **Ratified**: 2026-02-07 | **Last Amended**: 2026-02-07
+**Version**: 1.3.0 | **Ratified**: 2026-02-07 | **Last Amended**: 2026-02-21
