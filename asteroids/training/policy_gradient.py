@@ -14,6 +14,7 @@ from pathlib import Path
 import numpy as np
 import torch
 from torch import nn
+from torch.nn import functional as F
 
 # Add parent directory to path so we can import asteroids package
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
@@ -87,14 +88,12 @@ def train_on_game_results(model, optimizer, states, actions, advantages, device)
 
     optimizer.zero_grad()
 
-    # Forward pass - get action probabilities
-    action_probs = model(states)  # (N, num_actions)
+    # Forward pass - get action logits
+    logits = model(states)  # (N, num_actions)
 
     # Get log probability of actions that were actually taken
-    # action_probs[i, actions[i]] gives probability of action taken in state i
-    log_probs = torch.log(
-        action_probs.gather(1, actions.unsqueeze(1)).squeeze(1) + 1e-8
-    )
+    log_probs = F.log_softmax(logits, dim=1)
+    log_probs = log_probs.gather(1, actions.unsqueeze(1)).squeeze(1)
 
     # Policy gradient loss: -E[log π(a|s) * A(s,a)]
     loss = -torch.mean(log_probs * advantages)
