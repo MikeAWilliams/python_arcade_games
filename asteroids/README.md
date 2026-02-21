@@ -23,7 +23,8 @@ asteroids/
 ├── tools/                 # Utility scripts
 │   ├── compact_recordings.py    # Consolidate game recordings
 │   ├── analyze_state_data.py    # Inspect training data column stats
-│   └── convert_training_data.py # Convert angle to bearing format
+│   ├── convert_training_data.py # Convert angle to bearing format
+│   └── generate_random_model.py # Create a fresh random model file
 │
 ├── data/                  # Training data (not in git)
 ├── nn_checkpoints/        # Training checkpoints and logs (not in git)
@@ -178,6 +179,13 @@ Shows per-column min/max/mean/std for state vectors in training data files.
 python tools/convert_training_data.py --input-base training_data20k_combinded --output-base training_data20k_v2
 ```
 Converts old-format training data (scalar angle at column 4) to new bearing format (cos/sin at columns 4-5). Required after the angle-to-bearing encoding change.
+
+**Generate Random Model:**
+```bash
+python tools/generate_random_model.py
+python tools/generate_random_model.py --output nn_weights/my_model.pth
+```
+Creates a randomly-initialized model weights file. Useful for bootstrapping a default `nn_model.pth` when no trained model exists.
 
 ## AI Implementations
 
