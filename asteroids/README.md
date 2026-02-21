@@ -21,11 +21,23 @@ asteroids/
 │   └── cross_entropy.py   # Supervised learning (cross-entropy)
 │
 ├── tools/                 # Utility scripts
-│   └── compact_recordings.py  # Consolidate game recordings
+│   ├── compact_recordings.py    # Consolidate game recordings
+│   ├── analyze_state_data.py    # Inspect training data column stats
+│   └── convert_training_data.py # Convert angle to bearing format
+│
+├── data/                  # Training data (not in git)
+├── nn_checkpoints/        # Training checkpoints and logs (not in git)
+├── nn_weights/            # Trained model weights (not in git)
 │
 ├── main_arcade.py         # Interactive game (keyboard/AI)
 ├── main_headless.py       # Headless benchmarking
 ```
+
+### Data Directories (not in git)
+
+- **`data/`** - Recorded gameplay stored as `.npz` files. Created by `main_headless.py --record`. Contains state vectors, actions, game IDs, and tick numbers used for supervised training.
+- **`nn_checkpoints/`** - Intermediate checkpoints and log files saved during cross-entropy training. Checkpoints are saved at regular intervals so training can be inspected or resumed.
+- **`nn_weights/`** - Final trained model weights (`.pth` files) ready for use with `main_arcade.py --ain` or `main_headless.py --ai-type neural`.
 
 ## Installation
 
@@ -152,6 +164,20 @@ All artifacts saved to `nn_checkpoints/`:
 ```bash
 python tools/compact_recordings.py
 ```
+
+**Analyze Training Data Columns:**
+```bash
+python tools/analyze_state_data.py
+python tools/analyze_state_data.py --base-name training_data20k_v2
+python tools/analyze_state_data.py --sample-size 100000 --file-index 3
+```
+Shows per-column min/max/mean/std for state vectors in training data files.
+
+**Convert Training Data (Angle to Bearing):**
+```bash
+python tools/convert_training_data.py --input-base training_data20k_combinded --output-base training_data20k_v2
+```
+Converts old-format training data (scalar angle at column 4) to new bearing format (cos/sin at columns 4-5). Required after the angle-to-bearing encoding change.
 
 ## AI Implementations
 

@@ -25,7 +25,7 @@ from torch.nn import functional as F
 # Add parent to path for asteroids imports
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from asteroids.ai.neural import NNAIParameters
+from asteroids.ai.neural import NNAIParameters, validate_and_load_model
 from asteroids.core.game import Action
 
 
@@ -168,7 +168,9 @@ def evaluate_model(raw_model, games_per_eval, eval_threads, width=1280, height=7
     # Serialize model for workers (must be on CPU)
     model_state_dict = {k: v.cpu() for k, v in raw_model.model.state_dict().items()}
     eval_params = NNAIParameters(device="cpu")
-    eval_params.model.load_state_dict(model_state_dict)
+    validate_and_load_model(
+        eval_params.model, model_state_dict, source_description="training checkpoint"
+    )
     eval_params.model.eval()
 
     # Prepare game arguments

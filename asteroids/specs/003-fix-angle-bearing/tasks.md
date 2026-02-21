@@ -27,7 +27,7 @@ _(No tasks in this phase)_
 
 **Purpose**: The angle normalization fix in game.py is the root change that all other work depends on. It must be done first so that new game recordings and live state vectors have correct, bounded angles.
 
-- [ ] T001 [US1] Add angle normalization (`self.geometry.angle %= 2 * math.pi`) after the angle update on line 159 of `asteroids/core/game.py` in the `Player.update()` method
+- [x] T001 [US1] Add angle normalization (`self.geometry.angle %= 2 * math.pi`) after the angle update on line 159 of `asteroids/core/game.py` in the `Player.update()` method
 
 **Checkpoint**: Player angle is now always in [0, 2pi). Verify by running `python main_arcade.py` and observing the ship can spin freely without angle growing unbounded.
 
@@ -41,9 +41,9 @@ _(No tasks in this phase)_
 
 ### Implementation
 
-- [ ] T002 [US2] In `asteroids/ai/neural.py`, in `compute_state()` function (line 41), replace `result.append(float(game.player.geometry.angle / (2 * math.pi)))` with two lines: `result.append(float(math.cos(game.player.geometry.angle)))` and `result.append(float(math.sin(game.player.geometry.angle)))`. Update the docstring (lines 22-25) to reflect the new state layout: `player_state: x, y, vx, vy, bearing_x, bearing_y, shot_cooldown`.
-- [ ] T003 [US2] In `asteroids/ai/neural.py`, in `NNAIParameters.__init__()` (line 70), change `player_state_count = 6` to `player_state_count = 7` and update the comment to `# x,y, vx,vy, bearing_x,bearing_y, shot_cooldown`.
-- [ ] T004 [P] [US2] In `tools/analyze_state_data.py`, in `build_column_names()` (line 28), replace `cols.append("player_angle (norm)")` with `cols.append("player_bearing_x (cos)")` and `cols.append("player_bearing_y (sin)")`. Update the docstring on line 22 from "141" to "142".
+- [x] T002 [US2] In `asteroids/ai/neural.py`, in `compute_state()` function (line 41), replace `result.append(float(game.player.geometry.angle / (2 * math.pi)))` with two lines: `result.append(float(math.cos(game.player.geometry.angle)))` and `result.append(float(math.sin(game.player.geometry.angle)))`. Update the docstring (lines 22-25) to reflect the new state layout: `player_state: x, y, vx, vy, bearing_x, bearing_y, shot_cooldown`.
+- [x] T003 [US2] In `asteroids/ai/neural.py`, in `NNAIParameters.__init__()` (line 70), change `player_state_count = 6` to `player_state_count = 7` and update the comment to `# x,y, vx,vy, bearing_x,bearing_y, shot_cooldown`.
+- [x] T004 [P] [US2] In `tools/analyze_state_data.py`, in `build_column_names()` (line 28), replace `cols.append("player_angle (norm)")` with `cols.append("player_bearing_x (cos)")` and `cols.append("player_bearing_y (sin)")`. Update the docstring on line 22 from "141" to "142".
 
 **Checkpoint**: NN model now has 142 inputs. The `compute_state` function returns 142 values. The existing assertion in `NNAIInputMethod.compute_state()` (line 108) will confirm the match. Verify by running `python main_headless.py -n 1 --ai-type neural` (will use a fresh randomly-initialized model).
 
@@ -57,11 +57,11 @@ _(No tasks in this phase)_
 
 ### Implementation
 
-- [ ] T005 [US3] In `asteroids/ai/neural.py`, add a new function `validate_and_load_model(model, state_dict, source_description="model file")` that compares `model.state_dict()["0.weight"].shape` with `state_dict["0.weight"].shape`, raises `ValueError` with a clear message on mismatch, and calls `model.load_state_dict(state_dict)` on success.
-- [ ] T006 [P] [US3] In `main_arcade.py` (line 138), import `validate_and_load_model` from `asteroids.ai.neural` and replace the bare `params.model.load_state_dict(torch.load(...))` call with `validate_and_load_model(params.model, torch.load("nn_weights/" + args.ain, map_location=device), source_description=args.ain)`.
-- [ ] T007 [P] [US3] In `main_headless.py` (lines 197-199), import `validate_and_load_model` from `asteroids.ai.neural` and replace the bare `params.model.load_state_dict(torch.load(...))` call with `validate_and_load_model(params.model, torch.load("nn_weights/" + model_path, map_location="cpu"), source_description=model_path)`.
-- [ ] T008 [P] [US3] In `training/cross_entropy.py` (line 171), import `validate_and_load_model` from `asteroids.ai.neural` and replace `eval_params.model.load_state_dict(model_state_dict)` with `validate_and_load_model(eval_params.model, model_state_dict, source_description="training checkpoint")`.
-- [ ] T009 [P] [US3] In `training/policy_gradient.py` (line 126), import `validate_and_load_model` from `asteroids.ai.neural` and replace `params.model.load_state_dict(model_state_dict)` with `validate_and_load_model(params.model, model_state_dict, source_description="training checkpoint")`.
+- [x] T005 [US3] In `asteroids/ai/neural.py`, add a new function `validate_and_load_model(model, state_dict, source_description="model file")` that compares `model.state_dict()["0.weight"].shape` with `state_dict["0.weight"].shape`, raises `ValueError` with a clear message on mismatch, and calls `model.load_state_dict(state_dict)` on success.
+- [x] T006 [P] [US3] In `main_arcade.py` (line 138), import `validate_and_load_model` from `asteroids.ai.neural` and replace the bare `params.model.load_state_dict(torch.load(...))` call with `validate_and_load_model(params.model, torch.load("nn_weights/" + args.ain, map_location=device), source_description=args.ain)`.
+- [x] T007 [P] [US3] In `main_headless.py` (lines 197-199), import `validate_and_load_model` from `asteroids.ai.neural` and replace the bare `params.model.load_state_dict(torch.load(...))` call with `validate_and_load_model(params.model, torch.load("nn_weights/" + model_path, map_location="cpu"), source_description=model_path)`.
+- [x] T008 [P] [US3] In `training/cross_entropy.py` (line 171), import `validate_and_load_model` from `asteroids.ai.neural` and replace `eval_params.model.load_state_dict(model_state_dict)` with `validate_and_load_model(eval_params.model, model_state_dict, source_description="training checkpoint")`.
+- [x] T009 [P] [US3] In `training/policy_gradient.py` (line 126), import `validate_and_load_model` from `asteroids.ai.neural` and replace `params.model.load_state_dict(model_state_dict)` with `validate_and_load_model(params.model, model_state_dict, source_description="training checkpoint")`.
 
 **Checkpoint**: Old model files now produce clear errors. New models (trained after this change) load successfully. Verify by running `python main_arcade.py --ain nn_model.pth` and confirming a clear error about 141 vs 142 inputs.
 
@@ -75,7 +75,7 @@ _(No tasks in this phase)_
 
 ### Implementation
 
-- [ ] T010 [US4] Create `tools/convert_training_data.py` with: argparse CLI accepting `--input-base` and `--output-base` arguments; file discovery using `data/<input_base>_*.npz` pattern sorted numerically by suffix; for each file: load states array, extract column 4 (normalized angle), compute `angle_rad = col4 * 2 * pi`, replace column 4 with `cos(angle_rad)`, insert `sin(angle_rad)` as new column 5 (shifting remaining columns right) to produce 142-column states, save as `data/<output_base>_<suffix>.npz` preserving actions/game_ids/tick_nums unchanged. Print progress for each file converted. Error clearly if no files match the input pattern.
+- [x] T010 [US4] Create `tools/convert_training_data.py` with: argparse CLI accepting `--input-base` and `--output-base` arguments; file discovery using `data/<input_base>_*.npz` pattern sorted numerically by suffix; for each file: load states array, extract column 4 (normalized angle), compute `angle_rad = col4 * 2 * pi`, replace column 4 with `cos(angle_rad)`, insert `sin(angle_rad)` as new column 5 (shifting remaining columns right) to produce 142-column states, save as `data/<output_base>_<suffix>.npz` preserving actions/game_ids/tick_nums unchanged. Print progress for each file converted. Error clearly if no files match the input pattern.
 
 **Checkpoint**: Conversion tool works on test data. Verify with `python tools/analyze_state_data.py --base-name test_data_v2`.
 
@@ -83,9 +83,9 @@ _(No tasks in this phase)_
 
 ## Phase 6: Polish & Cross-Cutting Concerns
 
-- [ ] T011 Run `./format.sh` to apply Black formatting to all modified files
-- [ ] T012 Verify end-to-end: run `python main_arcade.py --ais` to confirm interactive gameplay works with angle fix
-- [ ] T013 Verify end-to-end: run `python main_headless.py -n 5 --ai-type neural` to confirm headless mode works with new 142-input model
+- [x] T011 Run `./format.sh` to apply Black formatting to all modified files
+- [x] T012 Verify end-to-end: run `python main_arcade.py --ais` to confirm interactive gameplay works with angle fix
+- [x] T013 Verify end-to-end: run `python main_headless.py -n 5 --ai-type neural` to confirm headless mode works with new 142-input model
 
 ---
 

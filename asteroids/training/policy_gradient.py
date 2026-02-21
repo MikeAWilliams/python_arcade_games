@@ -19,7 +19,7 @@ from torch import nn
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from asteroids.core.game import Action, Game
-from asteroids.ai.neural import NNAIInputMethod, NNAIParameters
+from asteroids.ai.neural import NNAIInputMethod, NNAIParameters, validate_and_load_model
 from asteroids.core.game_runner import execute_action
 
 
@@ -123,7 +123,9 @@ def run_games_batch_worker(args):
 
     # Create parameters once and reuse for all games in this worker
     params = NNAIParameters(device="cpu")
-    params.model.load_state_dict(model_state_dict)
+    validate_and_load_model(
+        params.model, model_state_dict, source_description="training checkpoint"
+    )
     params.model.eval()
 
     results = []
