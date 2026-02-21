@@ -305,3 +305,77 @@ leaves fewer neurons for actual strategy. With (sin, cos), the first linear laye
 directly compute angular relationships in a single matrix multiply.
 
 The tradeoff is one extra input dimension (142 vs 141), which is negligible.
+
+---
+
+## 10. Heuristic AI Tick Cycle Estimates
+
+Understanding how many game ticks the heuristic AI spends in each behavioral cycle
+helps inform batch size choices — a batch should contain enough samples to capture
+complete decision cycles, not just fragments of turning.
+
+### Fundamental rates
+
+- **Turn rate**: `PLAYER_TURN_RATE` = π rad/s → π/60 ≈ 0.0524 rad/tick ≈ 3°/tick
+- **Acceleration**: 180 px/s² → 3 px/s per tick
+- **Game tick**: dt = 1/60 s
+
+### SHOOT_NEAREST cycle (turn → fire)
+
+The AI turns toward the predicted intercept and fires when `|angle_diff| < shoot_angle_tolerance` (0.425 rad ≈ 24°).
+
+- Tolerance window: 0.425/π ≈ 13.5% chance already aimed
+- Average angle to turn (when not aimed): (π − 0.425)/2 ≈ 1.36 rad → ~26 ticks
+- Weighted average including already-aimed: ~22 ticks turning
+- Plus 20-tick `SHOOT_COOLDOWN` before next shot
+
+**Typical shoot cycle: ~23 ticks turning + fire + 20 tick cooldown ≈ 43 ticks (~0.7s)**
+
+During cooldown the AI keeps turning toward the next target, so consecutive shots overlap.
+
+### EVASIVE_ACTION cycle (detect threat → thrust away)
+
+Two phases: turn to align, then thrust (accelerate or decelerate).
+
+**Phase 1 — Turning**: Needs `|angle_diff|` either < 0.682 rad (to decel) or > π − 0.682 (to accel), whichever is closer.
+- Combined tolerance zones cover 2 × 0.682 = 1.364 rad out of π → 43% chance already aligned
+- Worst-case turn (from π/2): 0.889 rad → 17 ticks
+- Average turn when needed: ~0.445 rad → ~9 ticks
+- Weighted average: ~5 ticks
+
+**Phase 2 — Thrusting**: Continues while asteroids are predicted to collide within the 49-tick lookahead window. Each tick of thrust changes velocity by 3 px/s, so multiple ticks are needed to deflect trajectory enough.
+
+**Typical evasion cycle: 5–17 ticks turning + 10–30 ticks thrusting ≈ 15–45 ticks (~0.25–0.75s)**
+
+Upper bound naturally capped by the 49-tick lookahead.
+
+### SPEED_CONTROL cycle
+
+Same turning mechanics as evasion (0.682 rad tolerance), then decelerate until speed drops below `max_speed` (765 px/s).
+
+**Typical cycle: 5–9 ticks turning + 10–20 ticks decelerating ≈ 15–29 ticks**
+
+### Summary
+
+| Cycle | Turn Ticks | Action Ticks | Total | Real Time |
+|---|---|---|---|---|
+| Shoot (average) | ~22 | 1 + 20 cooldown | ~43 | ~0.7s |
+| Evasion (typical) | 5–17 | 10–30 | 15–45 | 0.25–0.75s |
+| Speed control | 5–9 | 10–20 | 15–29 | 0.25–0.5s |
+
+### Batch size consideration
+
+A batch size should be large enough to contain multiple complete decision cycles,
+not just fragments of turning. At ~43 ticks per shoot cycle and ~30 ticks per evasion
+cycle, a single game tick carries very little independent signal — it's almost always
+"continue turning in the same direction." This reinforces the class imbalance problem
+(Section 2): the 93% turning labels aren't 93% independent decisions, they're long
+runs of the same turn action repeated 20+ times in a row.
+
+A batch of 256 samples drawn from a single game likely contains only 6–8 complete
+decision cycles. A batch of 1024 contains ~24–30 cycles. Batches of 10K+ contain
+hundreds of cycles across multiple games, giving a more representative gradient.
+
+However, extremely large batches (3.3M) average out the signal from rare actions
+(Section 3a). The sweet spot from Section 8 (100K–1M) provides enough complete cycles
+for stable gradients while preserving learning signal from minority actions.
