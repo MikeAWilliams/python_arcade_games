@@ -5,6 +5,10 @@ User implements: Training loop, loss function, model architecture
 Agent provides: Argument parsing, logging, file I/O scaffolding
 """
 
+# Training regime name — controls log and checkpoint file names.
+# Change this for each new training run.
+TRAINING_RUN_NAME = "bearing_weighted"
+
 import argparse
 import glob
 import logging
@@ -30,17 +34,20 @@ from asteroids.core.game import Action
 
 
 class ModelWrap(nn.Module):
-    def __init__(self, model):
-        # model is a tensor
+    def __init__(self, model, class_weights=None):
         super().__init__()
         self.model = model
+        self.class_weights = class_weights  # (num_classes,) tensor or None
 
     def forward(self, x, y=None):
         logits = self.model(x)
         if y is not None:
             # y is one-hot encoded, so compute cross-entropy manually
             log_probs = F.log_softmax(logits, dim=1)
-            loss = -torch.mean(torch.sum(y * log_probs, dim=1))
+            if self.class_weights is not None:
+                loss = -torch.mean(torch.sum(self.class_weights * y * log_probs, dim=1))
+            else:
+                loss = -torch.mean(torch.sum(y * log_probs, dim=1))
         else:
             loss = None
         return logits, loss
@@ -74,6 +81,25 @@ class DataLoader:
         self.file_index = 0
         self.epoch_number = 0
         self.load_data()
+
+    def compute_class_weights(self) -> torch.Tensor:
+        """Compute inverse-frequency class weights from the first data file."""
+        raw = np.load(self.files[0])
+        actions = raw["actions"]
+        counts = np.array(
+            [np.sum(actions == a) for a in range(self.num_actions)], dtype=np.float64
+        )
+        # Inverse frequency; absent classes get weight 0
+        weights = np.where(counts > 0, 1.0 / counts, 0.0)
+        # Normalize so weights sum to num_actions (present classes only)
+        present = (weights > 0).sum()
+        if weights.sum() > 0:
+            weights = weights * present / weights.sum()
+        self.logger.info("Class weights:")
+        for a in range(self.num_actions):
+            action_name = Action(a).name
+            self.logger.info(f"  {action_name}: {weights[a]:.4f}")
+        return torch.tensor(weights, dtype=torch.float32).to(self.device)
 
     def load_data(self):
         file = self.files[self.file_index]
@@ -214,9 +240,10 @@ def train_model(
         max_iterations: Number of training max_iterations
         device: Device to train on ('cpu' or 'cuda')
     """
-    logger = setup_logging(base_name)
+    logger = setup_logging(TRAINING_RUN_NAME)
 
     logger.info(f"Cross-Entropy Supervised Learning")
+    logger.info(f"Training run: {TRAINING_RUN_NAME}")
     logger.info(f"Base name: {base_name}")
     logger.info(f"Batch size: {batch_size}")
     logger.info(f"Learning rate: {learning_rate}")
@@ -229,8 +256,9 @@ def train_model(
 
     logger.info("Loading training data...")
     data_loader = DataLoader(base_name, logger, batch_size, device)
+    class_weights = data_loader.compute_class_weights()
     raw_model = NNAIParameters(device)
-    model_wrap = ModelWrap(raw_model.model)
+    model_wrap = ModelWrap(raw_model.model, class_weights=class_weights)
     optimizer = torch.optim.AdamW(model_wrap.parameters(), lr=learning_rate)
 
     logger.info("starting training")
@@ -257,7 +285,7 @@ def train_model(
         if iter and iter % checkpoint_interval == 0:
             torch.save(
                 raw_model.model.state_dict(),
-                f"nn_checkpoints/{base_name}_checkpoint_{iter}.pth",
+                f"nn_checkpoints/{TRAINING_RUN_NAME}_checkpoint_{iter}.pth",
             )
 
         if iter % print_interval == 0:
@@ -287,7 +315,7 @@ def train_model(
 
     torch.save(
         raw_model.model.state_dict(),
-        f"nn_checkpoints/{base_name}_final.pth",
+        f"nn_checkpoints/{TRAINING_RUN_NAME}_final.pth",
     )
 
 

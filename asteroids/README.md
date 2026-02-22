@@ -157,7 +157,15 @@ All artifacts saved to `nn_checkpoints/`:
   - Saved during training (user implements checkpoint logic)
   - Final model saved as `<basename>_YYYYMMDD_HHMMSS_final.pth`
 
-**Note**: Core training algorithm not implemented - user implements cross-entropy loss and training loop.
+**Note**: The `TRAINING_RUN_NAME` constant at the top of `cross_entropy.py` controls all output file names. Set it before each new training regime.
+
+#### Cross-Entropy Training Runs
+
+| Run name | Log file | Notes |
+|----------|----------|-------|
+| `training_data20k_combinded` | `training_data20k_combinded_cross_entropy.log` | Old run. State used a scalar normalized angle (`angle / 2π`) at column 4. 141 input features. |
+| `training_data20k_converted` | `training_data20k_converted_cross_entropy.log` | Bearing format. Angle replaced with `cos(angle)`, `sin(angle)` at columns 4–5. 142 inputs. No class weights — model learned to spin but not shoot. |
+| `bearing_weighted` | `bearing_weighted_cross_entropy.log` | Same bearing format as above, with inverse-frequency class weights to improve learning of rare actions (shoot, accelerate). |
 
 ### Utilities
 
