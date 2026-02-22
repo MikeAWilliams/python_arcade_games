@@ -161,11 +161,11 @@ All artifacts saved to `nn_checkpoints/`:
 
 #### Cross-Entropy Training Runs
 
-| Run name | Log file | Notes |
-|----------|----------|-------|
-| `training_data20k_combinded` | `training_data20k_combinded_cross_entropy.log` | Old run. State used a scalar normalized angle (`angle / 2π`) at column 4. 141 input features. |
-| `training_data20k_converted` | `training_data20k_converted_cross_entropy.log` | Bearing format. Angle replaced with `cos(angle)`, `sin(angle)` at columns 4–5. 142 inputs. No class weights — model learned to spin but not shoot. |
-| `bearing_weighted` | `bearing_weighted_cross_entropy.log` | Same bearing format as above, with inverse-frequency class weights to improve learning of rare actions (shoot, accelerate). |
+| Run name | Log file | Result | Notes |
+|----------|----------|--------|-------|
+| `training_data20k_combinded` | `training_data20k_combinded_cross_entropy.log` | — | Old run. State used a scalar normalized angle (`angle / 2π`) at column 4. 141 input features. |
+| `training_data20k_converted` | `training_data20k_converted_cross_entropy.log` | Avg score ~9–10 | Bearing format (cos/sin at cols 4–5, 142 inputs). No class weights. Model learned to spin but rarely shot — action probabilities mirrored the training distribution (~93% turns) so shooting was almost never the argmax. |
+| `bearing_weighted` | `bearing_weighted_cross_entropy.log` | Avg score ~2–7 | Same bearing format with full inverse-frequency class weights (TURN: 0.05×, ACCEL: 3.07×, SHOOT: 0.57×). **Failed.** Down-weighting turns to 0.05 starved the model of survival signal. It learned to accelerate and decelerate without regard to asteroid position — the upweighted minority actions were reinforced, but the model never associated them with relevant game states. |
 
 ### Utilities
 
