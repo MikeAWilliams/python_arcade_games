@@ -14,12 +14,13 @@ from pathlib import Path
 import numpy as np
 import torch
 from torch import nn
+from torch.nn import functional as F
 
 # Add parent directory to path so we can import asteroids package
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from asteroids.core.game import Action, Game
-from asteroids.ai.neural import NNAIInputMethod, NNAIParameters
+from asteroids.ai.neural import NNAIInputMethod, NNAIParameters, validate_and_load_model
 from asteroids.core.game_runner import execute_action
 
 
@@ -87,14 +88,12 @@ def train_on_game_results(model, optimizer, states, actions, advantages, device)
 
     optimizer.zero_grad()
 
-    # Forward pass - get action probabilities
-    action_probs = model(states)  # (N, num_actions)
+    # Forward pass - get action logits
+    logits = model(states)  # (N, num_actions)
 
     # Get log probability of actions that were actually taken
-    # action_probs[i, actions[i]] gives probability of action taken in state i
-    log_probs = torch.log(
-        action_probs.gather(1, actions.unsqueeze(1)).squeeze(1) + 1e-8
-    )
+    log_probs = F.log_softmax(logits, dim=1)
+    log_probs = log_probs.gather(1, actions.unsqueeze(1)).squeeze(1)
 
     # Policy gradient loss: -E[log π(a|s) * A(s,a)]
     loss = -torch.mean(log_probs * advantages)
@@ -123,7 +122,9 @@ def run_games_batch_worker(args):
 
     # Create parameters once and reuse for all games in this worker
     params = NNAIParameters(device="cpu")
-    params.model.load_state_dict(model_state_dict)
+    validate_and_load_model(
+        params.model, model_state_dict, source_description="training checkpoint"
+    )
     params.model.eval()
 
     results = []
@@ -289,7 +290,7 @@ def train_model(width, height, batch_size=32, num_workers=None):
                         "epoch": epoch,
                         "model_state_dict": model.state_dict(),
                         "optimizer_state_dict": opt.state_dict(),
-                        "max_score": max_score,
+                        "max_score": float(max_score),
                         "loss": loss,
                     },
                     checkpoint_path,

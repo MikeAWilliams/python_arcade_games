@@ -157,6 +157,7 @@ class Player:
         self.geometry.pos.x += self.vel.x * dt
         self.geometry.pos.y += self.vel.y * dt
         self.geometry.angle += self.angle_vel * dt
+        self.geometry.angle %= 2 * math.pi
 
     def copy_geometry(self):
         return self.geometry.copy()

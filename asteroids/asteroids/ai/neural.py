@@ -20,7 +20,7 @@ def compute_state(game):
     Compute the game state vector for neural network input.
 
     State vector has the form:
-    - player_state: x, y, vx, vy, theta, shot_cooldown
+    - player_state: x, y, vx, vy, bearing_x, bearing_y, shot_cooldown
     - per_asteroid_state: x, y, vx, vy, active (for up to 27 asteroids)
 
     Total possible asteroids = 27 (3 + 6 + 18 for each generation)
@@ -38,7 +38,8 @@ def compute_state(game):
     result.append(float(game.player.geometry.pos.y / game.height))
     result.append(float(game.player.vel.x / game.width))
     result.append(float(game.player.vel.y / game.height))
-    result.append(float(game.player.geometry.angle / (2 * math.pi)))
+    result.append(float(math.cos(game.player.geometry.angle)))
+    result.append(float(math.sin(game.player.geometry.angle)))
     result.append(float(game.shoot_cooldown / SHOOT_COOLDOWN))
 
     # Encode the asteroid state
@@ -60,6 +61,31 @@ def compute_state(game):
     return result
 
 
+def validate_and_load_model(
+    model: torch.nn.Module,
+    state_dict: dict,
+    source_description: str = "model file",
+) -> None:
+    """Load state dict into model with dimension validation.
+
+    Accepts either a plain state_dict or a training checkpoint dict
+    containing a "model_state_dict" key.
+    """
+    # Extract model weights from checkpoint dict if needed
+    if "model_state_dict" in state_dict:
+        state_dict = state_dict["model_state_dict"]
+
+    expected_shape = model.state_dict()["0.weight"].shape
+    loaded_shape = state_dict["0.weight"].shape
+    if expected_shape != loaded_shape:
+        raise ValueError(
+            f"Model incompatible: first layer expects {expected_shape[1]} inputs "
+            f"but {source_description} has {loaded_shape[1]}. "
+            f"The model file was likely trained with a different architecture."
+        )
+    model.load_state_dict(state_dict)
+
+
 class NNAIParameters:
     """Configuration parameters for NNAI"""
 
@@ -67,7 +93,7 @@ class NNAIParameters:
         if device is None:
             device = "cpu"
         self.device = device
-        player_state_count = 6  # x,y, vx,vy,theta, shot_cooldown
+        player_state_count = 7  # x,y, vx,vy, bearing_x,bearing_y, shot_cooldown
         per_asteroid_count = 5  # x,y, vx,vy, active
         possible_asteroids = 27  # 3+6+18 for each generation
         self.num_inputs = player_state_count + per_asteroid_count * possible_asteroids

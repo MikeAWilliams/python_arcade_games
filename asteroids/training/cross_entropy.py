@@ -25,7 +25,7 @@ from torch.nn import functional as F
 # Add parent to path for asteroids imports
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from asteroids.ai.neural import NNAIParameters
+from asteroids.ai.neural import NNAIParameters, validate_and_load_model
 from asteroids.core.game import Action
 
 
@@ -47,11 +47,10 @@ class ModelWrap(nn.Module):
 
 
 class DataLoader:
-    def __init__(self, base_name, logger, batch_per_file, device="cpu"):
+    def __init__(self, base_name, logger, batch_size, device="cpu"):
         self.base_name = base_name
         self.logger = logger
-        self.batch_per_file = batch_per_file
-        self.batch_size = 1
+        self.batch_size = batch_size
         self.device = device
         self.num_actions = len(Action)
 
@@ -82,7 +81,6 @@ class DataLoader:
             raw = np.load(file)
             self.states = raw["states"]
             self.actions = raw["actions"]
-            self.batch_size = len(self.states) // self.batch_per_file
         except Exception as e:
             self.logger.error(f"  Failed to load {file}: {e}")
             raise
@@ -168,7 +166,9 @@ def evaluate_model(raw_model, games_per_eval, eval_threads, width=1280, height=7
     # Serialize model for workers (must be on CPU)
     model_state_dict = {k: v.cpu() for k, v in raw_model.model.state_dict().items()}
     eval_params = NNAIParameters(device="cpu")
-    eval_params.model.load_state_dict(model_state_dict)
+    validate_and_load_model(
+        eval_params.model, model_state_dict, source_description="training checkpoint"
+    )
     eval_params.model.eval()
 
     # Prepare game arguments
@@ -194,7 +194,7 @@ def evaluate_model(raw_model, games_per_eval, eval_threads, width=1280, height=7
 
 def train_model(
     base_name,
-    batch_per_file,
+    batch_size,
     learning_rate,
     max_iterations,
     print_interval,
@@ -218,7 +218,7 @@ def train_model(
 
     logger.info(f"Cross-Entropy Supervised Learning")
     logger.info(f"Base name: {base_name}")
-    logger.info(f"Batch per file: {batch_per_file}")
+    logger.info(f"Batch size: {batch_size}")
     logger.info(f"Learning rate: {learning_rate}")
     logger.info(f"max_iterations: {max_iterations}")
     logger.info(f"Evaluation interval: {eval_interval}")
@@ -228,7 +228,7 @@ def train_model(
     logger.info("")
 
     logger.info("Loading training data...")
-    data_loader = DataLoader(base_name, logger, batch_per_file, device)
+    data_loader = DataLoader(base_name, logger, batch_size, device)
     raw_model = NNAIParameters(device)
     model_wrap = ModelWrap(raw_model.model)
     optimizer = torch.optim.AdamW(model_wrap.parameters(), lr=learning_rate)
@@ -300,16 +300,16 @@ def main():
     parser.add_argument(
         "--base-name",
         type=str,
-        default="training_data20k_combinded",
+        default="training_data20k_converted",
         help="Base name for data files (data/<base_name>_*.npz) and output files",
     )
 
     # Training hyperparameters
     parser.add_argument(
-        "--batch-per-file",
+        "--batch-size",
         type=int,
-        default=3,
-        help="Divide each file into this number of batches (default: 3)",
+        default=1024,
+        help="Training batch size (default: 1024)",
     )
     parser.add_argument(
         "--learning-rate",
@@ -320,28 +320,28 @@ def main():
     parser.add_argument(
         "--max-iterations",
         type=int,
-        default=400,  # 400 for now as default batch per file is 3*115(files)=345
-        help="Number of training iterations (default: 400)",
+        default=56_250_000,
+        help="Number of training iterations (default: 1125000, ~1 epoch at batch-size 1024)",
     )
 
     parser.add_argument(
         "--print-interval",
         type=int,
-        default=10,
+        default=100_000,
         help="Number of iterations between prints (default: 10)",
     )
 
     parser.add_argument(
         "--checkpoint-interval",
         type=int,
-        default=50,
+        default=2_812_500,
         help="Number of iterations between checkpoints (default: 50)",
     )
 
     parser.add_argument(
         "--eval-interval",
         type=int,
-        default=10,
+        default=500_000,
         help="Number of iterations between evaluations (default: 10)",
     )
 
@@ -373,7 +373,7 @@ def main():
     # Run training
     train_model(
         base_name=args.base_name,
-        batch_per_file=args.batch_per_file,
+        batch_size=args.batch_size,
         learning_rate=args.learning_rate,
         max_iterations=args.max_iterations,
         print_interval=args.print_interval,

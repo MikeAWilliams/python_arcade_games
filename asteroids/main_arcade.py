@@ -5,7 +5,12 @@ import sys
 import arcade
 import torch
 
-from asteroids.ai import HeuristicAIInput, NNAIInputMethod, NNAIParameters
+from asteroids.ai import (
+    HeuristicAIInput,
+    NNAIInputMethod,
+    NNAIParameters,
+    validate_and_load_model,
+)
 from asteroids.core import Action, Game, InputMethod, KeyboardInput
 
 # constants
@@ -135,8 +140,10 @@ def main():
         )
         # Load the trained model
         params = NNAIParameters(device=device)
-        params.model.load_state_dict(
-            torch.load("nn_weights/" + args.ain, map_location=device)
+        validate_and_load_model(
+            params.model,
+            torch.load("nn_weights/" + args.ain, map_location=device, weights_only=False),
+            source_description=args.ain,
         )
         params.model.eval()
         print(f"Model loaded from {args.ain} on device: {device}")

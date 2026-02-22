@@ -187,6 +187,7 @@ def run_parallel_games(
         import torch
 
         from asteroids.ai import NNAIParameters
+        from asteroids.ai import validate_and_load_model
 
         # Default to nn_model.pth if no path specified
         if model_path is None:
@@ -194,8 +195,10 @@ def run_parallel_games(
 
         params = NNAIParameters(device="cpu")
         log(f"loading model file {model_path}")
-        params.model.load_state_dict(
-            torch.load("nn_weights/" + model_path, map_location="cpu")
+        validate_and_load_model(
+            params.model,
+            torch.load("nn_weights/" + model_path, map_location="cpu", weights_only=False),
+            source_description=model_path,
         )
         params.model.eval()
         ai_params = params

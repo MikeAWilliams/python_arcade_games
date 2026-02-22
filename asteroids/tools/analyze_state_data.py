@@ -19,13 +19,14 @@ import numpy as np
 
 
 def build_column_names():
-    """Build human-readable names for each of the 141 state columns."""
+    """Build human-readable names for each of the 142 state columns."""
     cols = []
     cols.append("player_x (norm)")
     cols.append("player_y (norm)")
     cols.append("player_vx (norm)")
     cols.append("player_vy (norm)")
-    cols.append("player_angle (norm)")
+    cols.append("player_bearing_x (cos)")
+    cols.append("player_bearing_y (sin)")
     cols.append("shoot_cooldown (norm)")
 
     for i in range(27):
@@ -65,7 +66,9 @@ def print_results(stats, cols):
         f"total (every {stats['step']}th row)"
     )
     print()
-    print(f"{'Col':>3}  {'Name':<26}  {'Min':>10}  {'Max':>10}  {'Mean':>10}  {'Std':>10}")
+    print(
+        f"{'Col':>3}  {'Name':<26}  {'Min':>10}  {'Max':>10}  {'Mean':>10}  {'Std':>10}"
+    )
     print("-" * 80)
 
     for i, name in enumerate(cols):
@@ -75,7 +78,7 @@ def print_results(stats, cols):
         )
 
         # Print separator between player and asteroid sections
-        if i == 5:
+        if i == 6:
             print("-" * 80)
 
 
@@ -104,9 +107,7 @@ def main():
     args = parser.parse_args()
 
     pattern = f"data/{args.base_name}_*.npz"
-    files = sorted(
-        glob.glob(pattern), key=lambda x: int(Path(x).stem.split("_")[-1])
-    )
+    files = sorted(glob.glob(pattern), key=lambda x: int(Path(x).stem.split("_")[-1]))
 
     if not files:
         print(f"No data files found matching: {pattern}")
