@@ -323,3 +323,235 @@ Evaluation avg_score=4.6, avg_time_alive=7.2s
 Epoch 22, Iteration 25000000/56250000, Loss: 0.1988 | Elapsed: 20044.8s, Per-iter: 0.001s, Remaining: 25056.0s, Total: 45100.8s
 Epoch 22, Iteration 25100000/56250000, Loss: 0.1486 | Elapsed: 20126.0s, Per-iter: 0.001s, Remaining: 24977.1s, Total: 45103.1s
 Epoch 22, Iteration 25200000/56250000, Loss: 0.0776 | Elapsed: 20205.1s, Per-iter: 0.001s, Remaining: 24895.6s, Total: 45100.8s
+Epoch 22, Iteration 25300000/56250000, Loss: 0.0548 | Elapsed: 20289.0s, Per-iter: 0.001s, Remaining: 24819.9s, Total: 45108.9s
+Epoch 22, Iteration 25400000/56250000, Loss: 0.0728 | Elapsed: 20368.3s, Per-iter: 0.001s, Remaining: 24738.7s, Total: 45107.0s
+Evaluation avg_score=3.1, avg_time_alive=6.3s
+Epoch 22, Iteration 25500000/56250000, Loss: 0.1259 | Elapsed: 20447.3s, Per-iter: 0.001s, Remaining: 24657.0s, Total: 45104.3s
+Epoch 22, Iteration 25600000/56250000, Loss: 0.2255 | Elapsed: 20528.3s, Per-iter: 0.001s, Remaining: 24577.8s, Total: 45106.1s
+Epoch 22, Iteration 25700000/56250000, Loss: 0.0732 | Elapsed: 20611.2s, Per-iter: 0.001s, Remaining: 24500.8s, Total: 45112.0s
+Epoch 23, Iteration 25800000/56250000, Loss: 0.1041 | Elapsed: 20691.1s, Per-iter: 0.001s, Remaining: 24420.3s, Total: 45111.5s
+Epoch 23, Iteration 25900000/56250000, Loss: 0.0652 | Elapsed: 20770.1s, Per-iter: 0.001s, Remaining: 24338.7s, Total: 45108.8s
+Evaluation avg_score=5.0, avg_time_alive=8.3s
+Epoch 23, Iteration 26000000/56250000, Loss: 0.0779 | Elapsed: 20855.3s, Per-iter: 0.001s, Remaining: 24264.3s, Total: 45119.6s
+Epoch 23, Iteration 26100000/56250000, Loss: 0.0404 | Elapsed: 20935.7s, Per-iter: 0.001s, Remaining: 24184.4s, Total: 45120.1s
+Epoch 23, Iteration 26200000/56250000, Loss: 0.2102 | Elapsed: 21015.2s, Per-iter: 0.001s, Remaining: 24103.3s, Total: 45118.6s
+Epoch 23, Iteration 26300000/56250000, Loss: 0.0649 | Elapsed: 21095.5s, Per-iter: 0.001s, Remaining: 24023.2s, Total: 45118.8s
+Epoch 23, Iteration 26400000/56250000, Loss: 0.0504 | Elapsed: 21178.8s, Per-iter: 0.001s, Remaining: 23946.5s, Total: 45125.3s
+Evaluation avg_score=4.9, avg_time_alive=8.1s
+Epoch 23, Iteration 26500000/56250000, Loss: 0.0960 | Elapsed: 21257.3s, Per-iter: 0.001s, Remaining: 23864.3s, Total: 45121.6s
+Epoch 23, Iteration 26600000/56250000, Loss: 0.0563 | Elapsed: 21335.1s, Per-iter: 0.001s, Remaining: 23781.5s, Total: 45116.6s
+Epoch 23, Iteration 26700000/56250000, Loss: 0.0795 | Elapsed: 21412.7s, Per-iter: 0.001s, Remaining: 23698.3s, Total: 45110.9s
+Epoch 23, Iteration 26800000/56250000, Loss: 0.1305 | Elapsed: 21497.6s, Per-iter: 0.001s, Remaining: 23623.2s, Total: 45120.8s
+Epoch 24, Iteration 26900000/56250000, Loss: 0.0993 | Elapsed: 21576.1s, Per-iter: 0.001s, Remaining: 23541.3s, Total: 45117.4s
+Evaluation avg_score=5.8, avg_time_alive=10.7s
+Epoch 24, Iteration 27000000/56250000, Loss: 0.0688 | Elapsed: 21655.1s, Per-iter: 0.001s, Remaining: 23459.7s, Total: 45114.8s
+Epoch 24, Iteration 27100000/56250000, Loss: 0.0983 | Elapsed: 21738.3s, Per-iter: 0.001s, Remaining: 23382.7s, Total: 45121.0s
+Epoch 24, Iteration 27200000/56250000, Loss: 0.0514 | Elapsed: 21817.7s, Per-iter: 0.001s, Remaining: 23301.6s, Total: 45119.2s
+Epoch 24, Iteration 27300000/56250000, Loss: 0.0604 | Elapsed: 21895.5s, Per-iter: 0.001s, Remaining: 23218.8s, Total: 45114.3s
+Epoch 24, Iteration 27400000/56250000, Loss: 0.0770 | Elapsed: 21973.7s, Per-iter: 0.001s, Remaining: 23136.6s, Total: 45110.3s
+Evaluation avg_score=4.0, avg_time_alive=6.6s
+Epoch 24, Iteration 27500000/56250000, Loss: 0.2471 | Elapsed: 22057.0s, Per-iter: 0.001s, Remaining: 23059.6s, Total: 45116.6s
+Epoch 24, Iteration 27600000/56250000, Loss: 0.0479 | Elapsed: 22136.4s, Per-iter: 0.001s, Remaining: 22978.5s, Total: 45114.9s
+Epoch 24, Iteration 27700000/56250000, Loss: 0.0621 | Elapsed: 22214.2s, Per-iter: 0.001s, Remaining: 22895.9s, Total: 45110.1s
+Epoch 24, Iteration 27800000/56250000, Loss: 0.0577 | Elapsed: 22294.3s, Per-iter: 0.001s, Remaining: 22815.6s, Total: 45109.9s
+Epoch 24, Iteration 27900000/56250000, Loss: 0.0639 | Elapsed: 22377.5s, Per-iter: 0.001s, Remaining: 22738.5s, Total: 45116.0s
+Evaluation avg_score=4.5, avg_time_alive=7.6s
+Epoch 25, Iteration 28000000/56250000, Loss: 0.0639 | Elapsed: 22454.9s, Per-iter: 0.001s, Remaining: 22655.4s, Total: 45110.4s
+Epoch 25, Iteration 28100000/56250000, Loss: 0.1362 | Elapsed: 22535.1s, Per-iter: 0.001s, Remaining: 22575.2s, Total: 45110.3s
+Epoch 25, Iteration 28200000/56250000, Loss: 0.0615 | Elapsed: 22617.3s, Per-iter: 0.001s, Remaining: 22497.0s, Total: 45114.4s
+Epoch 25, Iteration 28300000/56250000, Loss: 0.0527 | Elapsed: 22697.8s, Per-iter: 0.001s, Remaining: 22417.1s, Total: 45114.9s
+Epoch 25, Iteration 28400000/56250000, Loss: 0.0791 | Elapsed: 22777.2s, Per-iter: 0.001s, Remaining: 22336.1s, Total: 45113.3s
+Evaluation avg_score=3.1, avg_time_alive=6.1s
+Epoch 25, Iteration 28500000/56250000, Loss: 0.0497 | Elapsed: 22856.6s, Per-iter: 0.001s, Remaining: 22255.1s, Total: 45111.7s
+Epoch 25, Iteration 28600000/56250000, Loss: 0.0662 | Elapsed: 22940.1s, Per-iter: 0.001s, Remaining: 22178.1s, Total: 45118.3s
+Epoch 25, Iteration 28700000/56250000, Loss: 0.1301 | Elapsed: 23018.0s, Per-iter: 0.001s, Remaining: 22095.7s, Total: 45113.7s
+Epoch 25, Iteration 28800000/56250000, Loss: 0.0780 | Elapsed: 23097.5s, Per-iter: 0.001s, Remaining: 22014.8s, Total: 45112.2s
+Epoch 25, Iteration 28900000/56250000, Loss: 0.0814 | Elapsed: 23176.4s, Per-iter: 0.001s, Remaining: 21933.4s, Total: 45109.8s
+Evaluation avg_score=3.7, avg_time_alive=6.5s
+Epoch 25, Iteration 29000000/56250000, Loss: 0.0475 | Elapsed: 23255.5s, Per-iter: 0.001s, Remaining: 21852.1s, Total: 45107.7s
+Epoch 25, Iteration 29100000/56250000, Loss: 0.0763 | Elapsed: 23338.4s, Per-iter: 0.001s, Remaining: 21774.5s, Total: 45113.0s
+Epoch 26, Iteration 29200000/56250000, Loss: 0.1894 | Elapsed: 23415.5s, Per-iter: 0.001s, Remaining: 21691.4s, Total: 45106.9s
+Epoch 26, Iteration 29300000/56250000, Loss: 0.1742 | Elapsed: 23498.8s, Per-iter: 0.001s, Remaining: 21614.1s, Total: 45112.8s
+Epoch 26, Iteration 29400000/56250000, Loss: 0.1207 | Elapsed: 23576.5s, Per-iter: 0.001s, Remaining: 21531.6s, Total: 45108.2s
+Evaluation avg_score=5.4, avg_time_alive=7.8s
+Epoch 26, Iteration 29500000/56250000, Loss: 0.1820 | Elapsed: 23656.8s, Per-iter: 0.001s, Remaining: 21451.5s, Total: 45108.2s
+Epoch 26, Iteration 29600000/56250000, Loss: 0.1161 | Elapsed: 23735.9s, Per-iter: 0.001s, Remaining: 21370.3s, Total: 45106.2s
+Epoch 26, Iteration 29700000/56250000, Loss: 0.1617 | Elapsed: 23819.0s, Per-iter: 0.001s, Remaining: 21292.7s, Total: 45111.7s
+Epoch 26, Iteration 29800000/56250000, Loss: 0.0649 | Elapsed: 23897.9s, Per-iter: 0.001s, Remaining: 21211.4s, Total: 45109.3s
+Epoch 26, Iteration 29900000/56250000, Loss: 0.0500 | Elapsed: 23976.0s, Per-iter: 0.001s, Remaining: 21129.4s, Total: 45105.4s
+Evaluation avg_score=4.1, avg_time_alive=6.5s
+Epoch 26, Iteration 30000000/56250000, Loss: 0.0635 | Elapsed: 24057.2s, Per-iter: 0.001s, Remaining: 21050.0s, Total: 45107.2s
+Epoch 26, Iteration 30100000/56250000, Loss: 0.0928 | Elapsed: 24135.3s, Per-iter: 0.001s, Remaining: 20968.1s, Total: 45103.4s
+Epoch 26, Iteration 30200000/56250000, Loss: 0.0611 | Elapsed: 24218.5s, Per-iter: 0.001s, Remaining: 20890.5s, Total: 45109.0s
+Epoch 27, Iteration 30300000/56250000, Loss: 0.0801 | Elapsed: 24297.6s, Per-iter: 0.001s, Remaining: 20809.4s, Total: 45107.0s
+Epoch 27, Iteration 30400000/56250000, Loss: 0.0724 | Elapsed: 24381.9s, Per-iter: 0.001s, Remaining: 20732.7s, Total: 45114.6s
+Evaluation avg_score=3.8, avg_time_alive=7.8s
+Epoch 27, Iteration 30500000/56250000, Loss: 0.0861 | Elapsed: 24462.5s, Per-iter: 0.001s, Remaining: 20652.8s, Total: 45115.3s
+Epoch 27, Iteration 30600000/56250000, Loss: 0.0626 | Elapsed: 24540.7s, Per-iter: 0.001s, Remaining: 20570.9s, Total: 45111.5s
+Epoch 27, Iteration 30700000/56250000, Loss: 0.1040 | Elapsed: 24618.1s, Per-iter: 0.001s, Remaining: 20488.3s, Total: 45106.4s
+Epoch 27, Iteration 30800000/56250000, Loss: 0.0618 | Elapsed: 24700.4s, Per-iter: 0.001s, Remaining: 20409.9s, Total: 45110.2s
+Epoch 27, Iteration 30900000/56250000, Loss: 0.8609 | Elapsed: 24778.4s, Per-iter: 0.001s, Remaining: 20327.9s, Total: 45106.3s
+Evaluation avg_score=4.8, avg_time_alive=7.7s
+Epoch 27, Iteration 31000000/56250000, Loss: 0.1547 | Elapsed: 24859.4s, Per-iter: 0.001s, Remaining: 20248.4s, Total: 45107.8s
+Epoch 27, Iteration 31100000/56250000, Loss: 0.1656 | Elapsed: 24938.4s, Per-iter: 0.001s, Remaining: 20167.2s, Total: 45105.5s
+Epoch 27, Iteration 31200000/56250000, Loss: 0.1078 | Elapsed: 25019.5s, Per-iter: 0.001s, Remaining: 20087.7s, Total: 45107.2s
+Epoch 27, Iteration 31300000/56250000, Loss: 0.1032 | Elapsed: 25103.3s, Per-iter: 0.001s, Remaining: 20010.4s, Total: 45113.7s
+Epoch 28, Iteration 31400000/56250000, Loss: 0.2479 | Elapsed: 25181.5s, Per-iter: 0.001s, Remaining: 19928.6s, Total: 45110.1s
+Evaluation avg_score=4.2, avg_time_alive=7.5s
+Epoch 28, Iteration 31500000/56250000, Loss: 0.0535 | Elapsed: 25263.8s, Per-iter: 0.001s, Remaining: 19850.1s, Total: 45113.8s
+Epoch 28, Iteration 31600000/56250000, Loss: 0.0742 | Elapsed: 25344.2s, Per-iter: 0.001s, Remaining: 19770.1s, Total: 45114.3s
+Epoch 28, Iteration 31700000/56250000, Loss: 0.0736 | Elapsed: 25423.9s, Per-iter: 0.001s, Remaining: 19689.5s, Total: 45113.5s
+Epoch 28, Iteration 31800000/56250000, Loss: 0.0734 | Elapsed: 25503.2s, Per-iter: 0.001s, Remaining: 19608.6s, Total: 45111.7s
+Epoch 28, Iteration 31900000/56250000, Loss: 0.0830 | Elapsed: 25582.4s, Per-iter: 0.001s, Remaining: 19527.6s, Total: 45110.0s
+Evaluation avg_score=5.5, avg_time_alive=7.8s
+Epoch 28, Iteration 32000000/56250000, Loss: 0.0816 | Elapsed: 25665.5s, Per-iter: 0.001s, Remaining: 19449.6s, Total: 45115.1s
+Epoch 28, Iteration 32100000/56250000, Loss: 0.1003 | Elapsed: 25745.7s, Per-iter: 0.001s, Remaining: 19369.4s, Total: 45115.1s
+Epoch 28, Iteration 32200000/56250000, Loss: 0.1527 | Elapsed: 25824.4s, Per-iter: 0.001s, Remaining: 19288.1s, Total: 45112.5s
+Epoch 28, Iteration 32300000/56250000, Loss: 0.1082 | Elapsed: 25900.6s, Per-iter: 0.001s, Remaining: 19204.9s, Total: 45105.5s
+Epoch 28, Iteration 32400000/56250000, Loss: 0.0553 | Elapsed: 25983.4s, Per-iter: 0.001s, Remaining: 19126.7s, Total: 45110.1s
+Evaluation avg_score=4.6, avg_time_alive=7.7s
+Epoch 29, Iteration 32500000/56250000, Loss: 0.0645 | Elapsed: 26061.3s, Per-iter: 0.001s, Remaining: 19044.8s, Total: 45106.1s
+Epoch 29, Iteration 32600000/56250000, Loss: 0.1050 | Elapsed: 26145.3s, Per-iter: 0.001s, Remaining: 18967.4s, Total: 45112.7s
+Epoch 29, Iteration 32700000/56250000, Loss: 0.0776 | Elapsed: 26224.7s, Per-iter: 0.001s, Remaining: 18886.6s, Total: 45111.3s
+Epoch 29, Iteration 32800000/56250000, Loss: 0.1686 | Elapsed: 26304.3s, Per-iter: 0.001s, Remaining: 18806.0s, Total: 45110.3s
+Epoch 29, Iteration 32900000/56250000, Loss: 0.0672 | Elapsed: 26383.3s, Per-iter: 0.001s, Remaining: 18725.0s, Total: 45108.3s
+Evaluation avg_score=4.4, avg_time_alive=7.6s
+Epoch 29, Iteration 33000000/56250000, Loss: 0.0479 | Elapsed: 26463.0s, Per-iter: 0.001s, Remaining: 18644.4s, Total: 45107.4s
+Epoch 29, Iteration 33100000/56250000, Loss: 0.0789 | Elapsed: 26548.0s, Per-iter: 0.001s, Remaining: 18567.5s, Total: 45115.5s
+Epoch 29, Iteration 33200000/56250000, Loss: 0.1775 | Elapsed: 26628.3s, Per-iter: 0.001s, Remaining: 18487.4s, Total: 45115.6s
+Epoch 29, Iteration 33300000/56250000, Loss: 0.0772 | Elapsed: 26708.3s, Per-iter: 0.001s, Remaining: 18407.1s, Total: 45115.4s
+Epoch 29, Iteration 33400000/56250000, Loss: 0.0573 | Elapsed: 26787.2s, Per-iter: 0.001s, Remaining: 18326.0s, Total: 45113.1s
+Evaluation avg_score=5.1, avg_time_alive=8.1s
+Epoch 29, Iteration 33500000/56250000, Loss: 0.0659 | Elapsed: 26870.2s, Per-iter: 0.001s, Remaining: 18247.7s, Total: 45117.9s
+Epoch 30, Iteration 33600000/56250000, Loss: 0.2070 | Elapsed: 26948.1s, Per-iter: 0.001s, Remaining: 18165.9s, Total: 45114.1s
+Epoch 30, Iteration 33700000/56250000, Loss: 0.0627 | Elapsed: 27027.3s, Per-iter: 0.001s, Remaining: 18085.1s, Total: 45112.4s
+Epoch 30, Iteration 33800000/56250000, Loss: 0.0708 | Elapsed: 27113.2s, Per-iter: 0.001s, Remaining: 18008.6s, Total: 45121.8s
+Epoch 30, Iteration 33900000/56250000, Loss: 0.0824 | Elapsed: 27190.8s, Per-iter: 0.001s, Remaining: 17926.7s, Total: 45117.5s
+Evaluation avg_score=3.4, avg_time_alive=6.7s
+Epoch 30, Iteration 34000000/56250000, Loss: 0.0680 | Elapsed: 27269.4s, Per-iter: 0.001s, Remaining: 17845.4s, Total: 45114.9s
+Epoch 30, Iteration 34100000/56250000, Loss: 0.0895 | Elapsed: 27347.7s, Per-iter: 0.001s, Remaining: 17764.0s, Total: 45111.7s
+Epoch 30, Iteration 34200000/56250000, Loss: 0.0775 | Elapsed: 27432.1s, Per-iter: 0.001s, Remaining: 17686.5s, Total: 45118.6s
+Epoch 30, Iteration 34300000/56250000, Loss: 0.0477 | Elapsed: 27510.6s, Per-iter: 0.001s, Remaining: 17605.2s, Total: 45115.8s
+Epoch 30, Iteration 34400000/56250000, Loss: 0.1535 | Elapsed: 27589.1s, Per-iter: 0.001s, Remaining: 17523.9s, Total: 45113.0s
+Evaluation avg_score=5.4, avg_time_alive=8.5s
+Epoch 30, Iteration 34500000/56250000, Loss: 0.0575 | Elapsed: 27667.5s, Per-iter: 0.001s, Remaining: 17442.5s, Total: 45110.0s
+Epoch 30, Iteration 34600000/56250000, Loss: 0.1280 | Elapsed: 27749.0s, Per-iter: 0.001s, Remaining: 17363.2s, Total: 45112.2s
+Epoch 30, Iteration 34700000/56250000, Loss: 0.0895 | Elapsed: 27826.4s, Per-iter: 0.001s, Remaining: 17281.2s, Total: 45107.7s
+Epoch 31, Iteration 34800000/56250000, Loss: 0.1564 | Elapsed: 27903.9s, Per-iter: 0.001s, Remaining: 17199.4s, Total: 45103.3s
+Epoch 31, Iteration 34900000/56250000, Loss: 0.0735 | Elapsed: 27987.2s, Per-iter: 0.001s, Remaining: 17121.1s, Total: 45108.3s
+Evaluation avg_score=5.4, avg_time_alive=8.8s
+Epoch 31, Iteration 35000000/56250000, Loss: 0.1631 | Elapsed: 28066.3s, Per-iter: 0.001s, Remaining: 17040.2s, Total: 45106.5s
+Epoch 31, Iteration 35100000/56250000, Loss: 0.1040 | Elapsed: 28145.9s, Per-iter: 0.001s, Remaining: 16959.7s, Total: 45105.6s
+Epoch 31, Iteration 35200000/56250000, Loss: 0.1077 | Elapsed: 28225.4s, Per-iter: 0.001s, Remaining: 16879.1s, Total: 45104.5s
+Epoch 31, Iteration 35300000/56250000, Loss: 0.0628 | Elapsed: 28308.5s, Per-iter: 0.001s, Remaining: 16800.7s, Total: 45109.2s
+Epoch 31, Iteration 35400000/56250000, Loss: 0.2440 | Elapsed: 28388.4s, Per-iter: 0.001s, Remaining: 16720.3s, Total: 45108.7s
+Evaluation avg_score=5.2, avg_time_alive=8.2s
+Epoch 31, Iteration 35500000/56250000, Loss: 0.1248 | Elapsed: 28467.0s, Per-iter: 0.001s, Remaining: 16639.2s, Total: 45106.2s
+Epoch 31, Iteration 35600000/56250000, Loss: 0.0814 | Elapsed: 28545.4s, Per-iter: 0.001s, Remaining: 16557.9s, Total: 45103.4s
+Epoch 31, Iteration 35700000/56250000, Loss: 0.0534 | Elapsed: 28629.4s, Per-iter: 0.001s, Remaining: 16480.0s, Total: 45109.4s
+Epoch 31, Iteration 35800000/56250000, Loss: 0.0415 | Elapsed: 28706.1s, Per-iter: 0.001s, Remaining: 16397.8s, Total: 45103.9s
+Epoch 32, Iteration 35900000/56250000, Loss: 0.0575 | Elapsed: 28783.0s, Per-iter: 0.001s, Remaining: 16315.7s, Total: 45098.7s
+Evaluation avg_score=4.9, avg_time_alive=8.0s
+Epoch 32, Iteration 36000000/56250000, Loss: 0.1114 | Elapsed: 28865.6s, Per-iter: 0.001s, Remaining: 16236.9s, Total: 45102.6s
+Epoch 32, Iteration 36100000/56250000, Loss: 0.0839 | Elapsed: 28945.0s, Per-iter: 0.001s, Remaining: 16156.3s, Total: 45101.3s
+Epoch 32, Iteration 36200000/56250000, Loss: 0.0905 | Elapsed: 29023.1s, Per-iter: 0.001s, Remaining: 16075.0s, Total: 45098.1s
+Epoch 32, Iteration 36300000/56250000, Loss: 0.0562 | Elapsed: 29101.4s, Per-iter: 0.001s, Remaining: 15993.7s, Total: 45095.1s
+Epoch 32, Iteration 36400000/56250000, Loss: 0.0746 | Elapsed: 29181.5s, Per-iter: 0.001s, Remaining: 15913.5s, Total: 45095.0s
+Evaluation avg_score=5.6, avg_time_alive=7.7s
+Epoch 32, Iteration 36500000/56250000, Loss: 0.1233 | Elapsed: 29260.3s, Per-iter: 0.001s, Remaining: 15832.6s, Total: 45092.9s
+Epoch 32, Iteration 36600000/56250000, Loss: 0.1172 | Elapsed: 29338.6s, Per-iter: 0.001s, Remaining: 15751.5s, Total: 45090.0s
+Epoch 32, Iteration 36700000/56250000, Loss: 0.0634 | Elapsed: 29418.8s, Per-iter: 0.001s, Remaining: 15671.3s, Total: 45090.1s
+Epoch 32, Iteration 36800000/56250000, Loss: 0.0722 | Elapsed: 29499.4s, Per-iter: 0.001s, Remaining: 15591.4s, Total: 45090.9s
+Epoch 32, Iteration 36900000/56250000, Loss: 0.1102 | Elapsed: 29576.4s, Per-iter: 0.001s, Remaining: 15509.6s, Total: 45085.9s
+Evaluation avg_score=5.1, avg_time_alive=7.5s
+Epoch 33, Iteration 37000000/56250000, Loss: 0.1288 | Elapsed: 29654.6s, Per-iter: 0.001s, Remaining: 15428.4s, Total: 45083.0s
+Epoch 33, Iteration 37100000/56250000, Loss: 0.0760 | Elapsed: 29739.6s, Per-iter: 0.001s, Remaining: 15350.8s, Total: 45090.4s
+Epoch 33, Iteration 37200000/56250000, Loss: 0.0789 | Elapsed: 29819.4s, Per-iter: 0.001s, Remaining: 15270.4s, Total: 45089.9s
+Epoch 33, Iteration 37300000/56250000, Loss: 0.0737 | Elapsed: 29900.5s, Per-iter: 0.001s, Remaining: 15190.7s, Total: 45091.2s
+Epoch 33, Iteration 37400000/56250000, Loss: 0.0571 | Elapsed: 29980.0s, Per-iter: 0.001s, Remaining: 15110.2s, Total: 45090.2s
+Evaluation avg_score=4.2, avg_time_alive=7.1s
+Epoch 33, Iteration 37500000/56250000, Loss: 0.0990 | Elapsed: 30062.2s, Per-iter: 0.001s, Remaining: 15031.1s, Total: 45093.3s
+Epoch 33, Iteration 37600000/56250000, Loss: 0.2620 | Elapsed: 30142.9s, Per-iter: 0.001s, Remaining: 14951.2s, Total: 45094.2s
+Epoch 33, Iteration 37700000/56250000, Loss: 0.3064 | Elapsed: 30222.2s, Per-iter: 0.001s, Remaining: 14870.6s, Total: 45092.8s
+Epoch 33, Iteration 37800000/56250000, Loss: 0.1310 | Elapsed: 30299.5s, Per-iter: 0.001s, Remaining: 14789.0s, Total: 45088.5s
+Epoch 33, Iteration 37900000/56250000, Loss: 0.0587 | Elapsed: 30383.6s, Per-iter: 0.001s, Remaining: 14710.8s, Total: 45094.4s
+Evaluation avg_score=3.5, avg_time_alive=6.9s
+Epoch 33, Iteration 38000000/56250000, Loss: 0.0655 | Elapsed: 30463.7s, Per-iter: 0.001s, Remaining: 14630.6s, Total: 45094.3s
+Epoch 34, Iteration 38100000/56250000, Loss: 0.1135 | Elapsed: 30541.5s, Per-iter: 0.001s, Remaining: 14549.3s, Total: 45090.8s
+Epoch 34, Iteration 38200000/56250000, Loss: 0.0532 | Elapsed: 30623.8s, Per-iter: 0.001s, Remaining: 14470.1s, Total: 45094.0s
+Epoch 34, Iteration 38300000/56250000, Loss: 0.1613 | Elapsed: 30703.2s, Per-iter: 0.001s, Remaining: 14389.6s, Total: 45092.8s
+Epoch 34, Iteration 38400000/56250000, Loss: 0.0855 | Elapsed: 30781.7s, Per-iter: 0.001s, Remaining: 14308.7s, Total: 45090.4s
+Evaluation avg_score=4.5, avg_time_alive=6.7s
+Epoch 34, Iteration 38500000/56250000, Loss: 0.0875 | Elapsed: 30860.1s, Per-iter: 0.001s, Remaining: 14227.7s, Total: 45087.8s
+Epoch 34, Iteration 38600000/56250000, Loss: 0.0703 | Elapsed: 30942.3s, Per-iter: 0.001s, Remaining: 14148.5s, Total: 45090.8s
+Epoch 34, Iteration 38700000/56250000, Loss: 0.0755 | Elapsed: 31019.3s, Per-iter: 0.001s, Remaining: 14066.9s, Total: 45086.2s
+Epoch 34, Iteration 38800000/56250000, Loss: 0.0599 | Elapsed: 31098.2s, Per-iter: 0.001s, Remaining: 13986.2s, Total: 45084.4s
+Epoch 34, Iteration 38900000/56250000, Loss: 0.0989 | Elapsed: 31178.6s, Per-iter: 0.001s, Remaining: 13906.2s, Total: 45084.8s
+Evaluation avg_score=5.1, avg_time_alive=7.0s
+Epoch 34, Iteration 39000000/56250000, Loss: 0.0427 | Elapsed: 31261.4s, Per-iter: 0.001s, Remaining: 13827.2s, Total: 45088.5s
+Epoch 34, Iteration 39100000/56250000, Loss: 0.0571 | Elapsed: 31340.9s, Per-iter: 0.001s, Remaining: 13746.7s, Total: 45087.6s
+Epoch 35, Iteration 39200000/56250000, Loss: 0.0641 | Elapsed: 31418.5s, Per-iter: 0.001s, Remaining: 13665.4s, Total: 45083.9s
+Epoch 35, Iteration 39300000/56250000, Loss: 0.0875 | Elapsed: 31501.1s, Per-iter: 0.001s, Remaining: 13586.3s, Total: 45087.4s
+Epoch 35, Iteration 39400000/56250000, Loss: 0.0844 | Elapsed: 31579.5s, Per-iter: 0.001s, Remaining: 13505.4s, Total: 45084.9s
+Evaluation avg_score=5.0, avg_time_alive=7.6s
+Epoch 35, Iteration 39500000/56250000, Loss: 0.1725 | Elapsed: 31658.6s, Per-iter: 0.001s, Remaining: 13424.9s, Total: 45083.5s
+Epoch 35, Iteration 39600000/56250000, Loss: 0.1392 | Elapsed: 31738.2s, Per-iter: 0.001s, Remaining: 13344.5s, Total: 45082.6s
+Epoch 35, Iteration 39700000/56250000, Loss: 0.0960 | Elapsed: 31820.8s, Per-iter: 0.001s, Remaining: 13265.4s, Total: 45086.2s
+Epoch 35, Iteration 39800000/56250000, Loss: 0.0649 | Elapsed: 31899.8s, Per-iter: 0.001s, Remaining: 13184.7s, Total: 45084.5s
+Epoch 35, Iteration 39900000/56250000, Loss: 0.0582 | Elapsed: 31978.6s, Per-iter: 0.001s, Remaining: 13104.0s, Total: 45082.6s
+Evaluation avg_score=5.3, avg_time_alive=8.3s
+Epoch 35, Iteration 40000000/56250000, Loss: 0.0884 | Elapsed: 32057.6s, Per-iter: 0.001s, Remaining: 13023.4s, Total: 45080.9s
+Epoch 35, Iteration 40100000/56250000, Loss: 0.0646 | Elapsed: 32139.1s, Per-iter: 0.001s, Remaining: 12943.8s, Total: 45082.9s
+Epoch 35, Iteration 40200000/56250000, Loss: 0.0523 | Elapsed: 32215.9s, Per-iter: 0.001s, Remaining: 12862.3s, Total: 45078.3s
+Epoch 35, Iteration 40300000/56250000, Loss: 0.0509 | Elapsed: 32294.0s, Per-iter: 0.001s, Remaining: 12781.4s, Total: 45075.4s
+Epoch 36, Iteration 40400000/56250000, Loss: 0.1119 | Elapsed: 32377.0s, Per-iter: 0.001s, Remaining: 12702.4s, Total: 45079.4s
+Evaluation avg_score=5.1, avg_time_alive=8.5s
+Epoch 36, Iteration 40500000/56250000, Loss: 0.1076 | Elapsed: 32455.3s, Per-iter: 0.001s, Remaining: 12621.5s, Total: 45076.8s
+Epoch 36, Iteration 40600000/56250000, Loss: 0.0621 | Elapsed: 32535.0s, Per-iter: 0.001s, Remaining: 12541.2s, Total: 45076.1s
+Epoch 36, Iteration 40700000/56250000, Loss: 0.0861 | Elapsed: 32615.0s, Per-iter: 0.001s, Remaining: 12461.0s, Total: 45075.9s
+Epoch 36, Iteration 40800000/56250000, Loss: 0.0730 | Elapsed: 32698.5s, Per-iter: 0.001s, Remaining: 12382.2s, Total: 45080.7s
+Epoch 36, Iteration 40900000/56250000, Loss: 0.0533 | Elapsed: 32776.5s, Per-iter: 0.001s, Remaining: 12301.2s, Total: 45077.8s
+Evaluation avg_score=3.5, avg_time_alive=6.1s
+Epoch 36, Iteration 41000000/56250000, Loss: 0.1177 | Elapsed: 32855.1s, Per-iter: 0.001s, Remaining: 12220.5s, Total: 45075.6s
+Epoch 36, Iteration 41100000/56250000, Loss: 0.0716 | Elapsed: 32932.7s, Per-iter: 0.001s, Remaining: 12139.4s, Total: 45072.2s
+Epoch 36, Iteration 41200000/56250000, Loss: 0.0829 | Elapsed: 33011.2s, Per-iter: 0.001s, Remaining: 12058.7s, Total: 45069.9s
+Epoch 36, Iteration 41300000/56250000, Loss: 0.1187 | Elapsed: 33094.2s, Per-iter: 0.001s, Remaining: 11979.6s, Total: 45073.8s
+Epoch 36, Iteration 41400000/56250000, Loss: 0.1204 | Elapsed: 33172.7s, Per-iter: 0.001s, Remaining: 11898.9s, Total: 45071.6s
+Evaluation avg_score=5.6, avg_time_alive=7.9s
+Epoch 37, Iteration 41500000/56250000, Loss: 0.2237 | Elapsed: 33256.8s, Per-iter: 0.001s, Remaining: 11820.2s, Total: 45076.9s
+Epoch 37, Iteration 41600000/56250000, Loss: 0.0593 | Elapsed: 33335.3s, Per-iter: 0.001s, Remaining: 11739.5s, Total: 45074.8s
+Epoch 37, Iteration 41700000/56250000, Loss: 0.0747 | Elapsed: 33414.3s, Per-iter: 0.001s, Remaining: 11658.9s, Total: 45073.2s
+Epoch 37, Iteration 41800000/56250000, Loss: 0.1480 | Elapsed: 33493.8s, Per-iter: 0.001s, Remaining: 11578.6s, Total: 45072.4s
+Epoch 37, Iteration 41900000/56250000, Loss: 0.0578 | Elapsed: 33577.5s, Per-iter: 0.001s, Remaining: 11499.7s, Total: 45077.1s
+Evaluation avg_score=3.8, avg_time_alive=7.3s
+Epoch 37, Iteration 42000000/56250000, Loss: 0.1376 | Elapsed: 33654.3s, Per-iter: 0.001s, Remaining: 11418.4s, Total: 45072.7s
+Epoch 37, Iteration 42100000/56250000, Loss: 0.0636 | Elapsed: 33734.9s, Per-iter: 0.001s, Remaining: 11338.4s, Total: 45073.3s
+Epoch 37, Iteration 42200000/56250000, Loss: 0.1022 | Elapsed: 33813.7s, Per-iter: 0.001s, Remaining: 11257.9s, Total: 45071.6s
+Epoch 37, Iteration 42300000/56250000, Loss: 0.0601 | Elapsed: 33893.2s, Per-iter: 0.001s, Remaining: 11177.5s, Total: 45070.7s
+Epoch 37, Iteration 42400000/56250000, Loss: 0.0917 | Elapsed: 33977.4s, Per-iter: 0.001s, Remaining: 11098.8s, Total: 45076.2s
+Evaluation avg_score=4.2, avg_time_alive=6.7s
+Epoch 37, Iteration 42500000/56250000, Loss: 0.0938 | Elapsed: 34056.2s, Per-iter: 0.001s, Remaining: 11018.2s, Total: 45074.3s
+Epoch 38, Iteration 42600000/56250000, Loss: 0.1384 | Elapsed: 34136.8s, Per-iter: 0.001s, Remaining: 10938.2s, Total: 45075.0s
+Epoch 38, Iteration 42700000/56250000, Loss: 0.2822 | Elapsed: 34217.0s, Per-iter: 0.001s, Remaining: 10858.1s, Total: 45075.1s
+Epoch 38, Iteration 42800000/56250000, Loss: 0.0742 | Elapsed: 34296.2s, Per-iter: 0.001s, Remaining: 10777.7s, Total: 45073.9s
+Epoch 38, Iteration 42900000/56250000, Loss: 0.1092 | Elapsed: 34375.1s, Per-iter: 0.001s, Remaining: 10697.2s, Total: 45072.3s
+Evaluation avg_score=3.8, avg_time_alive=6.7s
+Epoch 38, Iteration 43000000/56250000, Loss: 0.1030 | Elapsed: 34456.9s, Per-iter: 0.001s, Remaining: 10617.5s, Total: 45074.5s
+Epoch 38, Iteration 43100000/56250000, Loss: 0.0813 | Elapsed: 34539.6s, Per-iter: 0.001s, Remaining: 10538.2s, Total: 45077.8s
+Epoch 38, Iteration 43200000/56250000, Loss: 0.0611 | Elapsed: 34620.5s, Per-iter: 0.001s, Remaining: 10458.3s, Total: 45078.8s
+Epoch 38, Iteration 43300000/56250000, Loss: 0.2208 | Elapsed: 34698.0s, Per-iter: 0.001s, Remaining: 10377.3s, Total: 45075.3s
+Epoch 38, Iteration 43400000/56250000, Loss: 0.0483 | Elapsed: 34778.3s, Per-iter: 0.001s, Remaining: 10297.3s, Total: 45075.6s
+Evaluation avg_score=4.1, avg_time_alive=6.8s
+Epoch 38, Iteration 43500000/56250000, Loss: 0.0498 | Elapsed: 34860.0s, Per-iter: 0.001s, Remaining: 10217.6s, Total: 45077.6s
+Epoch 38, Iteration 43600000/56250000, Loss: 0.0727 | Elapsed: 34939.3s, Per-iter: 0.001s, Remaining: 10137.2s, Total: 45076.5s
+Epoch 39, Iteration 43700000/56250000, Loss: 0.0831 | Elapsed: 35018.5s, Per-iter: 0.001s, Remaining: 10056.8s, Total: 45075.3s
+Epoch 39, Iteration 43800000/56250000, Loss: 0.1794 | Elapsed: 35096.5s, Per-iter: 0.001s, Remaining: 9976.1s, Total: 45072.5s
+Epoch 39, Iteration 43900000/56250000, Loss: 0.0755 | Elapsed: 35175.0s, Per-iter: 0.001s, Remaining: 9895.5s, Total: 45070.5s
+Evaluation avg_score=4.8, avg_time_alive=7.5s
+Epoch 39, Iteration 44000000/56250000, Loss: 0.0914 | Elapsed: 35253.2s, Per-iter: 0.001s, Remaining: 9814.8s, Total: 45068.1s
+Epoch 39, Iteration 44100000/56250000, Loss: 0.0796 | Elapsed: 35330.7s, Per-iter: 0.001s, Remaining: 9734.0s, Total: 45064.7s
+Epoch 39, Iteration 44200000/56250000, Loss: 0.1781 | Elapsed: 35414.5s, Per-iter: 0.001s, Remaining: 9654.9s, Total: 45069.4s
+Epoch 39, Iteration 44300000/56250000, Loss: 0.1112 | Elapsed: 35493.9s, Per-iter: 0.001s, Remaining: 9574.5s, Total: 45068.5s
+Epoch 39, Iteration 44400000/56250000, Loss: 0.1158 | Elapsed: 35571.5s, Per-iter: 0.001s, Remaining: 9493.7s, Total: 45065.2s
+Evaluation avg_score=4.3, avg_time_alive=6.8s
+Epoch 39, Iteration 44500000/56250000, Loss: 0.2131 | Elapsed: 35651.0s, Per-iter: 0.001s, Remaining: 9413.5s, Total: 45064.5s
