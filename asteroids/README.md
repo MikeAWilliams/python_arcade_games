@@ -208,3 +208,37 @@ Deep learning model trained with REINFORCE policy gradient:
 - State: Player position/velocity, asteroid positions/velocities
 - Actions: Turn left/right, accelerate/decelerate, shoot
 - Reward: Game score with survival time bonus
+
+## Related Work
+
+Survey of known prior approaches to Asteroids AI. See `research_notes.md` for detailed notes and links.
+
+| Source | Model size | Input to model | Training |
+|--------|-----------|----------------|----------|
+| Cuccu et al. — "Six Neurons" (2019) | 6–18 neurons (policy net only) | IDVQ-compressed encoding (handful of numbers) | ENES |
+| pjflanagan — Machine Learning Asteroids | 8→6→4 | 8 raycasting distances, one per compass direction | GA |
+| Immodal — NEAT Asteroids | Evolved by NEAT (starts minimal) | Raycasting distances in multiple directions | NEAT |
+| Hausknecht et al. (2014) | Evolved | Object features (likely raw pos/vel from RAM), raw pixels, or noise — compared all three | NEAT, HyperNEAT, CMA-ES, NE |
+| jrtechs blog | 2 conv layers + 256-unit FC | Raw pixels | DQN (failed — implementation bugs) |
+| datadaveshin — AIsteroids | Tabular (no network) | Discrete attributes (is asteroid near, collision status) | Q-learning |
+| hdparks — AsteroidsDeepReinforcement | Unknown | Unknown | PPO |
+| Machneva — Medium/data-surge | Unknown (MLP policy) | Gymnasium state, likely RAM-based given MLP choice | PPO (SB3) |
+| lgoodridge — Asteroids-AI | Unknown | Unknown | GA |
+| Delfosse et al. — OCAtari (2023) | Various RL agents | Structured object state from RAM: position, size, colour per object | Various RL |
+
+**Acronyms:**
+BC — Behavioural Cloning |
+CMA-ES — Covariance Matrix Adaptation Evolution Strategy |
+DQN — Deep Q-Network |
+ENES — Exponential Natural Evolution Strategies |
+FC — Fully Connected layer |
+GA — Genetic Algorithm |
+IDVQ — Increasing Dictionary Vector Quantization |
+MLP — Multi-Layer Perceptron |
+NEAT — NeuroEvolution of Augmenting Topologies |
+HyperNEAT — Hypercube-based NEAT |
+NE — NeuroEvolution |
+PPO — Proximal Policy Optimisation |
+RAM — Random Access Memory (Atari hardware state) |
+RL — Reinforcement Learning |
+SB3 — Stable Baselines 3
