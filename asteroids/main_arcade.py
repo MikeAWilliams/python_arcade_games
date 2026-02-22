@@ -142,7 +142,7 @@ def main():
         params = NNAIParameters(device=device)
         validate_and_load_model(
             params.model,
-            torch.load("nn_weights/" + args.ain, map_location=device),
+            torch.load("nn_weights/" + args.ain, map_location=device, weights_only=False),
             source_description=args.ain,
         )
         params.model.eval()

@@ -290,7 +290,7 @@ def train_model(width, height, batch_size=32, num_workers=None):
                         "epoch": epoch,
                         "model_state_dict": model.state_dict(),
                         "optimizer_state_dict": opt.state_dict(),
-                        "max_score": max_score,
+                        "max_score": float(max_score),
                         "loss": loss,
                     },
                     checkpoint_path,

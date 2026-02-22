@@ -66,7 +66,15 @@ def validate_and_load_model(
     state_dict: dict,
     source_description: str = "model file",
 ) -> None:
-    """Load state dict into model with dimension validation."""
+    """Load state dict into model with dimension validation.
+
+    Accepts either a plain state_dict or a training checkpoint dict
+    containing a "model_state_dict" key.
+    """
+    # Extract model weights from checkpoint dict if needed
+    if "model_state_dict" in state_dict:
+        state_dict = state_dict["model_state_dict"]
+
     expected_shape = model.state_dict()["0.weight"].shape
     loaded_shape = state_dict["0.weight"].shape
     if expected_shape != loaded_shape:

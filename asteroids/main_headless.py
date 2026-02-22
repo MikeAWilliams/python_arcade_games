@@ -197,7 +197,7 @@ def run_parallel_games(
         log(f"loading model file {model_path}")
         validate_and_load_model(
             params.model,
-            torch.load("nn_weights/" + model_path, map_location="cpu"),
+            torch.load("nn_weights/" + model_path, map_location="cpu", weights_only=False),
             source_description=model_path,
         )
         params.model.eval()
