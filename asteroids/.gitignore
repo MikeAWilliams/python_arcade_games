@@ -15,6 +15,7 @@ nn_checkpoints/*
 !nn_checkpoints/.gitkeep
 nn_weights/*
 !nn_weights/.gitkeep
+!nn_weights/*.log
 
 # Data directory (keep .gitkeep)
 data/*

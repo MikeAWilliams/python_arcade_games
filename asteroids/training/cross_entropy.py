@@ -300,7 +300,7 @@ def main():
     parser.add_argument(
         "--base-name",
         type=str,
-        default="training_data20k_combinded",
+        default="training_data20k_converted",
         help="Base name for data files (data/<base_name>_*.npz) and output files",
     )
 
@@ -320,28 +320,28 @@ def main():
     parser.add_argument(
         "--max-iterations",
         type=int,
-        default=1_125_000,
+        default=56_250_000,
         help="Number of training iterations (default: 1125000, ~1 epoch at batch-size 1024)",
     )
 
     parser.add_argument(
         "--print-interval",
         type=int,
-        default=10,
+        default=100_000,
         help="Number of iterations between prints (default: 10)",
     )
 
     parser.add_argument(
         "--checkpoint-interval",
         type=int,
-        default=50,
+        default=2_812_500,
         help="Number of iterations between checkpoints (default: 50)",
     )
 
     parser.add_argument(
         "--eval-interval",
         type=int,
-        default=10,
+        default=500_000,
         help="Number of iterations between evaluations (default: 10)",
     )
 
