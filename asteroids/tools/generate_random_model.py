@@ -17,7 +17,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 import torch
 
-from asteroids.ai.neural import NNAIParameters
+from asteroids.ai.raw_geometry_nn import RawGeometryNNParameters
 
 
 def main():
@@ -34,7 +34,7 @@ def main():
 
     os.makedirs(os.path.dirname(args.output), exist_ok=True)
 
-    params = NNAIParameters()
+    params = RawGeometryNNParameters()
     torch.save(params.model.state_dict(), args.output)
     print(f"Saved {params.num_inputs}-input model to {args.output}")
 

@@ -14,7 +14,11 @@ import numpy as np
 
 from asteroids.core.game import Action, Game
 from asteroids.ai.heuristic import HeuristicAIInput, HeuristicAIInputParameters
-from asteroids.ai.neural import NNAIInputMethod, NNAIParameters, compute_state
+from asteroids.ai.raw_geometry_nn import (
+    RawGeometryNNInputMethod,
+    RawGeometryNNParameters,
+    compute_state,
+)
 
 
 class GameRunner:
@@ -132,7 +136,7 @@ def create_ai_input(ai_type: str, game, ai_params=None):
     Args:
         ai_type: "heuristic", "neural", or future AI types
         game: Game instance
-        ai_params: Optional parameters (HeuristicAIInputParameters, NNAIParameters, etc.)
+        ai_params: Optional parameters (HeuristicAIInputParameters, RawGeometryNNParameters, etc.)
 
     Returns:
         InputMethod instance
@@ -141,8 +145,8 @@ def create_ai_input(ai_type: str, game, ai_params=None):
         params = ai_params if ai_params else HeuristicAIInputParameters()
         return HeuristicAIInput(game, params)
     elif ai_type == "neural":
-        params = ai_params if ai_params else NNAIParameters()
-        return NNAIInputMethod(game, params)
+        params = ai_params if ai_params else RawGeometryNNParameters()
+        return RawGeometryNNInputMethod(game, params)
     else:
         raise ValueError(f"Unknown AI type: {ai_type}")
 

@@ -29,7 +29,10 @@ from torch.nn import functional as F
 # Add parent to path for asteroids imports
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from asteroids.ai.neural import NNAIParameters, validate_and_load_model
+from asteroids.ai.raw_geometry_nn import (
+    RawGeometryNNParameters,
+    validate_and_load_model,
+)
 from asteroids.core.game import Action
 
 
@@ -177,7 +180,7 @@ def evaluate_model(raw_model, games_per_eval, eval_threads, width=1280, height=7
     Evaluate current model by running games in parallel.
 
     Args:
-        raw_model: NNAIParameters instance with trained weights
+        raw_model: RawGeometryNNParameters instance with trained weights
         games_per_eval: Number of games to run
         eval_threads: Number of worker processes
         width/height: Game dimensions
@@ -191,7 +194,7 @@ def evaluate_model(raw_model, games_per_eval, eval_threads, width=1280, height=7
 
     # Serialize model for workers (must be on CPU)
     model_state_dict = {k: v.cpu() for k, v in raw_model.model.state_dict().items()}
-    eval_params = NNAIParameters(device="cpu")
+    eval_params = RawGeometryNNParameters(device="cpu")
     validate_and_load_model(
         eval_params.model, model_state_dict, source_description="training checkpoint"
     )
@@ -257,7 +260,7 @@ def train_model(
     logger.info("Loading training data...")
     data_loader = DataLoader(base_name, logger, batch_size, device)
     class_weights = data_loader.compute_class_weights()
-    raw_model = NNAIParameters(device)
+    raw_model = RawGeometryNNParameters(device)
     model_wrap = ModelWrap(raw_model.model, class_weights=class_weights)
     optimizer = torch.optim.AdamW(model_wrap.parameters(), lr=learning_rate)
 

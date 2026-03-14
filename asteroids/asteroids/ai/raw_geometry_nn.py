@@ -1,5 +1,8 @@
 """
-AI input method using neural network
+AI input method using neural network with raw geometry state input.
+
+This approach feeds the full game geometry (player state + all asteroid positions/velocities)
+directly to the network and asks it to learn the mapping to actions.
 """
 
 import math
@@ -86,8 +89,8 @@ def validate_and_load_model(
     model.load_state_dict(state_dict)
 
 
-class NNAIParameters:
-    """Configuration parameters for NNAI"""
+class RawGeometryNNParameters:
+    """Configuration parameters for RawGeometryNN"""
 
     def __init__(self, device=None):
         if device is None:
@@ -111,16 +114,18 @@ class NNAIParameters:
         ).to(device)
 
 
-class NNAIInputMethod(InputMethod):
+class RawGeometryNNInputMethod(InputMethod):
     """
-    A Neural Network based AI.
+    A Neural Network based AI that takes raw geometry state as input.
     """
 
-    def __init__(self, game, parameters: NNAIParameters = None, keep_data=False):
+    def __init__(
+        self, game, parameters: RawGeometryNNParameters = None, keep_data=False
+    ):
         self.game = game
         self.keep_data = keep_data
         if parameters is None:
-            parameters = NNAIParameters()
+            parameters = RawGeometryNNParameters()
         self.parameters = parameters
 
         self.states = [] if keep_data else None

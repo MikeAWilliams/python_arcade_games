@@ -7,8 +7,8 @@ import torch
 
 from asteroids.ai import (
     HeuristicAIInput,
-    NNAIInputMethod,
-    NNAIParameters,
+    RawGeometryNNInputMethod,
+    RawGeometryNNParameters,
     validate_and_load_model,
 )
 from asteroids.core import Action, Game, InputMethod, KeyboardInput
@@ -139,15 +139,17 @@ def main():
             else "cpu"
         )
         # Load the trained model
-        params = NNAIParameters(device=device)
+        params = RawGeometryNNParameters(device=device)
         validate_and_load_model(
             params.model,
-            torch.load("nn_weights/" + args.ain, map_location=device, weights_only=False),
+            torch.load(
+                "nn_weights/" + args.ain, map_location=device, weights_only=False
+            ),
             source_description=args.ain,
         )
         params.model.eval()
         print(f"Model loaded from {args.ain} on device: {device}")
-        input_method = NNAIInputMethod(g, parameters=params)
+        input_method = RawGeometryNNInputMethod(g, parameters=params)
     else:
         input_method = KeyboardInput()
 

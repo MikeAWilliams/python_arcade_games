@@ -3,7 +3,7 @@ Analyze the range of state data columns in training data files.
 
 Samples rows evenly from the first data file and computes per-column
 statistics (min, max, mean, std). Column names are derived from the
-state encoding in asteroids/ai/neural.py:compute_state().
+state encoding in asteroids/ai/raw_geometry_nn.py:compute_state().
 
 Usage:
     python tools/analyze_state_data.py

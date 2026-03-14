@@ -20,7 +20,11 @@ from torch.nn import functional as F
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from asteroids.core.game import Action, Game
-from asteroids.ai.neural import NNAIInputMethod, NNAIParameters, validate_and_load_model
+from asteroids.ai.raw_geometry_nn import (
+    RawGeometryNNInputMethod,
+    RawGeometryNNParameters,
+    validate_and_load_model,
+)
 from asteroids.core.game_runner import execute_action
 
 
@@ -121,7 +125,7 @@ def run_games_batch_worker(args):
     worker_id, num_games, width, height, model_state_dict = args
 
     # Create parameters once and reuse for all games in this worker
-    params = NNAIParameters(device="cpu")
+    params = RawGeometryNNParameters(device="cpu")
     validate_and_load_model(
         params.model, model_state_dict, source_description="training checkpoint"
     )
@@ -131,7 +135,9 @@ def run_games_batch_worker(args):
     for game_id in range(num_games):
         # Run game
         game = Game(width, height)
-        input_method = NNAIInputMethod(game=game, parameters=params, keep_data=True)
+        input_method = RawGeometryNNInputMethod(
+            game=game, parameters=params, keep_data=True
+        )
         dt = 1 / 60
 
         while game.player_alive:
@@ -244,7 +250,7 @@ def train_model(width, height, batch_size=32, num_workers=None):
     logger.info(f"Using {num_workers} worker processes for game simulation")
     logger.info(f"Batch size: {batch_size} games per training update")
 
-    params = NNAIParameters(device=device)
+    params = RawGeometryNNParameters(device=device)
     model = params.model
     opt = torch.optim.Adam(model.parameters(), lr=0.0001)
     # alpha removed - not needed for REINFORCE
