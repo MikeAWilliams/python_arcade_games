@@ -13,7 +13,8 @@ asteroids/
 │   │   └── keyboard.py    # Keyboard input implementation
 │   └── ai/                # AI-based input implementations
 │       ├── heuristic.py   # Rule-based AI with genetic optimization
-│       └── neural.py      # Neural network AI
+│       ├── raw_geometry_nn.py  # Neural network AI (raw geometry input, 142 features)
+│       └── polar_nn.py    # Neural network AI (polar-coordinate features, 39 features)
 │
 ├── training/              # Training scripts
 │   ├── policy_gradient.py # Policy gradient (REINFORCE) training
@@ -24,7 +25,9 @@ asteroids/
 │   ├── compact_recordings.py    # Consolidate game recordings
 │   ├── analyze_state_data.py    # Inspect training data column stats
 │   ├── convert_training_data.py # Convert angle to bearing format
-│   └── generate_random_model.py # Create a fresh random model file
+│   ├── generate_random_model.py # Create a fresh random model file
+│   ├── visualize_state.py       # Visualize raw geometry state recordings
+│   └── visualize_state_polar.py # Visualize polar state (converted from raw)
 │
 ├── data/                  # Training data (not in git)
 ├── nn_checkpoints/        # Training checkpoints and logs (not in git)
@@ -38,7 +41,7 @@ asteroids/
 
 - **`data/`** - Recorded gameplay stored as `.npz` files. Created by `main_headless.py --record`. Contains state vectors, actions, game IDs, and tick numbers used for supervised training.
 - **`nn_checkpoints/`** - Intermediate checkpoints and log files saved during cross-entropy training. Checkpoints are saved at regular intervals so training can be inspected or resumed.
-- **`nn_weights/`** - Final trained model weights (`.pth` files) ready for use with `main_arcade.py --ain` or `main_headless.py --ai-type neural`.
+- **`nn_weights/`** - Final trained model weights (`.pth` files) ready for use with `main_arcade.py --air`/`--aip` or `main_headless.py --ai-type raw`/`polar`.
 
 ## Installation
 
@@ -59,9 +62,13 @@ python main_arcade.py
 # Watch heuristic AI play
 python main_arcade.py --aih
 
-# Watch neural network AI play (requires trained model)
-python main_arcade.py --ain
-python main_arcade.py --ain nn_weights/best_model.pth
+# Watch raw geometry neural network AI play (requires trained model)
+python main_arcade.py --air
+python main_arcade.py --air custom_model.pth
+
+# Watch polar neural network AI play (requires trained model)
+python main_arcade.py --aip
+python main_arcade.py --aip custom_polar.pth
 ```
 
 **Keyboard Controls:**
@@ -79,8 +86,11 @@ python main_headless.py -n 10
 # Run 100 games on 8 CPU cores
 python main_headless.py -n 100 -t 8
 
-# Benchmark neural network AI
-python main_headless.py --ai-type neural --model-path nn_weights/model.pth -n 50
+# Benchmark raw geometry neural network AI
+python main_headless.py --ai-type raw --model-path model.pth -n 50
+
+# Benchmark polar neural network AI
+python main_headless.py --ai-type polar -n 50
 
 # Record gameplay data (with logging)
 python main_headless.py -n 10 --record heuristic_data
@@ -190,10 +200,17 @@ Converts old-format training data (scalar angle at column 4) to new bearing form
 
 **Generate Random Model:**
 ```bash
-python tools/generate_random_model.py
-python tools/generate_random_model.py --output nn_weights/my_model.pth
+python tools/generate_random_model.py                        # raw geometry (nn_weights/nn_model.pth)
+python tools/generate_random_model.py --model polar          # polar (nn_weights/nn_polar.pth)
+python tools/generate_random_model.py --model polar --output nn_weights/my_model.pth
 ```
-Creates a randomly-initialized model weights file. Useful for bootstrapping a default `nn_model.pth` when no trained model exists.
+Creates a randomly-initialized model weights file. Useful for bootstrapping when no trained model exists.
+
+**Visualize State Recordings:**
+```bash
+python tools/visualize_state.py                  # raw geometry state
+python tools/visualize_state_polar.py            # polar state (converted from raw recordings)
+```
 
 ## AI Implementations
 
@@ -203,11 +220,18 @@ Rule-based AI using:
 - **Speed control** - Target velocity management
 - **Predictive targeting** - Intercept calculations for shooting
 
-### Neural Network AI
-Deep learning model trained with REINFORCE policy gradient:
-- State: Player position/velocity, asteroid positions/velocities
-- Actions: Turn left/right, accelerate/decelerate, shoot
-- Reward: Game score with survival time bonus
+### Neural Network AI — RawGeometry
+Feeds raw game geometry directly to the network (142 inputs):
+- State: Player x/y, velocity, bearing (cos/sin), cooldown + 27 asteroid slots (x/y, velocity, active flag)
+- Architecture: 142 → 128 (ReLU) → 6
+- Actions: Turn left/right, accelerate/decelerate, shoot, no action
+
+### Neural Network AI — Polar
+Pre-computes player-relative features (39 inputs):
+- Global: player speed, shot cooldown, asteroid count
+- Per asteroid (top 9 by distance): distance, relative angle from bearing, closing speed, size category
+- Architecture: 39 → 128 (ReLU) → 64 (ReLU) → 6
+- Includes `convert_raw_geometry_state()` to reuse existing training data
 
 ## Related Work
 
