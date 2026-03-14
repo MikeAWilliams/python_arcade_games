@@ -183,17 +183,21 @@ def run_parallel_games(
 
     # Load neural network model if needed
     ai_params = None
-    if ai_type == "neural":
+    if ai_type in ("raw", "polar"):
         import torch
 
-        from asteroids.ai import RawGeometryNNParameters
-        from asteroids.ai import validate_and_load_model
+        from asteroids.ai import RawGeometryNNParameters, validate_and_load_model
+        from asteroids.ai.polar_nn import PolarNNParameters
 
-        # Default to nn_model.pth if no path specified
-        if model_path is None:
-            model_path = "nn_model.pth"
+        if ai_type == "polar":
+            if model_path is None:
+                model_path = "nn_polar.pth"
+            params = PolarNNParameters(device="cpu")
+        else:
+            if model_path is None:
+                model_path = "nn_model.pth"
+            params = RawGeometryNNParameters(device="cpu")
 
-        params = RawGeometryNNParameters(device="cpu")
         log(f"loading model file {model_path}")
         validate_and_load_model(
             params.model,
@@ -280,7 +284,7 @@ def main():
 
     parser.add_argument(
         "--ai-type",
-        choices=["heuristic", "neural"],
+        choices=["heuristic", "raw", "polar"],
         default="heuristic",
         help="Type of AI to use (default: heuristic)",
     )

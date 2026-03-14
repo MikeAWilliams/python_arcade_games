@@ -202,7 +202,7 @@ def evaluate_model(raw_model, games_per_eval, eval_threads, width=1280, height=7
 
     # Prepare game arguments
     game_args = [
-        (game_id, width, height, "neural", None, eval_params, None)
+        (game_id, width, height, "raw", None, eval_params, None)
         for game_id in range(games_per_eval)
     ]
 

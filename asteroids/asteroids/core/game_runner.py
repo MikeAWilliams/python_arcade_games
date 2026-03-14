@@ -19,6 +19,7 @@ from asteroids.ai.raw_geometry_nn import (
     RawGeometryNNParameters,
     compute_state,
 )
+from asteroids.ai.polar_nn import PolarNNInputMethod, PolarNNParameters
 
 
 class GameRunner:
@@ -134,7 +135,7 @@ def create_ai_input(ai_type: str, game, ai_params=None):
     Factory function to create AI input method.
 
     Args:
-        ai_type: "heuristic", "neural", or future AI types
+        ai_type: "heuristic", "raw", "polar", or future AI types
         game: Game instance
         ai_params: Optional parameters (HeuristicAIInputParameters, RawGeometryNNParameters, etc.)
 
@@ -144,9 +145,12 @@ def create_ai_input(ai_type: str, game, ai_params=None):
     if ai_type == "heuristic":
         params = ai_params if ai_params else HeuristicAIInputParameters()
         return HeuristicAIInput(game, params)
-    elif ai_type == "neural":
+    elif ai_type == "raw":
         params = ai_params if ai_params else RawGeometryNNParameters()
         return RawGeometryNNInputMethod(game, params)
+    elif ai_type == "polar":
+        params = ai_params if ai_params else PolarNNParameters()
+        return PolarNNInputMethod(game, params)
     else:
         raise ValueError(f"Unknown AI type: {ai_type}")
 

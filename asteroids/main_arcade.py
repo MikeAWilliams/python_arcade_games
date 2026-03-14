@@ -11,6 +11,7 @@ from asteroids.ai import (
     RawGeometryNNParameters,
     validate_and_load_model,
 )
+from asteroids.ai.polar_nn import PolarNNInputMethod, PolarNNParameters
 from asteroids.core import Action, Game, InputMethod, KeyboardInput
 
 # constants
@@ -119,11 +120,18 @@ def main():
         "--aih", action="store_true", help="Use Heuristic AI input instead of keyboard"
     )
     parser.add_argument(
-        "--ain",
+        "--air",
         type=str,
         nargs="?",
         const="nn_model.pth",
-        help="Use Neural Network AI input, optionally specify model file path (default: nn_model.pth)",
+        help="Use RawGeometry Neural Network AI, optionally specify model file path (default: nn_model.pth)",
+    )
+    parser.add_argument(
+        "--aip",
+        type=str,
+        nargs="?",
+        const="nn_polar.pth",
+        help="Use Polar Neural Network AI, optionally specify model file path (default: nn_polar.pth)",
     )
     args = parser.parse_args()
 
@@ -131,25 +139,31 @@ def main():
 
     if args.aih:
         input_method = HeuristicAIInput(g)
-    elif args.ain:
+    elif args.air or args.aip:
         # Detect device (GPU if available, else CPU)
         device = (
             torch.accelerator.current_accelerator().type
             if torch.accelerator.is_available()
             else "cpu"
         )
-        # Load the trained model
-        params = RawGeometryNNParameters(device=device)
+        if args.aip:
+            model_file = args.aip
+            params = PolarNNParameters(device=device)
+            input_class = PolarNNInputMethod
+        else:
+            model_file = args.air
+            params = RawGeometryNNParameters(device=device)
+            input_class = RawGeometryNNInputMethod
         validate_and_load_model(
             params.model,
             torch.load(
-                "nn_weights/" + args.ain, map_location=device, weights_only=False
+                "nn_weights/" + model_file, map_location=device, weights_only=False
             ),
-            source_description=args.ain,
+            source_description=model_file,
         )
         params.model.eval()
-        print(f"Model loaded from {args.ain} on device: {device}")
-        input_method = RawGeometryNNInputMethod(g, parameters=params)
+        print(f"Model loaded from {model_file} on device: {device}")
+        input_method = input_class(g, parameters=params)
     else:
         input_method = KeyboardInput()
 
