@@ -59,6 +59,39 @@ def analyze_file(filepath, sample_size=500000):
     }
 
 
+def analyze_asteroid_counts(filepath, sample_size=500000):
+    """Count active asteroids per frame and report statistics."""
+    raw = np.load(filepath)
+    states = raw["states"]
+    n = len(states)
+
+    step = max(1, n // sample_size)
+    sample = states[::step]
+
+    # Active flags are at columns 11, 16, 21, ... (every 5th starting at index 11)
+    # Player state is 7 columns, then each asteroid has 5 columns, active is the last
+    num_asteroid_slots = (sample.shape[1] - 7) // 5
+    active_columns = [7 + i * 5 + 4 for i in range(num_asteroid_slots)]
+    active_flags = sample[:, active_columns]
+    counts = active_flags.sum(axis=1).astype(int)
+
+    print(f"Asteroid count per frame (sampled {len(sample):,} frames):")
+    print(f"  Mean:   {counts.mean():.1f}")
+    print(f"  Median: {np.median(counts):.1f}")
+    print(f"  Max:    {counts.max()}")
+    print(f"  P95:    {np.percentile(counts, 95):.0f}")
+    print(f"  P99:    {np.percentile(counts, 99):.0f}")
+    print()
+
+    # Distribution histogram
+    unique, hist = np.unique(counts, return_counts=True)
+    print(f"  {'Count':>5}  {'Frames':>10}  {'Pct':>6}")
+    print(f"  {'-'*5}  {'-'*10}  {'-'*6}")
+    for val, freq in zip(unique, hist):
+        print(f"  {val:5d}  {freq:10,}  {100*freq/len(counts):5.1f}%")
+    print()
+
+
 def print_results(stats, cols):
     """Print a formatted table of per-column statistics."""
     print(
@@ -89,8 +122,8 @@ def main():
     parser.add_argument(
         "--base-name",
         type=str,
-        default="training_data20k_combinded",
-        help="Base name for data files (default: training_data20k_combinded)",
+        default="training_data20k_converted",
+        help="Base name for data files (default: training_data20k_converted)",
     )
     parser.add_argument(
         "--sample-size",
@@ -120,6 +153,8 @@ def main():
     filepath = files[args.file_index]
     print(f"Analyzing: {filepath}")
     print()
+
+    analyze_asteroid_counts(filepath, args.sample_size)
 
     cols = build_column_names()
     stats = analyze_file(filepath, args.sample_size)
