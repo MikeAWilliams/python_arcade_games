@@ -241,15 +241,14 @@ class PolarNNParameters:
         per_asteroid_count = 4  # distance, relative_angle, closing_speed, size
         self.num_inputs = global_state_count + per_asteroid_count * MAX_ASTEROID_SLOTS
         self.num_actions = len(Action)
-        middle_dim = 128
+        hidden1 = 128
+        hidden2 = 64
         self.model = torch.nn.Sequential(
-            torch.nn.Linear(
-                self.num_inputs, middle_dim, bias=False, dtype=torch.float32
-            ),
+            torch.nn.Linear(self.num_inputs, hidden1, dtype=torch.float32),
             torch.nn.ReLU(),
-            torch.nn.Linear(
-                middle_dim, self.num_actions, bias=False, dtype=torch.float32
-            ),
+            torch.nn.Linear(hidden1, hidden2, dtype=torch.float32),
+            torch.nn.ReLU(),
+            torch.nn.Linear(hidden2, self.num_actions, dtype=torch.float32),
         ).to(device)
 
 
