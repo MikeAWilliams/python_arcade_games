@@ -4,7 +4,7 @@ Trains a Neural Network AI Input Method using policy gradient
 
 # Training run name — controls log and checkpoint file names.
 # Change this for each new training run.
-TRAINING_RUN_NAME = "polar_pg_entropy"
+TRAINING_RUN_NAME = "polar2_pg"
 
 import argparse
 import logging
@@ -95,7 +95,7 @@ def discounted_rewards(rewards, gamma=0.99, normalize=True):
 
 
 def train_on_game_results(
-    model, optimizer, states, actions, advantages, device, entropy_coeff=0.01
+    model, optimizer, states, actions, advantages, device, entropy_coeff=0.0
 ):
     """
     Train model using REINFORCE policy gradient with entropy bonus.
@@ -270,7 +270,7 @@ def train_model(
     model_type="raw",
     run_name=TRAINING_RUN_NAME,
     checkpoint=None,
-    entropy_coeff=0.01,
+    entropy_coeff=0.0,
 ):
     # Set up logging
     logger = setup_logging(run_name)
@@ -476,8 +476,8 @@ def main():
     parser.add_argument(
         "--entropy-coeff",
         type=float,
-        default=0.01,
-        help="Entropy bonus coefficient to encourage exploration (default: 0.01)",
+        default=0.0,
+        help="Entropy bonus coefficient to encourage exploration (default: 0.0)",
     )
     args = parser.parse_args()
     train_model(
