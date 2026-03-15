@@ -26,8 +26,9 @@ asteroids/
 │   ├── analyze_state_data.py    # Inspect training data column stats
 │   ├── convert_training_data.py # Convert angle to bearing format
 │   ├── generate_random_model.py # Create a fresh random model file
-│   ├── visualize_state.py       # Visualize raw geometry state recordings
-│   └── visualize_state_polar.py # Visualize polar state (converted from raw)
+│   ├── measure_entropy.py         # Measure policy entropy and action distribution
+│   ├── visualize_state.py         # Visualize raw geometry state recordings
+│   └── visualize_state_polar.py   # Visualize polar state (converted from raw)
 │
 ├── data/                  # Training data (not in git)
 ├── nn_checkpoints/        # Training checkpoints and logs (not in git)
@@ -205,6 +206,14 @@ python tools/generate_random_model.py --model polar          # polar (nn_weights
 python tools/generate_random_model.py --model polar --output nn_weights/my_model.pth
 ```
 Creates a randomly-initialized model weights file. Useful for bootstrapping when no trained model exists.
+
+**Measure Policy Entropy:**
+```bash
+python tools/measure_entropy.py                                              # defaults to nn_checkpoints/polar_pg_best.pth
+python tools/measure_entropy.py --checkpoint nn_weights/polar_pg_best.pth    # specify checkpoint
+python tools/measure_entropy.py --max-frames 10000                           # run longer game
+```
+Reports per-frame entropy statistics and average action probabilities to assess how deterministic the policy has become.
 
 **Visualize State Recordings:**
 ```bash

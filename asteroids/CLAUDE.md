@@ -2,6 +2,8 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+**Important:** When adding new tools, training scripts, or CLI options, update `README.md` to keep it in sync.
+
 ## Project Overview
 
 An Asteroids game implementation in Python with pluggable AI input system. The project supports both interactive gameplay and headless multi-process AI benchmarking.
@@ -145,6 +147,7 @@ PolarNN state vector:
 - `tools/visualize_state.py` - Visualize raw geometry state recordings
 - `tools/visualize_state_polar.py` - Visualize polar state (converted from raw recordings)
 - `tools/analyze_state_data.py` - Analyze training data statistics
+- `tools/measure_entropy.py` - Measure policy entropy and action distribution of a trained polar NN model
 
 ### Training
 - `training/cross_entropy.py` - Supervised learning from recorded heuristic AI data

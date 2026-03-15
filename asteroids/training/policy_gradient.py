@@ -4,7 +4,7 @@ Trains a Neural Network AI Input Method using policy gradient
 
 # Training run name — controls log and checkpoint file names.
 # Change this for each new training run.
-TRAINING_RUN_NAME = "polar_pg"
+TRAINING_RUN_NAME = "polar_pg_entropy"
 
 import argparse
 import logging
@@ -89,14 +89,17 @@ def discounted_rewards(rewards, gamma=0.99, normalize=True):
     return ret
 
 
-def train_on_game_results(model, optimizer, states, actions, advantages, device):
+def train_on_game_results(
+    model, optimizer, states, actions, advantages, device, entropy_coeff=0.01
+):
     """
-    Train model using REINFORCE policy gradient.
+    Train model using REINFORCE policy gradient with entropy bonus.
 
     Args:
         states: (N, state_dim) array of states
         actions: (N,) array of action indices taken
         advantages: (N,) array of advantage values (discounted rewards)
+        entropy_coeff: weight for entropy bonus (encourages exploration)
     """
     # Convert to tensors
     states = torch.from_numpy(states).float().to(device)
@@ -110,10 +113,17 @@ def train_on_game_results(model, optimizer, states, actions, advantages, device)
 
     # Get log probability of actions that were actually taken
     log_probs = F.log_softmax(logits, dim=1)
-    log_probs = log_probs.gather(1, actions.unsqueeze(1)).squeeze(1)
+    selected_log_probs = log_probs.gather(1, actions.unsqueeze(1)).squeeze(1)
 
-    # Policy gradient loss: -E[log π(a|s) * A(s,a)]
-    loss = -torch.mean(log_probs * advantages)
+    # Entropy bonus: -sum(p * log(p)) per sample
+    probs = F.softmax(logits, dim=1)
+    entropy = -torch.sum(probs * log_probs, dim=1)
+
+    # Policy gradient loss with entropy bonus
+    # Subtract entropy term to encourage exploration (maximizing entropy)
+    loss = -torch.mean(selected_log_probs * advantages) - entropy_coeff * torch.mean(
+        entropy
+    )
 
     # Backpropagate
     loss.backward()
@@ -255,6 +265,7 @@ def train_model(
     model_type="raw",
     run_name=TRAINING_RUN_NAME,
     checkpoint=None,
+    entropy_coeff=0.01,
 ):
     # Set up logging
     logger = setup_logging(run_name)
@@ -346,7 +357,7 @@ def train_model(
             # Shape: actions is (N,), dr is (N, 1) -> squeeze to (N,)
             advantages = dr.squeeze()
             loss = train_on_game_results(
-                model, opt, states, actions, advantages, device
+                model, opt, states, actions, advantages, device, entropy_coeff
             )
             train_time = time.time() - train_start
             now = time.time()
@@ -456,6 +467,12 @@ def main():
         action="store_true",
         help="Start from scratch, ignoring any existing checkpoint",
     )
+    parser.add_argument(
+        "--entropy-coeff",
+        type=float,
+        default=0.01,
+        help="Entropy bonus coefficient to encourage exploration (default: 0.01)",
+    )
     args = parser.parse_args()
     train_model(
         args.width,
@@ -465,6 +482,7 @@ def main():
         args.model_type,
         args.run_name,
         checkpoint=None if args.no_resume else args.checkpoint,
+        entropy_coeff=args.entropy_coeff,
     )
 
 
