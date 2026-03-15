@@ -2,14 +2,16 @@
 Trains a Neural Network AI Input Method using policy gradient
 """
 
+# Training run name — controls log and checkpoint file names.
+# Change this for each new training run.
+TRAINING_RUN_NAME = "polar_pg"
+
 import argparse
 import logging
 import os
 import sys
 import time
 from concurrent.futures import ProcessPoolExecutor, as_completed
-from datetime import datetime
-from pathlib import Path
 
 import numpy as np
 import torch
@@ -25,20 +27,31 @@ from asteroids.ai.raw_geometry_nn import (
     RawGeometryNNParameters,
     validate_and_load_model,
 )
+from asteroids.ai.polar_nn import PolarNNInputMethod, PolarNNParameters
 from asteroids.core.game_runner import execute_action
 
+MODEL_TYPES = {
+    "raw": {
+        "params_class": RawGeometryNNParameters,
+        "input_class": RawGeometryNNInputMethod,
+    },
+    "polar": {
+        "params_class": PolarNNParameters,
+        "input_class": PolarNNInputMethod,
+    },
+}
 
-def setup_logging(log_dir="nn_checkpoints"):
+
+def setup_logging(run_name):
     """
     Set up dual logging (console + file).
-    Returns: logger instance, timestamp for filenames
-    """
-    # Create directory if needed
-    os.makedirs(log_dir, exist_ok=True)
 
-    # Generate timestamp for this run
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    log_file = os.path.join(log_dir, f"training_{timestamp}.log")
+    Args:
+        run_name: Name for this training run (controls log and checkpoint filenames)
+    """
+    os.makedirs("nn_checkpoints", exist_ok=True)
+
+    log_file = os.path.join("nn_checkpoints", f"{run_name}_policy_gradient.log")
 
     # Configure logger
     logger = logging.getLogger("training")
@@ -61,7 +74,7 @@ def setup_logging(log_dir="nn_checkpoints"):
     logger.addHandler(console_handler)
     logger.addHandler(file_handler)
 
-    return logger, timestamp
+    return logger
 
 
 def discounted_rewards(rewards, gamma=0.99, normalize=True):
@@ -117,15 +130,16 @@ def run_games_batch_worker(args):
     Also computes discounted rewards in parallel to avoid main process bottleneck.
 
     Args:
-        args: Tuple of (worker_id, num_games, width, height, model_state_dict)
+        args: Tuple of (worker_id, num_games, width, height, model_state_dict, model_type)
 
     Returns:
         List of dicts, one per game with states, actions, discounted_rewards, score
     """
-    worker_id, num_games, width, height, model_state_dict = args
+    worker_id, num_games, width, height, model_state_dict, model_type = args
 
     # Create parameters once and reuse for all games in this worker
-    params = RawGeometryNNParameters(device="cpu")
+    model_info = MODEL_TYPES[model_type]
+    params = model_info["params_class"](device="cpu")
     validate_and_load_model(
         params.model, model_state_dict, source_description="training checkpoint"
     )
@@ -135,7 +149,7 @@ def run_games_batch_worker(args):
     for game_id in range(num_games):
         # Run game
         game = Game(width, height)
-        input_method = RawGeometryNNInputMethod(
+        input_method = model_info["input_class"](
             game=game, parameters=params, keep_data=True
         )
         dt = 1 / 60
@@ -179,7 +193,7 @@ def run_games_batch_worker(args):
 
 
 def run_games_parallel(
-    width, height, model_state_dict, batch_size, num_workers, executor
+    width, height, model_state_dict, batch_size, num_workers, executor, model_type
 ):
     """
     Run multiple games in parallel using a persistent ProcessPoolExecutor.
@@ -198,7 +212,9 @@ def run_games_parallel(
     for worker_id in range(num_workers):
         # Give extra games to first few workers
         num_games = games_per_worker + (1 if worker_id < extra_games else 0)
-        worker_args.append((worker_id, num_games, width, height, model_state_dict))
+        worker_args.append(
+            (worker_id, num_games, width, height, model_state_dict, model_type)
+        )
 
     all_states = []
     all_actions = []
@@ -231,9 +247,16 @@ def run_games_parallel(
     )
 
 
-def train_model(width, height, batch_size=32, num_workers=None):
+def train_model(
+    width,
+    height,
+    batch_size=32,
+    num_workers=None,
+    model_type="raw",
+    run_name=TRAINING_RUN_NAME,
+):
     # Set up logging
-    logger, timestamp = setup_logging()
+    logger = setup_logging(run_name)
 
     # Detect device (GPU if available, else CPU)
     device = (
@@ -243,6 +266,7 @@ def train_model(width, height, batch_size=32, num_workers=None):
     )
     device = "cpu"
     logger.info(f"Using device: {device}")
+    logger.info(f"Model type: {model_type}")
 
     # Default to all CPU cores
     if num_workers is None:
@@ -250,7 +274,8 @@ def train_model(width, height, batch_size=32, num_workers=None):
     logger.info(f"Using {num_workers} worker processes for game simulation")
     logger.info(f"Batch size: {batch_size} games per training update")
 
-    params = RawGeometryNNParameters(device=device)
+    model_info = MODEL_TYPES[model_type]
+    params = model_info["params_class"](device=device)
     model = params.model
     opt = torch.optim.Adam(model.parameters(), lr=0.0001)
     # alpha removed - not needed for REINFORCE
@@ -270,7 +295,13 @@ def train_model(width, height, batch_size=32, num_workers=None):
             # Run games in parallel using persistent executor
             sim_start = time.time()
             states, actions, dr, total_score = run_games_parallel(
-                width, height, model_state_dict, batch_size, num_workers, executor
+                width,
+                height,
+                model_state_dict,
+                batch_size,
+                num_workers,
+                executor,
+                model_type,
             )
             sim_time = time.time() - sim_start
 
@@ -289,7 +320,7 @@ def train_model(width, height, batch_size=32, num_workers=None):
             train_time = time.time() - train_start
             if epoch % intermediate_save_frequency == 0:
                 checkpoint_path = os.path.join(
-                    "nn_checkpoints", f"checkpoint_{timestamp}_epoch_{epoch}.pth"
+                    "nn_checkpoints", f"{run_name}_checkpoint_{epoch}.pth"
                 )
                 torch.save(
                     {
@@ -321,9 +352,7 @@ def train_model(width, height, batch_size=32, num_workers=None):
                 )
 
     # Save the trained model
-    final_checkpoint_path = os.path.join(
-        "nn_checkpoints", f"checkpoint_{timestamp}_final.pth"
-    )
+    final_checkpoint_path = os.path.join("nn_checkpoints", f"{run_name}_final.pth")
     torch.save(
         {
             "epoch": total_epochs - 1,
@@ -368,8 +397,28 @@ def main():
         default=None,
         help=f"Number of worker processes (default: {os.cpu_count() or 4})",
     )
+    parser.add_argument(
+        "--model-type",
+        type=str,
+        choices=list(MODEL_TYPES.keys()),
+        default="raw",
+        help="Model architecture to train (default: raw)",
+    )
+    parser.add_argument(
+        "--run-name",
+        type=str,
+        default=TRAINING_RUN_NAME,
+        help=f"Name for this training run, controls log/checkpoint filenames (default: {TRAINING_RUN_NAME})",
+    )
     args = parser.parse_args()
-    train_model(args.width, args.height, args.batch_size, args.workers)
+    train_model(
+        args.width,
+        args.height,
+        args.batch_size,
+        args.workers,
+        args.model_type,
+        args.run_name,
+    )
 
 
 if __name__ == "__main__":
