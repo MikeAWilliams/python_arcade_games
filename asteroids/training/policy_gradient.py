@@ -285,6 +285,7 @@ def train_model(
         num_workers = os.cpu_count() or 4
     logger.info(f"Using {num_workers} worker processes for game simulation")
     logger.info(f"Batch size: {batch_size} games per training update")
+    logger.info(f"Entropy coefficient: {entropy_coeff}")
 
     model_info = MODEL_TYPES[model_type]
     params = model_info["params_class"](device=device)
