@@ -20,6 +20,7 @@ import torch
 
 from asteroids.ai.raw_geometry_nn import RawGeometryNNParameters
 from asteroids.ai.polar_nn import PolarNNParameters
+from asteroids.ai.polar2_nn import Polar2NNParameters
 
 MODELS = {
     "raw_geometry": {
@@ -29,6 +30,10 @@ MODELS = {
     "polar": {
         "params_class": PolarNNParameters,
         "default_output": "nn_weights/nn_polar.pth",
+    },
+    "polar2": {
+        "params_class": Polar2NNParameters,
+        "default_output": "nn_weights/nn_polar2.pth",
     },
 }
 

@@ -20,6 +20,7 @@ from asteroids.ai.raw_geometry_nn import (
     compute_state,
 )
 from asteroids.ai.polar_nn import PolarNNInputMethod, PolarNNParameters
+from asteroids.ai.polar2_nn import Polar2NNInputMethod, Polar2NNParameters
 
 
 class GameRunner:
@@ -151,6 +152,9 @@ def create_ai_input(ai_type: str, game, ai_params=None):
     elif ai_type == "polar":
         params = ai_params if ai_params else PolarNNParameters()
         return PolarNNInputMethod(game, params)
+    elif ai_type == "polar2":
+        params = ai_params if ai_params else Polar2NNParameters()
+        return Polar2NNInputMethod(game, params)
     else:
         raise ValueError(f"Unknown AI type: {ai_type}")
 

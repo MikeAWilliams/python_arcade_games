@@ -28,6 +28,7 @@ from asteroids.ai.raw_geometry_nn import (
     validate_and_load_model,
 )
 from asteroids.ai.polar_nn import PolarNNInputMethod, PolarNNParameters
+from asteroids.ai.polar2_nn import Polar2NNInputMethod, Polar2NNParameters
 from asteroids.core.game_runner import execute_action
 
 MODEL_TYPES = {
@@ -38,6 +39,10 @@ MODEL_TYPES = {
     "polar": {
         "params_class": PolarNNParameters,
         "input_class": PolarNNInputMethod,
+    },
+    "polar2": {
+        "params_class": Polar2NNParameters,
+        "input_class": Polar2NNInputMethod,
     },
 }
 

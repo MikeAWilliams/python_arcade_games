@@ -12,6 +12,7 @@ from asteroids.ai import (
     validate_and_load_model,
 )
 from asteroids.ai.polar_nn import PolarNNInputMethod, PolarNNParameters
+from asteroids.ai.polar2_nn import Polar2NNInputMethod, Polar2NNParameters
 from asteroids.core import Action, Game, InputMethod, KeyboardInput
 
 # constants
@@ -130,8 +131,15 @@ def main():
         "--aip",
         type=str,
         nargs="?",
-        const="nn_polar.pth",
-        help="Use Polar Neural Network AI, optionally specify model file path (default: nn_polar.pth)",
+        const="polar_pg_best.pth",
+        help="Use Polar Neural Network AI, optionally specify model file path (default: polar_pg_best.pth)",
+    )
+    parser.add_argument(
+        "--aip2",
+        type=str,
+        nargs="?",
+        const="nn_polar2.pth",
+        help="Use Polar2 Neural Network AI, optionally specify model file path (default: nn_polar2.pth)",
     )
     args = parser.parse_args()
 
@@ -139,14 +147,18 @@ def main():
 
     if args.aih:
         input_method = HeuristicAIInput(g)
-    elif args.air or args.aip:
+    elif args.air or args.aip or args.aip2:
         # Detect device (GPU if available, else CPU)
         device = (
             torch.accelerator.current_accelerator().type
             if torch.accelerator.is_available()
             else "cpu"
         )
-        if args.aip:
+        if args.aip2:
+            model_file = args.aip2
+            params = Polar2NNParameters(device=device)
+            input_class = Polar2NNInputMethod
+        elif args.aip:
             model_file = args.aip
             params = PolarNNParameters(device=device)
             input_class = PolarNNInputMethod
