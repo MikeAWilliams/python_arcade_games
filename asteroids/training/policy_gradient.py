@@ -254,6 +254,7 @@ def train_model(
     num_workers=None,
     model_type="raw",
     run_name=TRAINING_RUN_NAME,
+    checkpoint=None,
 ):
     # Set up logging
     logger = setup_logging(run_name)
@@ -278,8 +279,23 @@ def train_model(
     params = model_info["params_class"](device=device)
     model = params.model
     opt = torch.optim.Adam(model.parameters(), lr=0.0001)
-    # alpha removed - not needed for REINFORCE
     max_score = 0
+
+    # Load from checkpoint if provided and exists
+    if checkpoint and os.path.exists(checkpoint):
+        ckpt = torch.load(checkpoint, map_location=device, weights_only=True)
+        validate_and_load_model(
+            model, ckpt["model_state_dict"], source_description=checkpoint
+        )
+        if "optimizer_state_dict" in ckpt:
+            opt.load_state_dict(ckpt["optimizer_state_dict"])
+        if "max_score" in ckpt:
+            max_score = float(ckpt["max_score"])
+        logger.info(
+            f"Resumed from checkpoint: {checkpoint} (max_score: {max_score:.2f})"
+        )
+    elif checkpoint:
+        logger.info(f"No checkpoint found at {checkpoint}, starting from scratch")
     total_epochs = 60000
     print_frequency = 500
     intermediate_save_frequency = total_epochs / 10
@@ -308,6 +324,19 @@ def train_model(
             avg_score = total_score / batch_size
             if avg_score > max_score:
                 max_score = avg_score
+                best_path = os.path.join("nn_checkpoints", f"{run_name}_best.pth")
+                torch.save(
+                    {
+                        "epoch": epoch,
+                        "model_state_dict": model.state_dict(),
+                        "optimizer_state_dict": opt.state_dict(),
+                        "max_score": float(max_score),
+                    },
+                    best_path,
+                )
+                logger.info(
+                    f"{epoch}/{total_epochs} -> NEW BEST avg_score:{avg_score:.2f} | sim:{sim_time:.2f}s"
+                )
 
             # Training computation
             train_start = time.time()
@@ -401,14 +430,25 @@ def main():
         "--model-type",
         type=str,
         choices=list(MODEL_TYPES.keys()),
-        default="raw",
-        help="Model architecture to train (default: raw)",
+        default="polar",
+        help="Model architecture to train (default: polar)",
     )
     parser.add_argument(
         "--run-name",
         type=str,
         default=TRAINING_RUN_NAME,
         help=f"Name for this training run, controls log/checkpoint filenames (default: {TRAINING_RUN_NAME})",
+    )
+    parser.add_argument(
+        "--checkpoint",
+        type=str,
+        default="nn_weights/polar_pg_best.pth",
+        help="Path to checkpoint to resume from (default: nn_weights/polar_pg_best.pth)",
+    )
+    parser.add_argument(
+        "--no-resume",
+        action="store_true",
+        help="Start from scratch, ignoring any existing checkpoint",
     )
     args = parser.parse_args()
     train_model(
@@ -418,6 +458,7 @@ def main():
         args.workers,
         args.model_type,
         args.run_name,
+        checkpoint=None if args.no_resume else args.checkpoint,
     )
 
 
