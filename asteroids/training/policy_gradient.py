@@ -299,6 +299,8 @@ def train_model(
     total_epochs = 60000
     print_frequency = 500
     intermediate_save_frequency = total_epochs / 10
+    timed_save_interval = 30 * 60  # 30 minutes
+    last_timed_save = time.time()
     start_time = time.time()
 
     # Create persistent process pool to avoid recreation overhead
@@ -347,7 +349,11 @@ def train_model(
                 model, opt, states, actions, advantages, device
             )
             train_time = time.time() - train_start
-            if epoch % intermediate_save_frequency == 0:
+            now = time.time()
+            if epoch % intermediate_save_frequency == 0 or (
+                now - last_timed_save >= timed_save_interval
+            ):
+                last_timed_save = now
                 checkpoint_path = os.path.join(
                     "nn_checkpoints", f"{run_name}_checkpoint_{epoch}.pth"
                 )
