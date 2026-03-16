@@ -186,7 +186,8 @@ All artifacts saved to `nn_checkpoints/`:
 | `polar_pg_entropy` | polar | `polar_pg_entropy_policy_gradient.log` | Avg ~80–120 | Added entropy bonus (0.01) to break local optimum. Scores dropped initially as policy diversified. Inconclusive — stopped to focus on polar2. |
 | `polar2_pg` | polar2 | `polar2_pg_policy_gradient.log` | Avg ~40, max ~70 | Polar2 model (edge distance, TTI, lateral velocity, player velocity direction) from scratch. Learned slower than polar v1. Policy collapsed to two actions (left-turn 52%, shoot 47%) — entropy at 9% of max. Plateaued at ~40 avg. |
 | `polar2_pg_entropy` | polar2 | `polar2_pg_entropy_policy_gradient.log` | Avg ~90–110, max ~128 | Resumed from `polar2_pg_best.pth` with entropy bonus (0.01). Broke out of local optimum within ~1500 iterations. All 6 actions now used. Entropy rose to 77% of max. |
-| `polar2_pg_exploit` | polar2 | `polar2_pg_exploit_policy_gradient.log` | — | Resumed from `polar2_pg_entropy_best.pth` with entropy=0 to sharpen the diversified policy. |
+| `polar2_pg_exploit` | polar2 | `polar2_pg_exploit_policy_gradient.log` | Best 136, avg ~50–60 | Resumed from `polar2_pg_entropy_best.pth` with entropy=0. Hit best 136.41 at iter 1137, then avg scores collapsed to 50–60 range for remaining 35k iters. Policy narrowed to aggressive charge-and-shoot strategy — high variance, no further improvement. Stopped at iter 36k. |
+| `polar2_pg_ent005` | polar2 | `polar2_pg_ent005_policy_gradient.log` | — | Resumed from `polar2_pg_exploit_best.pth` (136.41) with entropy=0.005 — half the original entropy bonus to prevent policy collapse while still favoring exploitation. |
 
 ### Utilities
 
