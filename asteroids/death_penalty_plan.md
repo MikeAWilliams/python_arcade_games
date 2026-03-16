@@ -58,3 +58,57 @@ evasion time and catches the approach decision.
 - N=60 frames (~1 second) covers the reaction window after a split
 - The hope is the agent learns its own implicit safe distance rather than needing a hardcoded threshold
 - Try this after evaluating the `polar2_pg_ent005` run results
+
+## Training distribution mismatch at higher waves
+
+The speed multiplier is 1.1x per wave, so asteroids get meaningfully faster:
+
+| Wave | Multiplier | Asteroid speed | Time to cross 50px |
+|------|-----------|---------------|-------------------|
+| 1 | 1.0 | 100 px/s | 30 frames |
+| 3 | 1.33 | 133 px/s | 22 frames |
+| 5 | 1.61 | 161 px/s | 19 frames |
+| 7 | 1.95 | 195 px/s | 15 frames |
+
+Most training episodes end in early waves, so the bulk of gradient updates
+come from slow-asteroid conditions. The agent gets well-adapted to wave 1-3
+physics, then hits a wall when later waves demand tighter evasion margins.
+A charging strategy that works at 100 px/s becomes suicidal at 161 px/s.
+
+The death penalty helps indirectly — most deaths probably happen at the
+transition to faster waves, which is exactly where the agent needs the
+strongest learning signal.
+
+## Charging is probably a local optimum
+
+The charge strategy maximizes short-term kill rate but is a dead end — the
+evasion physics above show you physically can't dodge splits at close range.
+Bullet speed (500 px/s) is 3-5x asteroid speed, so there's no accuracy
+benefit to closing distance. The optimal strategy is likely kiting: maintain
+maximum distance, use the whole screen, shoot accurately from range. The
+heuristic AI already plays something close to this.
+
+The death penalty should create pressure to discover that the high-scoring
+strategy is also the safe one: kill from range, keep moving, use the space.
+
+## Resume command for polar2_pg_ent005
+
+Run was stopped at iteration ~14.5k of 60k. Still improving (best 147.76).
+Resume with:
+
+```bash
+python training/policy_gradient.py --model-type polar2 --run-name polar2_pg_ent005 --entropy-coeff 0.005 --checkpoint nn_checkpoints/polar2_pg_ent005_best.pth
+```
+
+Note: this restarts from epoch 0 but with the best weights and optimizer
+state. The run will overwrite the log file. The best score (147.76) is
+preserved in the checkpoint so the max_score tracker picks up where it
+left off.
+
+## Orthogonal idea: curriculum training on later waves
+
+Start some or all training games at higher waves so the agent sees fast
+asteroids more often. This directly addresses the distribution mismatch
+without changing the reward structure. Could be combined with the death
+penalty — they solve different problems (what to learn from death vs.
+how often the agent encounters hard conditions).
