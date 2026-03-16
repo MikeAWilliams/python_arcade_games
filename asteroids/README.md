@@ -178,6 +178,16 @@ All artifacts saved to `nn_checkpoints/`:
 | `training_data20k_converted` | `training_data20k_converted_cross_entropy.log` | Avg score ~9–10 | Bearing format (cos/sin at cols 4–5, 142 inputs). No class weights. Model learned to spin but rarely shot — action probabilities mirrored the training distribution (~93% turns) so shooting was almost never the argmax. |
 | `bearing_weighted` | `bearing_weighted_cross_entropy.log` | Avg score ~2–7 | Same bearing format with full inverse-frequency class weights (TURN: 0.05×, ACCEL: 3.07×, SHOOT: 0.57×). **Failed.** Down-weighting turns to 0.05 starved the model of survival signal. It learned to accelerate and decelerate without regard to asteroid position — the upweighted minority actions were reinforced, but the model never associated them with relevant game states. |
 
+#### Policy Gradient Training Runs
+
+| Run name | Model | Log file | Result | Notes |
+|----------|-------|----------|--------|-------|
+| `polar_pg` | polar | `polar_pg_policy_gradient.log` | Avg ~120, max ~140 | First successful PG run. Learned to aim and shoot. Converged to stationary turret strategy (left/right turn + shoot, no movement). Explosive score jump around iter 29k. |
+| `polar_pg_entropy` | polar | `polar_pg_entropy_policy_gradient.log` | Avg ~80–120 | Added entropy bonus (0.01) to break local optimum. Scores dropped initially as policy diversified. Inconclusive — stopped to focus on polar2. |
+| `polar2_pg` | polar2 | `polar2_pg_policy_gradient.log` | Avg ~40, max ~70 | Polar2 model (edge distance, TTI, lateral velocity, player velocity direction) from scratch. Learned slower than polar v1. Policy collapsed to two actions (left-turn 52%, shoot 47%) — entropy at 9% of max. Plateaued at ~40 avg. |
+| `polar2_pg_entropy` | polar2 | `polar2_pg_entropy_policy_gradient.log` | Avg ~90–110, max ~128 | Resumed from `polar2_pg_best.pth` with entropy bonus (0.01). Broke out of local optimum within ~1500 iterations. All 6 actions now used. Entropy rose to 77% of max. |
+| `polar2_pg_exploit` | polar2 | `polar2_pg_exploit_policy_gradient.log` | — | Resumed from `polar2_pg_entropy_best.pth` with entropy=0 to sharpen the diversified policy. |
+
 ### Utilities
 
 **Consolidate Recording Files:**
