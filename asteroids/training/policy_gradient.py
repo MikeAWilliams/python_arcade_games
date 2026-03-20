@@ -145,12 +145,22 @@ def run_games_batch_worker(args):
     Also computes discounted rewards in parallel to avoid main process bottleneck.
 
     Args:
-        args: Tuple of (worker_id, num_games, width, height, model_state_dict, model_type)
+        args: Tuple of (worker_id, num_games, width, height, model_state_dict,
+              model_type, death_penalty, death_penalty_frames)
 
     Returns:
         List of dicts, one per game with states, actions, discounted_rewards, score
     """
-    worker_id, num_games, width, height, model_state_dict, model_type = args
+    (
+        worker_id,
+        num_games,
+        width,
+        height,
+        model_state_dict,
+        model_type,
+        death_penalty,
+        death_penalty_frames,
+    ) = args
 
     # Create parameters once and reuse for all games in this worker
     model_info = MODEL_TYPES[model_type]
@@ -188,6 +198,16 @@ def run_games_batch_worker(args):
         survival_bonus = 0.001
         rewards = rewards + survival_bonus
 
+        # Death penalty: penalize last N frames before death with ramping penalty
+        if death_penalty != 0 and death_penalty_frames > 0:
+            for i in range(
+                max(0, len(rewards) - death_penalty_frames), len(rewards)
+            ):
+                decay = (
+                    i - (len(rewards) - death_penalty_frames)
+                ) / death_penalty_frames  # 0→1
+                rewards[i] += death_penalty * decay
+
         # Compute discounted rewards HERE in the worker (parallel!)
         rewards_reshaped = np.vstack(rewards)
         dr = discounted_rewards(rewards_reshaped)
@@ -208,7 +228,15 @@ def run_games_batch_worker(args):
 
 
 def run_games_parallel(
-    width, height, model_state_dict, batch_size, num_workers, executor, model_type
+    width,
+    height,
+    model_state_dict,
+    batch_size,
+    num_workers,
+    executor,
+    model_type,
+    death_penalty=0.0,
+    death_penalty_frames=0,
 ):
     """
     Run multiple games in parallel using a persistent ProcessPoolExecutor.
@@ -228,7 +256,16 @@ def run_games_parallel(
         # Give extra games to first few workers
         num_games = games_per_worker + (1 if worker_id < extra_games else 0)
         worker_args.append(
-            (worker_id, num_games, width, height, model_state_dict, model_type)
+            (
+                worker_id,
+                num_games,
+                width,
+                height,
+                model_state_dict,
+                model_type,
+                death_penalty,
+                death_penalty_frames,
+            )
         )
 
     all_states = []
@@ -271,6 +308,8 @@ def train_model(
     run_name=TRAINING_RUN_NAME,
     checkpoint=None,
     entropy_coeff=0.0,
+    death_penalty=0.0,
+    death_penalty_frames=60,
 ):
     # Set up logging
     logger = setup_logging(run_name)
@@ -291,6 +330,10 @@ def train_model(
     logger.info(f"Using {num_workers} worker processes for game simulation")
     logger.info(f"Batch size: {batch_size} games per training update")
     logger.info(f"Entropy coefficient: {entropy_coeff}")
+    if death_penalty != 0:
+        logger.info(
+            f"Death penalty: {death_penalty} over last {death_penalty_frames} frames"
+        )
 
     model_info = MODEL_TYPES[model_type]
     params = model_info["params_class"](device=device)
@@ -337,6 +380,8 @@ def train_model(
                 num_workers,
                 executor,
                 model_type,
+                death_penalty,
+                death_penalty_frames,
             )
             sim_time = time.time() - sim_start
 
@@ -479,6 +524,18 @@ def main():
         default=0.0,
         help="Entropy bonus coefficient to encourage exploration (default: 0.0)",
     )
+    parser.add_argument(
+        "--death-penalty",
+        type=float,
+        default=0.0,
+        help="Death penalty magnitude applied to last N frames before death (default: 0.0, try -0.5)",
+    )
+    parser.add_argument(
+        "--death-penalty-frames",
+        type=int,
+        default=60,
+        help="Number of frames before death to apply ramping penalty (default: 60)",
+    )
     args = parser.parse_args()
     train_model(
         args.width,
@@ -489,6 +546,8 @@ def main():
         args.run_name,
         checkpoint=None if args.no_resume else args.checkpoint,
         entropy_coeff=args.entropy_coeff,
+        death_penalty=args.death_penalty,
+        death_penalty_frames=args.death_penalty_frames,
     )
 
 
