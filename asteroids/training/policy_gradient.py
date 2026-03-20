@@ -21,7 +21,7 @@ from torch.nn import functional as F
 # Add parent directory to path so we can import asteroids package
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from asteroids.core.game import Action, Game
+from asteroids.core.game import ASTEROID_SPEED_INCREMENT, Action, Game
 from asteroids.ai.raw_geometry_nn import (
     RawGeometryNNInputMethod,
     RawGeometryNNParameters,
@@ -146,7 +146,7 @@ def run_games_batch_worker(args):
 
     Args:
         args: Tuple of (worker_id, num_games, width, height, model_state_dict,
-              model_type, death_penalty, death_penalty_frames)
+              model_type, death_penalty, death_penalty_frames, starting_wave)
 
     Returns:
         List of dicts, one per game with states, actions, discounted_rewards, score
@@ -160,6 +160,7 @@ def run_games_batch_worker(args):
         model_type,
         death_penalty,
         death_penalty_frames,
+        starting_wave,
     ) = args
 
     # Create parameters once and reuse for all games in this worker
@@ -173,7 +174,7 @@ def run_games_batch_worker(args):
     results = []
     for game_id in range(num_games):
         # Run game
-        game = Game(width, height)
+        game = Game(width, height, starting_wave)
         input_method = model_info["input_class"](
             game=game, parameters=params, keep_data=True
         )
@@ -200,9 +201,7 @@ def run_games_batch_worker(args):
 
         # Death penalty: penalize last N frames before death with ramping penalty
         if death_penalty != 0 and death_penalty_frames > 0:
-            for i in range(
-                max(0, len(rewards) - death_penalty_frames), len(rewards)
-            ):
+            for i in range(max(0, len(rewards) - death_penalty_frames), len(rewards)):
                 decay = (
                     i - (len(rewards) - death_penalty_frames)
                 ) / death_penalty_frames  # 0→1
@@ -237,6 +236,7 @@ def run_games_parallel(
     model_type,
     death_penalty=0.0,
     death_penalty_frames=0,
+    starting_wave=1,
 ):
     """
     Run multiple games in parallel using a persistent ProcessPoolExecutor.
@@ -265,6 +265,7 @@ def run_games_parallel(
                 model_type,
                 death_penalty,
                 death_penalty_frames,
+                starting_wave,
             )
         )
 
@@ -310,6 +311,7 @@ def train_model(
     entropy_coeff=0.0,
     death_penalty=0.0,
     death_penalty_frames=60,
+    starting_wave=1,
 ):
     # Set up logging
     logger = setup_logging(run_name)
@@ -330,6 +332,10 @@ def train_model(
     logger.info(f"Using {num_workers} worker processes for game simulation")
     logger.info(f"Batch size: {batch_size} games per training update")
     logger.info(f"Entropy coefficient: {entropy_coeff}")
+    if starting_wave > 1:
+        logger.info(
+            f"Starting wave: {starting_wave} (speed multiplier: {ASTEROID_SPEED_INCREMENT ** (starting_wave - 1):.3f})"
+        )
     if death_penalty != 0:
         logger.info(
             f"Death penalty: {death_penalty} over last {death_penalty_frames} frames"
@@ -351,9 +357,15 @@ def train_model(
             opt.load_state_dict(ckpt["optimizer_state_dict"])
         if "max_score" in ckpt:
             max_score = float(ckpt["max_score"])
-        logger.info(
-            f"Resumed from checkpoint: {checkpoint} (max_score: {max_score:.2f})"
-        )
+        if starting_wave > 1:
+            logger.info(
+                f"Resumed from checkpoint: {checkpoint} (resetting max_score from {max_score:.2f} to 0 for starting_wave={starting_wave})"
+            )
+            max_score = 0
+        else:
+            logger.info(
+                f"Resumed from checkpoint: {checkpoint} (max_score: {max_score:.2f})"
+            )
     elif checkpoint:
         logger.info(f"No checkpoint found at {checkpoint}, starting from scratch")
     total_epochs = 60000
@@ -382,6 +394,7 @@ def train_model(
                 model_type,
                 death_penalty,
                 death_penalty_frames,
+                starting_wave,
             )
             sim_time = time.time() - sim_start
 
@@ -536,6 +549,12 @@ def main():
         default=60,
         help="Number of frames before death to apply ramping penalty (default: 60)",
     )
+    parser.add_argument(
+        "--starting-wave",
+        type=int,
+        default=1,
+        help="Wave number to start each training game at (default: 1). Higher waves have faster asteroids.",
+    )
     args = parser.parse_args()
     train_model(
         args.width,
@@ -548,6 +567,7 @@ def main():
         entropy_coeff=args.entropy_coeff,
         death_penalty=args.death_penalty,
         death_penalty_frames=args.death_penalty_frames,
+        starting_wave=args.starting_wave,
     )
 
 

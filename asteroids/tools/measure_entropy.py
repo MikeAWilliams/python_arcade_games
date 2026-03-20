@@ -65,9 +65,7 @@ def measure_entropy(model_type: str, checkpoint: str, max_frames: int):
 
         state = inp.compute_state()
         with torch.no_grad():
-            logits = params.model(
-                torch.tensor(state, dtype=torch.float32).unsqueeze(0)
-            )
+            logits = params.model(torch.tensor(state, dtype=torch.float32).unsqueeze(0))
             probs = F.softmax(logits, dim=1).numpy()[0]
         all_probs.append(probs)
 

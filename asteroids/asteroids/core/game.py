@@ -237,14 +237,16 @@ class Bullet:
 
 
 class Game:
-    def __init__(self, width, height):
+    def __init__(self, width, height, starting_wave: int = 1):
         self.width = width
         self.height = height
         self.player = Player(
             GeometryObject(Vec2d(width // 2, height // 2), PLAYER_RADIUS)
         )
         self.bullets = []
-        self.asteroid_speed_multiplier = 1.0  # Increases with each wave
+        self.asteroid_speed_multiplier = ASTEROID_SPEED_INCREMENT ** (
+            starting_wave - 1
+        )  # Increases with each wave
         asteroid_centers = generate_fair_asteroid_starting_geometry(
             width,
             height,

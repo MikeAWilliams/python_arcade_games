@@ -32,11 +32,11 @@ from asteroids.core.game import (
 )
 
 # ── tuneable constants ─────────────────────────────────────────────────────────
-DISPLAY_SIZE     = 720   # square window side in pixels
-GAME_WIDTH       = 1280  # original game width used for normalising positions/velocities
-VEL_SCALE        = 1.0   # 1.0 → arrow length = 1-second travel distance in display coords
-INDICATOR_TICKS  = 6     # ticks to hold SHOOT / ACCEL / DECEL indicator on screen
-TRANSITION_TICKS = 8     # ticks to show white flash between games
+DISPLAY_SIZE = 720  # square window side in pixels
+GAME_WIDTH = 1280  # original game width used for normalising positions/velocities
+VEL_SCALE = 1.0  # 1.0 → arrow length = 1-second travel distance in display coords
+INDICATOR_TICKS = 6  # ticks to hold SHOOT / ACCEL / DECEL indicator on screen
+TRANSITION_TICKS = 8  # ticks to show white flash between games
 # ──────────────────────────────────────────────────────────────────────────────
 
 
@@ -62,36 +62,45 @@ class VisualizerView(arcade.View):
 
         # Sort by (game_id, tick_num) so games play in order
         order = np.lexsort((tick_nums, game_ids))
-        self.states   = states[order]
-        self.actions  = actions[order]
+        self.states = states[order]
+        self.actions = actions[order]
         self.game_ids = game_ids[order]
 
-        self.filename    = filename
+        self.filename = filename
         self.total_games = int(len(np.unique(game_ids)))
 
         # Playback state
-        self.frame_ptr       = 0
-        self.display_frame   = 0
+        self.frame_ptr = 0
+        self.display_frame = 0
         self.current_game_id = None
-        self.game_number     = 0
-        self.paused          = False
+        self.game_number = 0
+        self.paused = False
 
         # Transition flash
-        self.transitioning    = False
+        self.transitioning = False
         self.transition_ticks = 0
 
         # Action indicator
-        self.indicator       = None   # Action or None
+        self.indicator = None  # Action or None
         self.indicator_ticks = 0
 
         # Pre-built Text objects (avoids per-frame PerformanceWarning)
         self.hud_text = arcade.Text(
-            "", 6, 6, arcade.color.WHITE, font_size=11,
+            "",
+            6,
+            6,
+            arcade.color.WHITE,
+            font_size=11,
         )
         self.transition_text = arcade.Text(
-            "", DISPLAY_SIZE / 2, DISPLAY_SIZE / 2,
-            arcade.color.BLACK, font_size=28,
-            anchor_x="center", anchor_y="center", bold=True,
+            "",
+            DISPLAY_SIZE / 2,
+            DISPLAY_SIZE / 2,
+            arcade.color.BLACK,
+            font_size=28,
+            anchor_x="center",
+            anchor_y="center",
+            bold=True,
         )
 
     # ── coordinate helpers ─────────────────────────────────────────────────────
@@ -116,9 +125,12 @@ class VisualizerView(arcade.View):
         if self.frame_ptr >= len(self.states):
             return
         cur = int(self.game_ids[self.frame_ptr])
-        while self.frame_ptr < len(self.states) and int(self.game_ids[self.frame_ptr]) == cur:
+        while (
+            self.frame_ptr < len(self.states)
+            and int(self.game_ids[self.frame_ptr]) == cur
+        ):
             self.frame_ptr += 1
-        self.indicator       = None
+        self.indicator = None
         self.indicator_ticks = 0
 
     def on_update(self, dt):
@@ -134,29 +146,29 @@ class VisualizerView(arcade.View):
 
         # Loop when all data played
         if self.frame_ptr >= len(self.states):
-            self.frame_ptr       = 0
+            self.frame_ptr = 0
             self.current_game_id = None
-            self.game_number     = 0
+            self.game_number = 0
 
         new_id = int(self.game_ids[self.frame_ptr])
 
         # Game boundary → trigger white flash
         if self.current_game_id is not None and new_id != self.current_game_id:
-            self.game_number    += 1
+            self.game_number += 1
             self.current_game_id = new_id
-            self.indicator       = None
+            self.indicator = None
             self.indicator_ticks = 0
-            self.transitioning   = True
+            self.transitioning = True
             self.transition_ticks = TRANSITION_TICKS
             return  # hold frame_ptr until flash finishes
 
         self.current_game_id = new_id
-        self.display_frame   = self.frame_ptr
+        self.display_frame = self.frame_ptr
 
         # Update indicator
         action = Action(int(self.actions[self.frame_ptr]))
         if action in (Action.ACCELERATE, Action.DECELERATE, Action.SHOOT):
-            self.indicator       = action
+            self.indicator = action
             self.indicator_ticks = INDICATOR_TICKS
         elif self.indicator_ticks > 0:
             self.indicator_ticks -= 1
@@ -171,35 +183,42 @@ class VisualizerView(arcade.View):
         # ── white flash between games ──────────────────────────────────────
         if self.transitioning:
             arcade.draw_polygon_filled(
-                [(0, 0), (DISPLAY_SIZE, 0), (DISPLAY_SIZE, DISPLAY_SIZE), (0, DISPLAY_SIZE)],
+                [
+                    (0, 0),
+                    (DISPLAY_SIZE, 0),
+                    (DISPLAY_SIZE, DISPLAY_SIZE),
+                    (0, DISPLAY_SIZE),
+                ],
                 arcade.color.WHITE,
             )
-            self.transition_text.text = f"Game {self.game_number + 1} / {self.total_games}"
+            self.transition_text.text = (
+                f"Game {self.game_number + 1} / {self.total_games}"
+            )
             self.transition_text.draw()
             return
 
-        s      = self.states[self.display_frame]
+        s = self.states[self.display_frame]
         action = Action(int(self.actions[self.display_frame]))
 
         # ── decode player ──────────────────────────────────────────────────
-        px      = self._s(s[0])
-        py      = self._s(s[1])
-        pvx     = s[2]
-        pvy     = s[3]
-        bx      = s[4]   # cos(angle)
-        by      = s[5]   # sin(angle)
-        pr      = self._sr(PLAYER_RADIUS)
+        px = self._s(s[0])
+        py = self._s(s[1])
+        pvx = s[2]
+        pvy = s[3]
+        bx = s[4]  # cos(angle)
+        by = s[5]  # sin(angle)
+        pr = self._sr(PLAYER_RADIUS)
         p_angle = math.atan2(by, bx)
 
         # ── asteroids ──────────────────────────────────────────────────────
         for i in range(27):
-            base   = 7 + i * 5
-            ax     = self._s(s[base])
-            ay     = self._s(s[base + 1])
-            avx    = s[base + 2]
-            avy    = s[base + 3]
+            base = 7 + i * 5
+            ax = self._s(s[base])
+            ay = self._s(s[base + 1])
+            avx = s[base + 2]
+            avy = s[base + 3]
             active = s[base + 4] > 0.5
-            r      = self._sr(_asteroid_radius(i))
+            r = self._sr(_asteroid_radius(i))
 
             if active:
                 arcade.draw_circle_filled(ax, ay, r, (160, 160, 160))
@@ -234,7 +253,9 @@ class VisualizerView(arcade.View):
             offset = pr * 3.5
             cx = px + bx * offset
             cy = py + by * offset
-            self._draw_rotated_rect(cx, cy, pr * 3.0, pr * 0.7, p_angle, arcade.color.GREEN)
+            self._draw_rotated_rect(
+                cx, cy, pr * 3.0, pr * 0.7, p_angle, arcade.color.GREEN
+            )
 
         # ── player velocity arrow ───────────────────────────────────────────
         self._draw_arrow(px, py, pvx, pvy, arcade.color.YELLOW)
@@ -243,8 +264,7 @@ class VisualizerView(arcade.View):
         self.hud_text.text = (
             f"{os.path.basename(self.filename)}  │  "
             f"game {self.game_number + 1}/{self.total_games}  │  "
-            f"{action.name}"
-            + ("  │  [PAUSED]" if self.paused else "")
+            f"{action.name}" + ("  │  [PAUSED]" if self.paused else "")
         )
         self.hud_text.draw()
 
@@ -274,9 +294,9 @@ class VisualizerView(arcade.View):
         arcade.draw_line(ox, oy, tip_x, tip_y, color, line_width=2)
 
         # Arrowhead
-        angle    = math.atan2(nvy, nvx)
+        angle = math.atan2(nvy, nvx)
         head_len = min(12.0, VEL_SCALE * DISPLAY_SIZE * speed * 0.35)
-        spread   = 0.4
+        spread = 0.4
         hx1 = tip_x - head_len * math.cos(angle - spread)
         hy1 = tip_y - head_len * math.sin(angle - spread)
         hx2 = tip_x - head_len * math.cos(angle + spread)
@@ -313,16 +333,17 @@ def main():
         sys.exit(1)
 
     print(f"Loading {path} ...")
-    raw       = np.load(path)
-    states    = raw["states"]
-    actions   = raw["actions"]
-    game_ids  = raw["game_ids"]
+    raw = np.load(path)
+    states = raw["states"]
+    actions = raw["actions"]
+    game_ids = raw["game_ids"]
     tick_nums = raw["tick_nums"]
-    n_games   = len(np.unique(game_ids))
+    n_games = len(np.unique(game_ids))
     print(f"  {len(states):,} frames across {n_games:,} games")
 
     window = arcade.Window(
-        DISPLAY_SIZE, DISPLAY_SIZE,
+        DISPLAY_SIZE,
+        DISPLAY_SIZE,
         f"State Visualizer — {os.path.basename(path)}",
     )
     window.set_update_rate(1 / 60)

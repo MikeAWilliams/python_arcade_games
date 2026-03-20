@@ -120,9 +120,7 @@ def main():
     logger = setup_logging(args.output_base)
 
     pattern = f"data/{args.input_base}_*.npz"
-    files = sorted(
-        glob.glob(pattern), key=lambda x: int(Path(x).stem.split("_")[-1])
-    )
+    files = sorted(glob.glob(pattern), key=lambda x: int(Path(x).stem.split("_")[-1]))
 
     if not files:
         logger.error(f"No data files found matching: {pattern}")
