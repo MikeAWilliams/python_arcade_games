@@ -85,7 +85,7 @@ Training pipeline already exists in `training/cross_entropy.py`. Heuristic gamep
 
 **Hybrid approach:** Cross-entropy to get close to heuristic performance (especially learning the dodge behavior), then PG fine-tuning to push beyond it. This avoids starting PG from scratch without dodge knowledge.
 
-## Option 4: Curriculum training on later waves
+## Option 4: Curriculum training on later waves — PREFERRED, DO THIS NEXT
 
 Start some or all training games at higher waves so the agent sees fast
 asteroids more often. Most training episodes end in early waves, so the bulk
@@ -94,11 +94,21 @@ wave 1-3 physics then hits a wall when later waves demand tighter margins.
 
 **Training distribution mismatch:**
 
+Speed multiplier is `1.1^(wave-1)` — wave 1 starts at 1.0, each subsequent wave multiplies by 1.1:
+
 | Wave | Multiplier | Asteroid speed | Time to cross 50px |
 |------|-----------|---------------|-------------------|
 | 1 | 1.0 | 100 px/s | 30 frames |
-| 3 | 1.33 | 133 px/s | 22 frames |
-| 5 | 1.61 | 161 px/s | 19 frames |
-| 7 | 1.95 | 195 px/s | 15 frames |
+| 3 | 1.21 | 121 px/s | 25 frames |
+| 5 | 1.46 | 146 px/s | 21 frames |
+| 7 | 1.77 | 177 px/s | 17 frames |
 
-Orthogonal to reward shaping — addresses *how often* hard situations appear, not *what to learn from them*. Could be combined with other approaches.
+Current NN avg ~118 points = partway through wave 5 (108 points to clear wave 4). Heuristic avg ~139 = partway through wave 6. The gap is roughly one wave of survival.
+
+Orthogonal to reward shaping — addresses *how often* hard situations appear, not *what to learn from them*. Combine with death penalty (-0.1) and entropy (0.005).
+
+**Implementation plan:**
+
+1. `Game.__init__(width, height, starting_wave=1)` — set `asteroid_speed_multiplier = 1.1^(starting_wave-1)` so initial asteroids spawn at the correct speed. All existing callers default to wave 1, no changes needed.
+2. `training/policy_gradient.py` — add `--starting-wave` CLI arg, thread through worker args tuple to `Game(width, height, starting_wave)`.
+3. Start training at wave 5 — resume from `polar2_pg_ent005_best.pth`, keep death penalty (-0.1 over 60 frames) and entropy (0.005), reset max_score to 0 since scores are not comparable across different starting waves.
