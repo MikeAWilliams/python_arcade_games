@@ -28,6 +28,7 @@ asteroids/
 │   ├── generate_random_model.py # Create a fresh random model file
 │   ├── measure_entropy.py         # Measure policy entropy and action distribution
 │   ├── visualize_state.py         # Visualize raw geometry state recordings
+│   ├── visualize_reward_shaping.py # Visualize death penalty reward shaping
 │   └── visualize_state_polar.py   # Visualize polar state (converted from raw)
 │
 ├── data/                  # Training data (not in git)
@@ -225,6 +226,12 @@ python tools/measure_entropy.py --checkpoint nn_weights/polar_pg_best.pth    # s
 python tools/measure_entropy.py --max-frames 10000                           # run longer game
 ```
 Reports per-frame entropy statistics and average action probabilities to assess how deterministic the policy has become.
+
+**Visualize Reward Shaping:**
+```bash
+python tools/visualize_reward_shaping.py
+```
+Shows the effect of death penalty reward shaping on discounted returns — compares raw rewards, the penalty ramp, and normalized advantages with and without the penalty.
 
 **Visualize State Recordings:**
 ```bash
