@@ -1,0 +1,39 @@
+Using device: cpu
+Model type: polar2
+Using 16 worker processes for game simulation
+Batch size: 32 games per training update
+Entropy coefficient: 0.005
+Death penalty: -0.5 over last 60 frames
+Resumed from checkpoint: nn_checkpoints/polar2_pg_ent005_best.pth (max_score: 159.05)
+Creating persistent worker pool...
+0/60000 -> avg_score:105.35, max:159.05, loss:0.0845 | sim:1.11s, train:0.09s | elapsed:00:00:01, total:19:59:28, remaining:19:59:27
+500/60000 -> avg_score:92.95, max:159.05, loss:0.0853 | sim:0.98s, train:0.08s | elapsed:00:09:07, total:18:13:06, remaining:18:03:58
+1000/60000 -> avg_score:94.73, max:159.05, loss:0.0698 | sim:0.89s, train:0.08s | elapsed:00:18:34, total:18:33:32, remaining:18:14:57
+1500/60000 -> avg_score:98.89, max:159.05, loss:0.0787 | sim:1.07s, train:0.09s | elapsed:00:27:55, total:18:35:56, remaining:18:08:01
+2000/60000 -> avg_score:98.41, max:159.05, loss:0.0910 | sim:1.07s, train:0.08s | elapsed:00:37:11, total:18:35:13, remaining:17:58:01
+2500/60000 -> avg_score:100.74, max:159.05, loss:0.0872 | sim:0.98s, train:0.09s | elapsed:00:46:36, total:18:37:57, remaining:17:51:21
+3000/60000 -> avg_score:104.41, max:159.05, loss:0.0905 | sim:1.08s, train:0.09s | elapsed:00:55:48, total:18:35:52, remaining:17:40:03
+3500/60000 -> avg_score:103.32, max:159.05, loss:0.0966 | sim:1.01s, train:0.09s | elapsed:01:05:07, total:18:36:15, remaining:17:31:07
+4000/60000 -> avg_score:128.79, max:159.05, loss:0.0943 | sim:1.18s, train:0.12s | elapsed:01:14:38, total:18:39:15, remaining:17:24:37
+4500/60000 -> avg_score:82.86, max:159.05, loss:0.0950 | sim:0.85s, train:0.06s | elapsed:01:24:03, total:18:40:36, remaining:17:16:32
+5000/60000 -> avg_score:121.09, max:159.05, loss:0.0837 | sim:1.19s, train:0.11s | elapsed:01:33:32, total:18:42:18, remaining:17:08:46
+5500/60000 -> avg_score:125.66, max:159.05, loss:0.0867 | sim:1.26s, train:0.11s | elapsed:01:43:01, total:18:43:47, remaining:17:00:45
+6000/60000 -> avg_score:107.99, max:159.05, loss:0.0895 | sim:1.03s, train:0.10s | elapsed:01:52:37, total:18:46:00, remaining:16:53:23
+6500/60000 -> avg_score:100.37, max:159.05, loss:0.0730 | sim:0.96s, train:0.09s | elapsed:02:02:07, total:18:47:07, remaining:16:45:00
+7000/60000 -> avg_score:121.26, max:159.05, loss:0.0767 | sim:1.15s, train:0.11s | elapsed:02:11:40, total:18:48:24, remaining:16:36:44
+7500/60000 -> avg_score:109.15, max:159.05, loss:0.0897 | sim:1.07s, train:0.10s | elapsed:02:21:12, total:18:49:27, remaining:16:28:15
+8000/60000 -> avg_score:110.53, max:159.05, loss:0.0801 | sim:0.96s, train:0.10s | elapsed:02:30:49, total:18:51:01, remaining:16:20:11
+8500/60000 -> avg_score:91.71, max:159.05, loss:0.1060 | sim:0.94s, train:0.08s | elapsed:02:40:19, total:18:51:36, remaining:16:11:16
+9000/60000 -> avg_score:103.83, max:159.05, loss:0.0848 | sim:1.03s, train:0.09s | elapsed:02:49:52, total:18:52:20, remaining:16:02:28
+9500/60000 -> avg_score:107.97, max:159.05, loss:0.0868 | sim:1.05s, train:0.10s | elapsed:02:59:26, total:18:53:12, remaining:15:53:45
+10000/60000 -> avg_score:119.22, max:159.05, loss:0.0685 | sim:1.07s, train:0.11s | elapsed:03:09:01, total:18:54:00, remaining:15:44:59
+10500/60000 -> avg_score:114.18, max:159.05, loss:0.0989 | sim:1.02s, train:0.10s | elapsed:03:18:36, total:18:54:50, remaining:15:36:13
+11000/60000 -> avg_score:114.12, max:159.05, loss:0.0876 | sim:1.03s, train:0.10s | elapsed:03:28:17, total:18:56:03, remaining:15:27:45
+11500/60000 -> avg_score:94.63, max:159.05, loss:0.0925 | sim:0.93s, train:0.09s | elapsed:03:38:00, total:18:57:19, remaining:15:19:19
+12000/60000 -> avg_score:100.82, max:159.05, loss:0.0691 | sim:0.92s, train:0.09s | elapsed:03:47:37, total:18:58:03, remaining:15:10:25
+12500/60000 -> avg_score:115.34, max:159.05, loss:0.0802 | sim:1.09s, train:0.11s | elapsed:03:57:22, total:18:59:18, remaining:15:01:55
+13000/60000 -> avg_score:108.12, max:159.05, loss:0.0801 | sim:1.05s, train:0.10s | elapsed:04:07:10, total:19:00:41, remaining:14:53:31
+13500/60000 -> avg_score:107.12, max:159.05, loss:0.0863 | sim:0.98s, train:0.10s | elapsed:04:16:47, total:19:01:14, remaining:14:44:26
+14000/60000 -> avg_score:108.65, max:159.05, loss:0.0843 | sim:1.22s, train:0.10s | elapsed:04:26:32, total:19:02:14, remaining:14:35:42
+14500/60000 -> avg_score:97.47, max:159.05, loss:0.0816 | sim:0.98s, train:0.09s | elapsed:04:36:22, total:19:03:32, remaining:14:27:09
+15000/60000 -> avg_score:97.41, max:159.05, loss:0.0967 | sim:1.19s, train:0.08s | elapsed:04:46:12, total:19:04:47, remaining:14:18:34

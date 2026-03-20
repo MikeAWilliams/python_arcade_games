@@ -6,8 +6,8 @@ then the player dies. Shows raw rewards, the death penalty ramp, and
 discounted returns with and without the penalty.
 """
 
-import numpy as np
 import matplotlib
+import numpy as np
 
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
@@ -43,7 +43,7 @@ def main():
 
     # Death penalty version
     death_penalty_frames = 60
-    death_penalty = -0.5
+    death_penalty = -0.1
     rewards_with_penalty = rewards_no_penalty.copy()
     for i in range(
         max(0, len(rewards_with_penalty) - death_penalty_frames),
