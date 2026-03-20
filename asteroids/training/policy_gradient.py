@@ -68,7 +68,7 @@ def setup_logging(run_name):
     console_handler.setLevel(logging.INFO)
 
     # File handler
-    file_handler = logging.FileHandler(log_file, mode="w")
+    file_handler = logging.FileHandler(log_file, mode="a")
     file_handler.setLevel(logging.INFO)
 
     # Simple format (no logger name prefix)
