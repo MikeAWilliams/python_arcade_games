@@ -85,7 +85,7 @@ Training pipeline already exists in `training/cross_entropy.py`. Heuristic gamep
 
 **Hybrid approach:** Cross-entropy to get close to heuristic performance (especially learning the dodge behavior), then PG fine-tuning to push beyond it. This avoids starting PG from scratch without dodge knowledge.
 
-## Option 4: Curriculum training on later waves — PREFERRED, DO THIS NEXT
+## Option 4: Curriculum training on later waves — IN PROGRESS
 
 Start some or all training games at higher waves so the agent sees fast
 asteroids more often. Most training episodes end in early waves, so the bulk
@@ -112,3 +112,15 @@ Orthogonal to reward shaping — addresses *how often* hard situations appear, n
 1. `Game.__init__(width, height, starting_wave=1)` — set `asteroid_speed_multiplier = 1.1^(starting_wave-1)` so initial asteroids spawn at the correct speed. All existing callers default to wave 1, no changes needed.
 2. `training/policy_gradient.py` — add `--starting-wave` CLI arg, thread through worker args tuple to `Game(width, height, starting_wave)`.
 3. Start training at wave 5 — resume from `polar2_pg_ent005_best.pth`, keep death penalty (-0.1 over 60 frames) and entropy (0.005), reset max_score to 0 since scores are not comparable across different starting waves.
+
+**Results so far:** 1000-game wave-1 benchmarks improving: avg 128 at checkpoint 12k, avg 131 at checkpoint 18k. Still improving despite flat wave-5 batch averages.
+
+## Option 5: Reduce or remove entropy bonus
+
+**Status:** Not started. Try after current wave-5 run plateaus.
+
+Visual observation shows the policy rapidly alternating between accelerate and decelerate on consecutive frames, with turns and shots intermixed. This accel/decel flicker is effectively a no-op (net zero displacement) and wastes frames that could be spent on useful actions. The entropy bonus (0.005) is the likely cause — it pressures the policy to keep all 6 actions in use, so it fills gaps with meaningless thrust toggles rather than committing to a direction or staying still.
+
+**Proposal:** Continue from the best wave-5 checkpoint with entropy reduced to 0 or 0.001. The policy has already developed a broad action distribution from the entropy-guided training; removing the bonus should let it tighten up and stop wasting frames.
+
+**Risk:** Without entropy the policy could collapse back to a narrow action set (the `polar2_pg_exploit` failure — avg dropped to 50-60). Mitigated by starting from a much stronger checkpoint (131 avg vs 70 at the time). Could try 0.001 as a middle ground.

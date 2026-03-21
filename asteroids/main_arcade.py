@@ -28,6 +28,7 @@ class GameView(arcade.View):
         super().__init__()
         self.game = game
         self.input_method = input_method
+        self.last_action = Action.NO_ACTION
 
     def on_update(self, dt):
         """Move everything"""
@@ -37,7 +38,12 @@ class GameView(arcade.View):
 
         # Get and execute the action from input method
         action = self.input_method.get_move()
+        self.last_action = action
+        bullet_count = len(self.game.bullets)
         self.execute_action(action)
+        self.shot_blocked = (
+            action == Action.SHOOT and len(self.game.bullets) == bullet_count
+        )
 
         self.game.update(dt)
         if not self.game.player_alive:
@@ -96,6 +102,85 @@ class GameView(arcade.View):
 
         # Draw the filled triangle using the calculated points
         arcade.draw_triangle_filled(x1, y1, x2, y2, x3, y3, arcade.color.WHITE)
+
+        # Thrust/brake indicator
+        if self.last_action == Action.ACCELERATE:
+            # Flame behind the ship (opposite of heading)
+            back_angle = p_angle + math.pi
+            flame_len = r * 1.5
+            ft = back_angle  # flame tip
+            fl = back_angle + 0.3  # flame left
+            fr = back_angle - 0.3  # flame right
+            base_dist = r * 0.6
+            arcade.draw_triangle_filled(
+                cx + flame_len * math.cos(ft),
+                cy + flame_len * math.sin(ft),
+                cx + base_dist * math.cos(fl),
+                cy + base_dist * math.sin(fl),
+                cx + base_dist * math.cos(fr),
+                cy + base_dist * math.sin(fr),
+                arcade.color.ORANGE,
+            )
+        elif self.last_action == Action.DECELERATE:
+            # Flame in front of the ship (direction of heading)
+            flame_len = r * 1.5
+            ft = p_angle
+            fl = p_angle + 0.3
+            fr = p_angle - 0.3
+            base_dist = r * 0.6
+            arcade.draw_triangle_filled(
+                cx + flame_len * math.cos(ft),
+                cy + flame_len * math.sin(ft),
+                cx + base_dist * math.cos(fl),
+                cy + base_dist * math.sin(fl),
+                cx + base_dist * math.cos(fr),
+                cy + base_dist * math.sin(fr),
+                arcade.color.RED,
+            )
+        elif self.last_action == Action.TURN_LEFT:
+            # Triangle on the right side of the ship (reaction flame)
+            side_angle = p_angle - math.pi / 2
+            flame_len = r * 1.5
+            ft = side_angle
+            fl = side_angle + 0.3
+            fr = side_angle - 0.3
+            base_dist = r * 0.6
+            arcade.draw_triangle_filled(
+                cx + flame_len * math.cos(ft),
+                cy + flame_len * math.sin(ft),
+                cx + base_dist * math.cos(fl),
+                cy + base_dist * math.sin(fl),
+                cx + base_dist * math.cos(fr),
+                cy + base_dist * math.sin(fr),
+                arcade.color.YELLOW,
+            )
+        elif self.last_action == Action.TURN_RIGHT:
+            # Triangle on the left side of the ship (reaction flame)
+            side_angle = p_angle + math.pi / 2
+            flame_len = r * 1.5
+            ft = side_angle
+            fl = side_angle + 0.3
+            fr = side_angle - 0.3
+            base_dist = r * 0.6
+            arcade.draw_triangle_filled(
+                cx + flame_len * math.cos(ft),
+                cy + flame_len * math.sin(ft),
+                cx + base_dist * math.cos(fl),
+                cy + base_dist * math.sin(fl),
+                cx + base_dist * math.cos(fr),
+                cy + base_dist * math.sin(fr),
+                arcade.color.YELLOW,
+            )
+        elif self.last_action == Action.SHOOT and self.shot_blocked:
+            # Shoot on cooldown — small X in front of ship
+            front_dist = r * 1.3
+            fx = cx + front_dist * math.cos(p_angle)
+            fy = cy + front_dist * math.sin(p_angle)
+            s = r * 0.25
+            arcade.draw_line(fx - s, fy - s, fx + s, fy + s, arcade.color.RED, 2)
+            arcade.draw_line(fx - s, fy + s, fx + s, fy - s, arcade.color.RED, 2)
+        elif self.last_action == Action.NO_ACTION:
+            arcade.draw_circle_filled(cx, cy, r * 0.15, arcade.color.GRAY)
 
     def draw_bullets(self, bullets):
         self.draw_circles(bullets)
