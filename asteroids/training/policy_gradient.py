@@ -312,6 +312,7 @@ def train_model(
     death_penalty=0.0,
     death_penalty_frames=60,
     starting_wave=1,
+    reset_max=False,
 ):
     # Set up logging
     logger = setup_logging(run_name)
@@ -357,9 +358,9 @@ def train_model(
             opt.load_state_dict(ckpt["optimizer_state_dict"])
         if "max_score" in ckpt:
             max_score = float(ckpt["max_score"])
-        if starting_wave > 1:
+        if reset_max:
             logger.info(
-                f"Resumed from checkpoint: {checkpoint} (resetting max_score from {max_score:.2f} to 0 for starting_wave={starting_wave})"
+                f"Resumed from checkpoint: {checkpoint} (resetting max_score from {max_score:.2f} to 0 via --reset-max)"
             )
             max_score = 0
         else:
@@ -532,6 +533,11 @@ def main():
         help="Start from scratch, ignoring any existing checkpoint",
     )
     parser.add_argument(
+        "--reset-max",
+        action="store_true",
+        help="Reset max_score to 0 when resuming from a checkpoint",
+    )
+    parser.add_argument(
         "--entropy-coeff",
         type=float,
         default=0.0,
@@ -568,6 +574,7 @@ def main():
         death_penalty=args.death_penalty,
         death_penalty_frames=args.death_penalty_frames,
         starting_wave=args.starting_wave,
+        reset_max=args.reset_max,
     )
 
 

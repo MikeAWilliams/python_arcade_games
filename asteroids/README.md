@@ -26,7 +26,9 @@ asteroids/
 │   ├── analyze_state_data.py    # Inspect training data column stats
 │   ├── convert_training_data.py # Convert angle to bearing format
 │   ├── generate_random_model.py # Create a fresh random model file
+│   ├── benchmark.sh               # Benchmark a polar2 model via headless runs
 │   ├── measure_entropy.py         # Measure policy entropy and action distribution
+│   ├── promote_checkpoint.sh      # Copy most recent checkpoint to nn_weights/
 │   ├── visualize_state.py         # Visualize raw geometry state recordings
 │   ├── visualize_reward_shaping.py # Visualize death penalty reward shaping
 │   └── visualize_state_polar.py   # Visualize polar state (converted from raw)
@@ -191,7 +193,7 @@ All artifacts saved to `nn_checkpoints/`:
 | `polar2_pg_ent005` | polar2 | `polar2_pg_ent005_policy_gradient.log` | **Best 159, avg ~100–120** | **Current best run.** Resumed from `polar2_pg_exploit_best.pth` (136.41) with entropy=0.005. Steady improvement over ~21k iters: best 136→142→147→159. Avg scores healthy at 100–120 without the collapse seen in exploit run. Plateaued after iter ~15k. |
 | `polar2_pg_ent005_dp` | polar2 | `polar2_pg_ent005_dp_policy_gradient.log` | No improvement | Resumed from `polar2_pg_ent005_best.pth` (159.05) with entropy=0.005 and death penalty (-0.5 over 60 frames). Ran 15k iters over ~5 hours with zero new bests. Avg scores same 90–125 range. Penalty too strong: cumulative -15 over 60 frames overwhelmed the +1 kill rewards, drowning out the scoring signal. |
 | `polar2_pg_ent005_dp01` | polar2 | `polar2_pg_ent005_dp01_policy_gradient.log` | Best 163, avg ~118 (100-game) | Resumed from `polar2_pg_ent005_best.pth` (159.05) with entropy=0.005 and reduced death penalty (-0.1 over 60 frames). Two new batch bests (160, 163) but 100-game benchmark ~118, similar to ent005. Some subtle dodging observed visually but not enough to move the needle. |
-| `polar2_pg_wave5` | polar2 | `polar2_pg_wave5_policy_gradient.log` | *In progress* | Curriculum training: games start at wave 5 (speed multiplier 1.46x) so the agent trains on fast asteroids from the start. Resumed from `polar2_pg_ent005_best.pth` with entropy=0.005, death penalty (-0.1 over 60 frames). Scores are wave-5-relative (add 108 for equivalent full-game score). |
+| `polar2_pg_wave5` | polar2 | `polar2_pg_wave5_policy_gradient.log` | Best batch 83, **avg ~131 (1000-game)** | Curriculum training: games start at wave 5 (speed multiplier 1.46x). Resumed from `polar2_pg_ent005_best.pth` with entropy=0.005, death penalty (-0.1 over 60 frames). Two runs totaling ~52.5k iters (~7.5 hours): first 37.5k iters, then continued from checkpoint 36k for another 15k. 1000-game wave-1 benchmarks: avg 128 at checkpoint 12k, avg 131 at checkpoint 18k (second run). Still improving despite flat wave-5 batch averages. |
 
 ### Utilities
 
@@ -221,6 +223,21 @@ python tools/generate_random_model.py --model polar          # polar (nn_weights
 python tools/generate_random_model.py --model polar --output nn_weights/my_model.pth
 ```
 Creates a randomly-initialized model weights file. Useful for bootstrapping when no trained model exists.
+
+**Promote Checkpoint:**
+```bash
+tools/promote_checkpoint.sh          # most recent .pth
+tools/promote_checkpoint.sh --best   # most recent *best*.pth
+```
+Copies the most recently modified `.pth` file from `nn_checkpoints/` to `nn_weights/`. Prints the destination path to stdout for piping.
+
+**Benchmark:**
+```bash
+tools/benchmark.sh nn_weights/model.pth          # 1000 games (default)
+tools/benchmark.sh nn_weights/model.pth 500      # 500 games
+tools/promote_checkpoint.sh | tools/benchmark.sh  # promote then benchmark
+```
+Runs headless polar2 benchmarking games and reports scores.
 
 **Measure Policy Entropy:**
 ```bash
