@@ -12,7 +12,7 @@ if [ "${1:-}" = "--best" ]; then
     GLOB="*best*.pth"
 fi
 
-latest=$(ls -t "$SRC"/$GLOB 2>/dev/null | head -1)
+latest=$(ls -t "$SRC"/$GLOB 2>/dev/null | head -1 || true)
 
 if [ -z "$latest" ]; then
     echo "No matching .pth files found in $SRC"

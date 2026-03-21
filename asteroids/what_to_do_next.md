@@ -66,7 +66,7 @@ Polar2's time-to-impact (TTI) only captures the *radial* component of closing sp
 
 ## Option 3: Cross-entropy training from heuristic data
 
-**Status:** Considering.
+**Status:** Considering full approach. Selective variant is the preferred next step.
 
 Train the NN via supervised learning on recorded heuristic AI gameplay data. The cross-entropy pipeline already exists in `training/cross_entropy.py`.
 
@@ -85,7 +85,27 @@ Training pipeline already exists in `training/cross_entropy.py`. Heuristic gamep
 
 **Hybrid approach:** Cross-entropy to get close to heuristic performance (especially learning the dodge behavior), then PG fine-tuning to push beyond it. This avoids starting PG from scratch without dodge knowledge.
 
-## Option 4: Curriculum training on later waves — IN PROGRESS
+### Option 3b: Selective cross-entropy on dodge frames only — PREFERRED, DO THIS NEXT
+
+The NN's shooting policy is already strong (~130 avg), possibly better than the heuristic's. What's missing is dodge behavior — the NN doesn't know what to do when a collision is imminent. Full cross-entropy would overwrite the good shooting policy and hit the class imbalance problem.
+
+**Proposal:** Filter existing recorded heuristic games to only frames where a collision is imminent (using the same forward-projection check the heuristic uses, lines 322-365 of heuristic.py). Cross-entropy train on just those frames to teach the NN dodge behavior without touching its shooting policy. Then PG fine-tune.
+
+**Implementation:**
+1. Use existing recorded game data (raw geometry format)
+2. For each frame, run the heuristic's collision prediction (project player + asteroid positions forward 49 ticks, check geometric overlap)
+3. Keep only frames where collision is imminent — label with the heuristic's action
+4. Cross-entropy train the current best polar2 model on these filtered frames
+5. PG fine-tune from the resulting checkpoint
+
+**Why this should work:**
+- Directly teaches the one behavior the NN is missing (dodging)
+- Avoids class imbalance — dodge frames are dominated by thrust/turn, not the 93% turning of the full dataset
+- Doesn't overwrite existing shooting policy since non-dodge frames are excluded
+- Polar2 features already include TTI, so the NN has the inputs to learn when and how to dodge — it just hasn't seen enough dodge situations during PG training
+- No need to re-record data — apply the collision check to existing recordings
+
+## Option 4: Curriculum training on later waves — DONE, plateaued at ~131
 
 Start some or all training games at higher waves so the agent sees fast
 asteroids more often. Most training episodes end in early waves, so the bulk
@@ -113,7 +133,7 @@ Orthogonal to reward shaping — addresses *how often* hard situations appear, n
 2. `training/policy_gradient.py` — add `--starting-wave` CLI arg, thread through worker args tuple to `Game(width, height, starting_wave)`.
 3. Start training at wave 5 — resume from `polar2_pg_ent005_best.pth`, keep death penalty (-0.1 over 60 frames) and entropy (0.005), reset max_score to 0 since scores are not comparable across different starting waves.
 
-**Results so far:** 1000-game wave-1 benchmarks improving: avg 128 at checkpoint 12k, avg 131 at checkpoint 18k. Still improving despite flat wave-5 batch averages.
+**Results:** 1000-game wave-1 benchmarks: avg 128 at 12k, avg 131 at 18k (peak), regressed to 128 at 24k. Follow-up exploit run (entropy=0) from 18k checkpoint: cleaner actions but same ~130 avg after 39.5k iters. Plateaued. Still improving despite flat wave-5 batch averages.
 
 ## Option 5: Reduce or remove entropy bonus
 
