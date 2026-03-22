@@ -1,0 +1,40 @@
+Using device: cpu
+Model type: polar2
+Using 16 worker processes for game simulation
+Batch size: 32 games per training update
+Entropy coefficient: 0.0
+Crisis mode: training on crisis scenarios, evaluating with 100 crisis games per epoch
+Resumed from checkpoint: nn_weights/polar2_pg_wave5_exploit_best.pth (max_score: 96.18)
+Creating persistent worker pool...
+0/60000 -> avg_score:12.69, train_avg:14.49, max:96.18, loss:0.0302 | sim:0.08s, train:0.01s, eval:0.08s | elapsed:00:00:00, total:02:42:06, remaining:02:42:06
+500/60000 -> avg_score:16.47, train_avg:16.18, max:96.18, loss:0.0215 | sim:0.04s, train:0.00s, eval:0.08s | elapsed:00:00:21, total:00:43:48, remaining:00:43:26
+1000/60000 -> avg_score:21.60, train_avg:14.48, max:96.18, loss:0.0454 | sim:0.04s, train:0.00s, eval:0.09s | elapsed:00:00:43, total:00:43:51, remaining:00:43:08
+1500/60000 -> avg_score:17.01, train_avg:23.78, max:96.18, loss:0.0424 | sim:0.05s, train:0.00s, eval:0.13s | elapsed:00:01:06, total:00:44:16, remaining:00:43:10
+2000/60000 -> avg_score:19.98, train_avg:20.40, max:96.18, loss:0.0303 | sim:0.04s, train:0.00s, eval:0.10s | elapsed:00:01:30, total:00:45:09, remaining:00:43:38
+2500/60000 -> avg_score:24.30, train_avg:16.17, max:96.18, loss:0.0546 | sim:0.05s, train:0.00s, eval:0.10s | elapsed:00:01:53, total:00:45:31, remaining:00:43:37
+3000/60000 -> avg_score:17.82, train_avg:21.26, max:96.18, loss:0.0386 | sim:0.04s, train:0.00s, eval:0.09s | elapsed:00:02:16, total:00:45:28, remaining:00:43:12
+Using device: cpu
+Model type: polar2
+Using 16 worker processes for game simulation
+Batch size: 32 games per training update
+Entropy coefficient: 0.0
+Crisis mode: training on crisis scenarios, evaluating with 100 crisis games per epoch
+Resumed from checkpoint: nn_weights/polar2_pg_wave5_exploit_best.pth (max_score: 96.18)
+Creating persistent worker pool...
+0/60000 -> NEW BEST avg_score:129.01 | sim:0.09s
+0/60000 -> avg_score:129.01, train_avg:20.42, max:129.01, loss:0.0594 | sim:0.09s, train:0.01s, eval:2.50s | elapsed:00:00:02, total:19:25:35, remaining:19:25:32
+100/60000 -> NEW BEST avg_score:137.82 | sim:0.04s
+300/60000 -> NEW BEST avg_score:150.01 | sim:0.04s
+500/60000 -> avg_score:140.74, train_avg:15.33, max:150.01, loss:0.0234 | sim:0.03s, train:0.00s, eval:2.89s | elapsed:00:00:38, total:01:17:11, remaining:01:16:33
+1000/60000 -> avg_score:146.17, train_avg:19.56, max:150.01, loss:0.0678 | sim:0.04s, train:0.00s, eval:3.11s | elapsed:00:01:17, total:01:17:26, remaining:01:16:09
+1300/60000 -> NEW BEST avg_score:151.21 | sim:0.04s
+1500/60000 -> avg_score:149.37, train_avg:16.18, max:151.21, loss:0.0578 | sim:0.04s, train:0.00s, eval:6.12s | elapsed:00:01:58, total:01:18:47, remaining:01:16:49
+2000/60000 -> avg_score:101.97, train_avg:22.93, max:151.21, loss:0.0637 | sim:0.04s, train:0.00s, eval:3.50s | elapsed:00:03:04, total:01:32:25, remaining:01:29:20
+2500/60000 -> avg_score:93.92, train_avg:23.81, max:151.21, loss:0.0127 | sim:0.07s, train:0.00s, eval:3.11s | elapsed:00:04:14, total:01:41:35, remaining:01:37:21
+3000/60000 -> avg_score:53.42, train_avg:17.03, max:151.21, loss:0.0868 | sim:0.04s, train:0.00s, eval:2.35s | elapsed:00:04:51, total:01:37:09, remaining:01:32:18
+3500/60000 -> avg_score:30.66, train_avg:18.75, max:151.21, loss:0.0620 | sim:0.05s, train:0.00s, eval:1.80s | elapsed:00:05:27, total:01:33:30, remaining:01:28:03
+4000/60000 -> avg_score:17.29, train_avg:24.63, max:151.21, loss:0.0474 | sim:0.06s, train:0.00s, eval:1.44s | elapsed:00:05:59, total:01:29:44, remaining:01:23:45
+4500/60000 -> avg_score:10.68, train_avg:24.64, max:151.21, loss:0.0651 | sim:0.05s, train:0.00s, eval:0.94s | elapsed:00:06:29, total:01:26:25, remaining:01:19:56
+5000/60000 -> avg_score:7.22, train_avg:18.73, max:151.21, loss:0.0550 | sim:0.05s, train:0.00s, eval:0.77s | elapsed:00:06:57, total:01:23:33, remaining:01:16:36
+5500/60000 -> avg_score:4.74, train_avg:26.36, max:151.21, loss:0.0880 | sim:0.05s, train:0.00s, eval:0.77s | elapsed:00:07:25, total:01:20:58, remaining:01:13:33
+6000/60000 -> avg_score:9.52, train_avg:19.56, max:151.21, loss:0.0628 | sim:0.04s, train:0.00s, eval:0.99s | elapsed:00:07:53, total:01:18:58, remaining:01:11:04
