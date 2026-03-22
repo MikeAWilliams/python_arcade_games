@@ -24,14 +24,26 @@ WINDOW_TITLE = "Asteroids!"
 class GameView(arcade.View):
     """Main application class."""
 
-    def __init__(self, game, input_method: InputMethod):
+    def __init__(self, game, input_method: InputMethod, pause_on_wave: bool = False):
         super().__init__()
         self.game = game
         self.input_method = input_method
         self.last_action = Action.NO_ACTION
+        self.pause_on_wave = pause_on_wave
+        self.waiting_for_input = pause_on_wave
+        self.last_wave_number = game.wave_number
 
     def on_update(self, dt):
         """Move everything"""
+        if self.waiting_for_input:
+            return
+
+        # Detect new wave for crisis pause (human player)
+        if self.pause_on_wave and self.game.wave_number != self.last_wave_number:
+            self.last_wave_number = self.game.wave_number
+            self.waiting_for_input = True
+            return
+
         # Clear turn and acceleration every frame
         self.game.clear_turn()
         self.game.clear_acc()
@@ -69,6 +81,8 @@ class GameView(arcade.View):
 
     def on_key_press(self, key, modifiers):
         """Delegate key press to input method if it supports it"""
+        if self.waiting_for_input:
+            self.waiting_for_input = False
         if hasattr(self.input_method, "on_key_press"):
             self.input_method.on_key_press(key, modifiers)
 
@@ -199,6 +213,26 @@ class GameView(arcade.View):
         self.draw_asteroids(geometry.asteroids)
         self.draw_bullets(geometry.bullets)
 
+        # HUD: wave and score
+        arcade.draw_text(
+            f"Wave: {self.game.wave_number}  Score: {self.game.player_score}",
+            WINDOW_WIDTH - 10,
+            WINDOW_HEIGHT - 30,
+            arcade.color.WHITE,
+            14,
+            anchor_x="right",
+        )
+
+        if self.waiting_for_input:
+            arcade.draw_text(
+                "Press any key to start",
+                WINDOW_WIDTH // 2,
+                100,
+                arcade.color.YELLOW,
+                20,
+                anchor_x="center",
+            )
+
 
 def main():
     parser = argparse.ArgumentParser(description="Asteroids Game")
@@ -226,9 +260,14 @@ def main():
         const="nn_polar2.pth",
         help="Use Polar2 Neural Network AI, optionally specify model file path (default: nn_polar2.pth)",
     )
+    parser.add_argument(
+        "--crisis",
+        action="store_true",
+        help="Enable crisis mode: small asteroid dodge scenarios",
+    )
     args = parser.parse_args()
 
-    g = Game(WINDOW_WIDTH, WINDOW_HEIGHT)
+    g = Game(WINDOW_WIDTH, WINDOW_HEIGHT, crisis_mode=args.crisis)
 
     if args.aih:
         input_method = HeuristicAIInput(g)
@@ -264,8 +303,11 @@ def main():
     else:
         input_method = KeyboardInput()
 
+    is_human = not (args.aih or args.air or args.aip or args.aip2)
+    pause_on_wave = args.crisis and is_human
+
     window = arcade.Window(WINDOW_WIDTH, WINDOW_HEIGHT, WINDOW_TITLE)
-    game_view = GameView(g, input_method)
+    game_view = GameView(g, input_method, pause_on_wave=pause_on_wave)
     window.show_view(game_view)
     arcade.run()
 
