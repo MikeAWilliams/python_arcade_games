@@ -21,14 +21,14 @@ from torch.nn import functional as F
 # Add parent directory to path so we can import asteroids package
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from asteroids.core.game import ASTEROID_SPEED_INCREMENT, Action, Game
+from asteroids.ai.polar2_nn import Polar2NNInputMethod, Polar2NNParameters
+from asteroids.ai.polar_nn import PolarNNInputMethod, PolarNNParameters
 from asteroids.ai.raw_geometry_nn import (
     RawGeometryNNInputMethod,
     RawGeometryNNParameters,
     validate_and_load_model,
 )
-from asteroids.ai.polar_nn import PolarNNInputMethod, PolarNNParameters
-from asteroids.ai.polar2_nn import Polar2NNInputMethod, Polar2NNParameters
+from asteroids.core.game import ASTEROID_SPEED_INCREMENT, Action, Game
 from asteroids.core.game_runner import execute_action
 
 MODEL_TYPES = {
@@ -161,6 +161,7 @@ def run_games_batch_worker(args):
         death_penalty,
         death_penalty_frames,
         starting_wave,
+        crisis_mode,
     ) = args
 
     # Create parameters once and reuse for all games in this worker
@@ -174,7 +175,7 @@ def run_games_batch_worker(args):
     results = []
     for game_id in range(num_games):
         # Run game
-        game = Game(width, height, starting_wave)
+        game = Game(width, height, starting_wave, crisis_mode=crisis_mode)
         input_method = model_info["input_class"](
             game=game, parameters=params, keep_data=True
         )
@@ -237,6 +238,7 @@ def run_games_parallel(
     death_penalty=0.0,
     death_penalty_frames=0,
     starting_wave=1,
+    crisis_mode=False,
 ):
     """
     Run multiple games in parallel using a persistent ProcessPoolExecutor.
@@ -266,6 +268,7 @@ def run_games_parallel(
                 death_penalty,
                 death_penalty_frames,
                 starting_wave,
+                crisis_mode,
             )
         )
 
@@ -300,6 +303,79 @@ def run_games_parallel(
     )
 
 
+def eval_games_batch_worker(args):
+    """Run games for evaluation only, returning just scores."""
+    (
+        worker_id,
+        num_games,
+        width,
+        height,
+        model_state_dict,
+        model_type,
+        starting_wave,
+        crisis_mode,
+    ) = args
+
+    model_info = MODEL_TYPES[model_type]
+    params = model_info["params_class"](device="cpu")
+    validate_and_load_model(params.model, model_state_dict, source_description="eval")
+    params.model.eval()
+
+    scores = []
+    for _ in range(num_games):
+        game = Game(width, height, starting_wave, crisis_mode=crisis_mode)
+        input_method = model_info["input_class"](game=game, parameters=params)
+        dt = 1 / 60
+        while game.player_alive:
+            game.clear_turn()
+            game.clear_acc()
+            action = input_method.get_move()
+            execute_action(game, action)
+            game.update(dt)
+        scores.append(game.player_score)
+    return scores
+
+
+def run_eval_parallel(
+    width,
+    height,
+    model_state_dict,
+    num_games,
+    num_workers,
+    executor,
+    model_type,
+    starting_wave=1,
+    crisis_mode=False,
+):
+    """Run evaluation games in parallel. Returns average score."""
+    games_per_worker = num_games // num_workers
+    extra_games = num_games % num_workers
+
+    worker_args = []
+    for worker_id in range(num_workers):
+        n = games_per_worker + (1 if worker_id < extra_games else 0)
+        if n > 0:
+            worker_args.append(
+                (
+                    worker_id,
+                    n,
+                    width,
+                    height,
+                    model_state_dict,
+                    model_type,
+                    starting_wave,
+                    crisis_mode,
+                )
+            )
+
+    all_scores = []
+    futures = [executor.submit(eval_games_batch_worker, args) for args in worker_args]
+    for future in as_completed(futures):
+        all_scores.extend(future.result())
+
+    return sum(all_scores) / len(all_scores)
+
+
 def train_model(
     width,
     height,
@@ -313,6 +389,7 @@ def train_model(
     death_penalty_frames=60,
     starting_wave=1,
     reset_max=False,
+    crisis_mode=False,
 ):
     # Set up logging
     logger = setup_logging(run_name)
@@ -336,6 +413,10 @@ def train_model(
     if starting_wave > 1:
         logger.info(
             f"Starting wave: {starting_wave} (speed multiplier: {ASTEROID_SPEED_INCREMENT ** (starting_wave - 1):.3f})"
+        )
+    if crisis_mode:
+        logger.info(
+            "Crisis mode: training on crisis scenarios, evaluating with 100 crisis games per epoch"
         )
     if death_penalty != 0:
         logger.info(
@@ -371,6 +452,7 @@ def train_model(
         logger.info(f"No checkpoint found at {checkpoint}, starting from scratch")
     total_epochs = 60000
     print_frequency = 500
+    eval_frequency = 100
     intermediate_save_frequency = total_epochs / 10
     timed_save_interval = 30 * 60  # 30 minutes
     last_timed_save = time.time()
@@ -383,7 +465,7 @@ def train_model(
             # Get model state dict for subprocess (CPU version)
             model_state_dict = {k: v.cpu() for k, v in model.state_dict().items()}
 
-            # Run games in parallel using persistent executor
+            # Run training games in parallel using persistent executor
             sim_start = time.time()
             states, actions, dr, total_score = run_games_parallel(
                 width,
@@ -396,10 +478,40 @@ def train_model(
                 death_penalty,
                 death_penalty_frames,
                 starting_wave,
+                crisis_mode,
             )
             sim_time = time.time() - sim_start
 
+            # Training computation
+            train_start = time.time()
+            # Advantages are the discounted rewards (already computed per game)
+            # Shape: actions is (N,), dr is (N, 1) -> squeeze to (N,)
+            advantages = dr.squeeze()
+            loss = train_on_game_results(
+                model, opt, states, actions, advantages, device, entropy_coeff
+            )
+            train_time = time.time() - train_start
+
+            # Evaluation
+            eval_time = 0
             avg_score = total_score / batch_size
+            if crisis_mode and epoch % eval_frequency == 0:
+                # Run 100 eval games with post-training model for scoring
+                eval_model_state = {k: v.cpu() for k, v in model.state_dict().items()}
+                eval_start = time.time()
+                avg_score = run_eval_parallel(
+                    width,
+                    height,
+                    eval_model_state,
+                    100,
+                    num_workers,
+                    executor,
+                    model_type,
+                    starting_wave,
+                    crisis_mode=False,
+                )
+                eval_time = time.time() - eval_start
+
             if avg_score > max_score:
                 max_score = avg_score
                 best_path = os.path.join("nn_checkpoints", f"{run_name}_best.pth")
@@ -416,15 +528,6 @@ def train_model(
                     f"{epoch}/{total_epochs} -> NEW BEST avg_score:{avg_score:.2f} | sim:{sim_time:.2f}s"
                 )
 
-            # Training computation
-            train_start = time.time()
-            # Advantages are the discounted rewards (already computed per game)
-            # Shape: actions is (N,), dr is (N, 1) -> squeeze to (N,)
-            advantages = dr.squeeze()
-            loss = train_on_game_results(
-                model, opt, states, actions, advantages, device, entropy_coeff
-            )
-            train_time = time.time() - train_start
             now = time.time()
             if epoch % intermediate_save_frequency == 0 or (
                 now - last_timed_save >= timed_save_interval
@@ -456,9 +559,13 @@ def train_model(
                     "%H:%M:%S", time.gmtime(estimated_remaining_time)
                 )
 
+                eval_str = f", eval:{eval_time:.2f}s" if eval_time > 0 else ""
+                crisis_str = (
+                    f", train_avg:{total_score / batch_size:.2f}" if crisis_mode else ""
+                )
                 logger.info(
-                    f"{epoch}/{total_epochs} -> avg_score:{avg_score:.2f}, max:{max_score:.2f}, loss:{loss:.4f} | "
-                    f"sim:{sim_time:.2f}s, train:{train_time:.2f}s | "
+                    f"{epoch}/{total_epochs} -> avg_score:{avg_score:.2f}{crisis_str}, max:{max_score:.2f}, loss:{loss:.4f} | "
+                    f"sim:{sim_time:.2f}s, train:{train_time:.2f}s{eval_str} | "
                     f"elapsed:{elapsed_str}, total:{total_str}, remaining:{remaining_str}"
                 )
 
@@ -561,6 +668,11 @@ def main():
         default=1,
         help="Wave number to start each training game at (default: 1). Higher waves have faster asteroids.",
     )
+    parser.add_argument(
+        "--crisis",
+        action="store_true",
+        help="Train on crisis mode scenarios. Evaluates with 100 crisis games per epoch for scoring.",
+    )
     args = parser.parse_args()
     train_model(
         args.width,
@@ -575,6 +687,7 @@ def main():
         death_penalty_frames=args.death_penalty_frames,
         starting_wave=args.starting_wave,
         reset_max=args.reset_max,
+        crisis_mode=args.crisis,
     )
 
 
