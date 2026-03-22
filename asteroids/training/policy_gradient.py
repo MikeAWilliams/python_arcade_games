@@ -389,7 +389,7 @@ def train_model(
     death_penalty_frames=60,
     starting_wave=1,
     reset_max=False,
-    crisis_mode=False,
+    crisis_mix=0.0,
 ):
     # Set up logging
     logger = setup_logging(run_name)
@@ -414,9 +414,12 @@ def train_model(
         logger.info(
             f"Starting wave: {starting_wave} (speed multiplier: {ASTEROID_SPEED_INCREMENT ** (starting_wave - 1):.3f})"
         )
-    if crisis_mode:
+    eval_frequency = 100
+    if crisis_mix > 0:
+        crisis_batch = max(1, int(batch_size * crisis_mix))
+        normal_batch = batch_size - crisis_batch
         logger.info(
-            "Crisis mode: training on crisis scenarios, evaluating with 100 crisis games per epoch"
+            f"Crisis mix: {crisis_mix:.0%} crisis ({crisis_batch} crisis + {normal_batch} normal per batch), eval every {eval_frequency} epochs"
         )
     if death_penalty != 0:
         logger.info(
@@ -452,7 +455,6 @@ def train_model(
         logger.info(f"No checkpoint found at {checkpoint}, starting from scratch")
     total_epochs = 60000
     print_frequency = 500
-    eval_frequency = 100
     intermediate_save_frequency = total_epochs / 10
     timed_save_interval = 30 * 60  # 30 minutes
     last_timed_save = time.time()
@@ -467,19 +469,52 @@ def train_model(
 
             # Run training games in parallel using persistent executor
             sim_start = time.time()
-            states, actions, dr, total_score = run_games_parallel(
-                width,
-                height,
-                model_state_dict,
-                batch_size,
-                num_workers,
-                executor,
-                model_type,
-                death_penalty,
-                death_penalty_frames,
-                starting_wave,
-                crisis_mode,
-            )
+            if crisis_mix > 0:
+                # Mixed training: run crisis and normal games, concatenate
+                s_c, a_c, dr_c, score_c = run_games_parallel(
+                    width,
+                    height,
+                    model_state_dict,
+                    crisis_batch,
+                    num_workers,
+                    executor,
+                    model_type,
+                    death_penalty,
+                    death_penalty_frames,
+                    starting_wave,
+                    crisis_mode=True,
+                )
+                s_n, a_n, dr_n, score_n = run_games_parallel(
+                    width,
+                    height,
+                    model_state_dict,
+                    normal_batch,
+                    num_workers,
+                    executor,
+                    model_type,
+                    death_penalty,
+                    death_penalty_frames,
+                    starting_wave,
+                    crisis_mode=False,
+                )
+                states = np.concatenate([s_c, s_n], axis=0)
+                actions = np.concatenate([a_c, a_n], axis=0)
+                dr = np.concatenate([dr_c, dr_n], axis=0)
+                total_score = score_n  # normal game score for logging
+            else:
+                states, actions, dr, total_score = run_games_parallel(
+                    width,
+                    height,
+                    model_state_dict,
+                    batch_size,
+                    num_workers,
+                    executor,
+                    model_type,
+                    death_penalty,
+                    death_penalty_frames,
+                    starting_wave,
+                    crisis_mode=False,
+                )
             sim_time = time.time() - sim_start
 
             # Training computation
@@ -494,12 +529,14 @@ def train_model(
 
             # Evaluation
             eval_time = 0
-            avg_score = total_score / batch_size
-            if crisis_mode and epoch % eval_frequency == 0:
+            train_avg = total_score / (normal_batch if crisis_mix > 0 else batch_size)
+            avg_score = train_avg
+            eval_avg = None
+            if crisis_mix > 0 and epoch % eval_frequency == 0:
                 # Run 100 eval games with post-training model for scoring
                 eval_model_state = {k: v.cpu() for k, v in model.state_dict().items()}
                 eval_start = time.time()
-                avg_score = run_eval_parallel(
+                eval_avg = run_eval_parallel(
                     width,
                     height,
                     eval_model_state,
@@ -511,6 +548,7 @@ def train_model(
                     crisis_mode=False,
                 )
                 eval_time = time.time() - eval_start
+                avg_score = eval_avg
 
             if avg_score > max_score:
                 max_score = avg_score
@@ -560,11 +598,15 @@ def train_model(
                 )
 
                 eval_str = f", eval:{eval_time:.2f}s" if eval_time > 0 else ""
-                crisis_str = (
-                    f", train_avg:{total_score / batch_size:.2f}" if crisis_mode else ""
-                )
+                if crisis_mix > 0:
+                    eval_part = (
+                        f", eval_avg:{eval_avg:.2f}" if eval_avg is not None else ""
+                    )
+                    score_str = f"train_avg:{train_avg:.2f}{eval_part}"
+                else:
+                    score_str = f"avg_score:{avg_score:.2f}"
                 logger.info(
-                    f"{epoch}/{total_epochs} -> avg_score:{avg_score:.2f}{crisis_str}, max:{max_score:.2f}, loss:{loss:.4f} | "
+                    f"{epoch}/{total_epochs} -> {score_str}, max:{max_score:.2f}, loss:{loss:.4f} | "
                     f"sim:{sim_time:.2f}s, train:{train_time:.2f}s{eval_str} | "
                     f"elapsed:{elapsed_str}, total:{total_str}, remaining:{remaining_str}"
                 )
@@ -669,9 +711,10 @@ def main():
         help="Wave number to start each training game at (default: 1). Higher waves have faster asteroids.",
     )
     parser.add_argument(
-        "--crisis",
-        action="store_true",
-        help="Train on crisis mode scenarios. Evaluates with 100 crisis games per epoch for scoring.",
+        "--crisis-mix",
+        type=float,
+        default=0.0,
+        help="Fraction of training batch to run as crisis games (e.g. 0.5 = half crisis, half normal). Eval on normal games every 100 epochs.",
     )
     args = parser.parse_args()
     train_model(
@@ -687,7 +730,7 @@ def main():
         death_penalty_frames=args.death_penalty_frames,
         starting_wave=args.starting_wave,
         reset_max=args.reset_max,
-        crisis_mode=args.crisis,
+        crisis_mix=args.crisis_mix,
     )
 
 

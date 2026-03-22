@@ -124,8 +124,8 @@ When using the `--record <basename>` option, headless benchmarking creates:
 ```bash
 python training/policy_gradient.py --batch-size 32 --workers 8
 
-# Crisis mode training (dodge scenarios, eval on normal games)
-python training/policy_gradient.py --crisis --model-type polar2 --checkpoint nn_weights/model.pth --run-name my_crisis_run
+# Mixed crisis training (10% crisis dodge scenarios + 90% normal games)
+python training/policy_gradient.py --crisis-mix 0.1 --model-type polar2 --checkpoint nn_weights/model.pth --run-name my_crisis_run
 ```
 
 **Train with Supervised Learning (Cross-Entropy):**
@@ -202,7 +202,8 @@ All artifacts saved to `nn_checkpoints/`:
 | `polar2_pg_ent005_dp01` | polar2 | `polar2_pg_ent005_dp01_policy_gradient.log` | Best 163, avg ~118 (100-game) | Resumed from `polar2_pg_ent005_best.pth` (159.05) with entropy=0.005 and reduced death penalty (-0.1 over 60 frames). Two new batch bests (160, 163) but 100-game benchmark ~118, similar to ent005. Some subtle dodging observed visually but not enough to move the needle. |
 | `polar2_pg_wave5` | polar2 | `polar2_pg_wave5_policy_gradient.log` | Best batch 83, **avg ~131 (1000-game)** | Curriculum training: games start at wave 5 (speed multiplier 1.46x). Resumed from `polar2_pg_ent005_best.pth` with entropy=0.005, death penalty (-0.1 over 60 frames). Two runs totaling ~52.5k iters (~7.5 hours): first 37.5k iters, then continued from checkpoint 36k for another 15k. 1000-game wave-1 benchmarks: avg 128 at 12k, **avg 131 at 18k** (peak), avg 128 at 24k (regressed). Entropy causes noisy action selection — rapid accel/decel and turn flickering observed visually. |
 | `polar2_pg_wave5_exploit` | polar2 | `polar2_pg_wave5_exploit_policy_gradient.log` | Best batch 96, **avg ~130 (1000-game)** | Resumed from `polar2_pg_wave5_checkpoint_18000.pth` (131 avg) with entropy=0, death penalty (-0.1 over 60 frames), wave 5 curriculum. ~39.5k iters (~6.3 hours). No score improvement but eliminated noisy action flickering — no more useless accel/decel and turn toggling. Cleaner policy, same results. |
-| `polar2_crisis` | polar2 | `polar2_crisis_policy_gradient.log` | **avg ~145.5 (1000-game)** | Crisis mode training: small-asteroid dodge scenarios (1–5 asteroids, timed to arrive before player can turn to face them). Resumed from `polar2_pg_wave5_exploit_best.pth` (130 avg). Eval every 100 epochs on normal (non-crisis) games. Two runs: first run used crisis eval (wrong metric), second run fixed to normal-game eval. Best eval 151.21 at iter 1300. 1000-game benchmark: **145.5 avg**. Significant improvement over prior best (130→145.5) — crisis training successfully taught dodging skills that transfer to normal gameplay. |
+| `polar2_crisis` | polar2 | `polar2_crisis_policy_gradient.log` | **avg ~145.5 (1000-game)** | **100% crisis training — catastrophic forgetting.** Small-asteroid dodge scenarios (1–5 asteroids, timed to arrive before player can turn to face them). Resumed from `polar2_pg_wave5_exploit_best.pth` (130 avg). Best eval 151.21 at iter 1300 then steady collapse: 102→53→17→5 by iter 5500. Model became terrified of asteroids — learned to run instead of shoot. Crisis-only training overwrites normal gameplay policy. Best checkpoint (iter 1300) benchmarked at 145.5 avg over 1000 games, but training must be stopped early or it destroys the model. Led to crisis-mix approach. |
+| `polar2_crisis_mix` | polar2 | `polar2_crisis_mix_policy_gradient.log` | **In progress** | Mixed crisis training: 10% crisis + 90% normal games per batch (3 crisis + 29 normal). Resumed from `polar2_pg_wave5_exploit_best.pth` (130 avg). Fixes catastrophic forgetting — normal games maintain shooting behavior while crisis games teach dodging. Eval every 100 epochs on normal games. Early results promising: new best 157.51 by iter 28. |
 
 ### Utilities
 
