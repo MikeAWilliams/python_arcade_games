@@ -194,11 +194,20 @@ def run_games_batch_worker(args):
         # Note: probs no longer needed for REINFORCE
         rewards = np.diff(input_method.scores, prepend=0)
 
-        # Add small survival bonus per frame (0.001 per frame)
+        # Skip crisis games where no wave was cleared — zero rewards would
+        # produce pure noise after reward normalization
+        if crisis_mode and np.sum(rewards) == 0:
+            continue
+
+        # Add small survival bonus for non-crisis games only (0.001 per frame)
         # Heuristic AI: ~149s * 60fps = ~8960 frames → ~8.96 total bonus
         # Max score: ~236, so survival is ~3.8% of max score (keeps score primary)
-        survival_bonus = 0.001
-        rewards = rewards + survival_bonus
+        # Crisis games skip this: failed waves have all-zero rewards, and adding
+        # a flat bonus would create noise that normalization amplifies into
+        # meaningless gradients.
+        if not crisis_mode:
+            survival_bonus = 0.001
+            rewards = rewards + survival_bonus
 
         # Death penalty: penalize last N frames before death with ramping penalty
         if death_penalty != 0 and death_penalty_frames > 0:
@@ -289,6 +298,10 @@ def run_games_parallel(
             all_actions.append(result["actions"])
             all_discounted_rewards.append(result["discounted_rewards"])
             total_score += result["score"]
+
+    # All games may have been filtered (e.g. crisis games with no wave clears)
+    if len(all_states) == 0:
+        return None, None, None, 0
 
     # Concatenate all games into single batches
     states_batch = np.concatenate(all_states, axis=0)
@@ -473,6 +486,9 @@ def train_model(
 
             # Run training games in parallel using persistent executor
             sim_start = time.time()
+            s_n = a_n = dr_n = None
+            s_c = a_c = dr_c = None
+            score_c = 0
             if crisis_mix > 0:
                 # Mixed training: run crisis and normal games separately
                 s_c, a_c, dr_c, score_c = run_games_parallel(
@@ -488,20 +504,23 @@ def train_model(
                     starting_wave,
                     crisis_mode=True,
                 )
-                s_n, a_n, dr_n, score_n = run_games_parallel(
-                    width,
-                    height,
-                    model_state_dict,
-                    normal_batch,
-                    num_workers,
-                    executor,
-                    model_type,
-                    death_penalty,
-                    death_penalty_frames,
-                    starting_wave,
-                    crisis_mode=False,
-                )
-                total_score = score_n
+                if normal_batch > 0:
+                    s_n, a_n, dr_n, score_n = run_games_parallel(
+                        width,
+                        height,
+                        model_state_dict,
+                        normal_batch,
+                        num_workers,
+                        executor,
+                        model_type,
+                        death_penalty,
+                        death_penalty_frames,
+                        starting_wave,
+                        crisis_mode=False,
+                    )
+                    total_score = score_n
+                else:
+                    total_score = score_c
             else:
                 s_n, a_n, dr_n, total_score = run_games_parallel(
                     width,
@@ -521,21 +540,38 @@ def train_model(
             # Training: separate gradient updates so crisis signal isn't
             # drowned out by the much larger normal game frame count
             train_start = time.time()
-            adv_n = dr_n.squeeze()
-            loss = train_on_game_results(
-                model, opt, s_n, a_n, adv_n, device, entropy_coeff
-            )
-            if crisis_mix > 0:
+            loss = None
+            if s_n is not None:
+                adv_n = dr_n.squeeze()
+                loss = train_on_game_results(
+                    model, opt, s_n, a_n, adv_n, device, entropy_coeff
+                )
+            if crisis_mix > 0 and s_c is not None:
                 adv_c = dr_c.squeeze()
                 crisis_loss = train_on_game_results(
                     model, opt, s_c, a_c, adv_c, device, entropy_coeff
                 )
+                if loss is None:
+                    loss = crisis_loss
             train_time = time.time() - train_start
 
             # Evaluation (100-game eval for stable max tracking)
             eval_time = 0
-            train_avg = total_score / (normal_batch if crisis_mix > 0 else batch_size)
+            if crisis_mix > 0 and normal_batch > 0:
+                train_avg = total_score / normal_batch
+            elif crisis_mix > 0:
+                train_avg = total_score / crisis_batch
+            else:
+                train_avg = total_score / batch_size
             eval_avg = None
+
+            # No training data this epoch (e.g. all crisis games failed to clear)
+            if loss is None:
+                if epoch % print_frequency == 0:
+                    logger.info(
+                        f"{epoch}/{total_epochs} -> no training data (all crisis games filtered)"
+                    )
+                continue
 
             # Track best training score separately
             if train_avg > max_train_score:
