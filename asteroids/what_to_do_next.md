@@ -4,6 +4,26 @@
 
 Best model: `polar2_crisis_best.pth` — **146.4 avg over 1000 games** (all-time best). Produced by 100% crisis training for ~1300 iterations from `polar2_pg_wave5_exploit_best.pth` (130 avg). Already beats the heuristic AI (~139 avg).
 
+## Reward normalization creates a "charge" incentive
+
+The `discounted_rewards()` normalization (mean-subtract then divide by std) makes frames between kills have negative advantage. The model learns to minimize time between kills → charge at asteroids. This may not be optimal — keeping distance and shooting from range could score higher by avoiding deaths from close-range splits.
+
+Crisis training collapses because it directly conflicts with this: crisis says "stay away from asteroids" while normalization says "get close fast." These are contradictory gradient signals on the same weights.
+
+**Algorithm: clamp-to-zero normalization.** Standard normalization first (subtract mean, divide by std), then clamp negatives to zero: `ret = np.maximum(ret, 0)`. This keeps variance reduction from the normalization step but zeroes out all negative advantages. Kill frames get positive spikes, frames between kills get exactly zero — no gradient, no "stop doing that" signal. Visualized in `tools/visualize_reward_shaping.py` (bottom panel).
+
+Note: an earlier idea (subtract min instead of clamping) didn't work — only one frame becomes zero and everything else shifts up by that amount, so valleys between kills still get small positive rewards instead of true zero.
+
+**Optimal play style hypothesis:** Move away from asteroids, maintain maximum mean distance, shoot from range. Current normalization actively discourages this.
+
+**Open question:** The current best model has thousands of iterations of charging behavior baked into its weights. Resuming from it with clamped normalization might not undo the charge — the model may need to be trained from scratch (or from an early checkpoint before charging was learned) to develop a distance-keeping play style.
+
+## Crisis Training — All Mix Ratios Collapse
+
+Tested with reward noise fix (skip zero-reward crisis games, no survival bonus for crisis): 100%, 97%, 90%, 50%, 10% crisis mix all show the same pattern — initial eval gain of +15-20 points in first 200-400 iterations, then steady collapse. The initial gain is real dodging skill transferring to normal gameplay. Then the crisis gradient overwhelms the shooting policy.
+
+Burst + recovery (below) may still work but the normalization conflict is likely the deeper problem.
+
 ## Crisis Training Strategy: Burst + Recovery
 
 Pure crisis training (100%) made massive improvements fast — best checkpoint at iter 1300 (146.4 avg) before catastrophic forgetting set in around iter 5000. The model didn't collapse until well after 1300 iterations.

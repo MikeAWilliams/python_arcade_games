@@ -25,6 +25,19 @@ def discounted_returns(rewards, gamma=0.99, normalize=True):
     return ret
 
 
+def discounted_returns_nonneg(rewards, gamma=0.99):
+    """Normalize then clamp negatives to zero — no frame gets negative advantage."""
+    eps = 0.0001
+    ret = np.zeros(len(rewards))
+    s = 0
+    for i in range(len(rewards) - 1, -1, -1):
+        s = rewards[i] + gamma * s
+        ret[i] = s
+    ret = (ret - np.mean(ret)) / (np.std(ret) + eps)
+    ret = np.maximum(ret, 0)
+    return ret
+
+
 def main():
     # 27 asteroids killed spread over ~5000 frames, then death
     # Score is +1 per asteroid regardless of size
@@ -56,8 +69,9 @@ def main():
 
     dr_no = discounted_returns(rewards_no_penalty)
     dr_yes = discounted_returns(rewards_with_penalty)
+    dr_nonneg = discounted_returns_nonneg(rewards_no_penalty)
 
-    fig, axes = plt.subplots(4, 1, figsize=(14, 10), sharex=False)
+    fig, axes = plt.subplots(5, 1, figsize=(14, 12), sharex=False)
 
     # 1: Raw kill rewards
     axes[0].stem(
@@ -90,7 +104,7 @@ def main():
     axes[1].set_title("Last 200 frames: raw reward with death penalty ramp")
     axes[1].legend()
 
-    # 3: Discounted returns WITHOUT penalty
+    # 3: Discounted returns WITHOUT penalty (standard normalization)
     axes[2].plot(dr_no, "C0-", linewidth=0.7)
     axes[2].axhline(0, color="gray", linestyle="-", alpha=0.3)
     axes[2].set_ylabel("Advantage")
@@ -102,8 +116,17 @@ def main():
     axes[3].axhline(0, color="gray", linestyle="-", alpha=0.3)
     axes[3].set_ylabel("Advantage")
     axes[3].set_title("Discounted returns WITH death penalty (normalized)")
-    axes[3].set_xlabel("Frame")
     axes[3].set_xlim(0, n_frames)
+
+    # 5: Non-negative normalization (shift minimum to zero)
+    axes[4].plot(dr_nonneg, "C2-", linewidth=0.7)
+    axes[4].axhline(0, color="gray", linestyle="-", alpha=0.3)
+    axes[4].set_ylabel("Advantage")
+    axes[4].set_title(
+        "Discounted returns — non-negative (normalize then clamp negatives to zero)"
+    )
+    axes[4].set_xlabel("Frame")
+    axes[4].set_xlim(0, n_frames)
 
     plt.tight_layout()
     output_path = "reward_shaping_comparison.png"
