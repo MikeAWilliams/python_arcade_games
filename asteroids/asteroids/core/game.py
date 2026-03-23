@@ -155,7 +155,7 @@ def generate_crisis_asteroids(
 
     Each asteroid is placed at a distance such that it arrives at the player
     in exactly (num_asteroids * 90 degrees) / PLAYER_TURN_RATE seconds.
-    For 1 asteroid, placement excludes the 90-degree forward arc.
+    For 1 asteroid, placement excludes the 180-degree forward arc.
     For 2+, placement is at random angles.
     Trajectories are offset to graze the player, not aimed dead center.
     """
@@ -167,8 +167,8 @@ def generate_crisis_asteroids(
     for i in range(num_asteroids):
         # Choose placement angle
         if num_asteroids == 1:
-            # Exclude ±45 degrees from player heading
-            excluded_half = math.pi / 4
+            # Exclude ±90 degrees from player heading
+            excluded_half = math.pi / 2
             offset = random.uniform(excluded_half, 2 * math.pi - excluded_half)
             placement_angle = player_angle + offset
         else:
