@@ -431,6 +431,7 @@ def train_model(
     model = params.model
     opt = torch.optim.Adam(model.parameters(), lr=0.0001)
     max_score = 0
+    max_train_score = 0
 
     # Load from checkpoint if provided and exists
     if checkpoint and os.path.exists(checkpoint):
@@ -442,11 +443,14 @@ def train_model(
             opt.load_state_dict(ckpt["optimizer_state_dict"])
         if "max_score" in ckpt:
             max_score = float(ckpt["max_score"])
+        if "max_train_score" in ckpt:
+            max_train_score = float(ckpt["max_train_score"])
         if reset_max:
             logger.info(
                 f"Resumed from checkpoint: {checkpoint} (resetting max_score from {max_score:.2f} to 0 via --reset-max)"
             )
             max_score = 0
+            max_train_score = 0
         else:
             logger.info(
                 f"Resumed from checkpoint: {checkpoint} (max_score: {max_score:.2f})"
@@ -470,7 +474,7 @@ def train_model(
             # Run training games in parallel using persistent executor
             sim_start = time.time()
             if crisis_mix > 0:
-                # Mixed training: run crisis and normal games, concatenate
+                # Mixed training: run crisis and normal games separately
                 s_c, a_c, dr_c, score_c = run_games_parallel(
                     width,
                     height,
@@ -497,12 +501,9 @@ def train_model(
                     starting_wave,
                     crisis_mode=False,
                 )
-                states = np.concatenate([s_c, s_n], axis=0)
-                actions = np.concatenate([a_c, a_n], axis=0)
-                dr = np.concatenate([dr_c, dr_n], axis=0)
-                total_score = score_n  # normal game score for logging
+                total_score = score_n
             else:
-                states, actions, dr, total_score = run_games_parallel(
+                s_n, a_n, dr_n, total_score = run_games_parallel(
                     width,
                     height,
                     model_state_dict,
@@ -517,23 +518,45 @@ def train_model(
                 )
             sim_time = time.time() - sim_start
 
-            # Training computation
+            # Training: separate gradient updates so crisis signal isn't
+            # drowned out by the much larger normal game frame count
             train_start = time.time()
-            # Advantages are the discounted rewards (already computed per game)
-            # Shape: actions is (N,), dr is (N, 1) -> squeeze to (N,)
-            advantages = dr.squeeze()
+            adv_n = dr_n.squeeze()
             loss = train_on_game_results(
-                model, opt, states, actions, advantages, device, entropy_coeff
+                model, opt, s_n, a_n, adv_n, device, entropy_coeff
             )
+            if crisis_mix > 0:
+                adv_c = dr_c.squeeze()
+                crisis_loss = train_on_game_results(
+                    model, opt, s_c, a_c, adv_c, device, entropy_coeff
+                )
             train_time = time.time() - train_start
 
-            # Evaluation
+            # Evaluation (100-game eval for stable max tracking)
             eval_time = 0
             train_avg = total_score / (normal_batch if crisis_mix > 0 else batch_size)
-            avg_score = train_avg
             eval_avg = None
-            if crisis_mix > 0 and epoch % eval_frequency == 0:
-                # Run 100 eval games with post-training model for scoring
+
+            # Track best training score separately
+            if train_avg > max_train_score:
+                max_train_score = train_avg
+                best_train_path = os.path.join(
+                    "nn_checkpoints", f"{run_name}_best_training.pth"
+                )
+                torch.save(
+                    {
+                        "epoch": epoch,
+                        "model_state_dict": model.state_dict(),
+                        "optimizer_state_dict": opt.state_dict(),
+                        "max_score": float(max_score),
+                        "max_train_score": float(max_train_score),
+                    },
+                    best_train_path,
+                )
+                logger.info(
+                    f"{epoch}/{total_epochs} -> NEW BEST train_avg:{train_avg:.2f} | sim:{sim_time:.2f}s"
+                )
+            if epoch % eval_frequency == 0:
                 eval_model_state = {k: v.cpu() for k, v in model.state_dict().items()}
                 eval_start = time.time()
                 eval_avg = run_eval_parallel(
@@ -548,23 +571,22 @@ def train_model(
                     crisis_mode=False,
                 )
                 eval_time = time.time() - eval_start
-                avg_score = eval_avg
 
-            if avg_score > max_score:
-                max_score = avg_score
-                best_path = os.path.join("nn_checkpoints", f"{run_name}_best.pth")
-                torch.save(
-                    {
-                        "epoch": epoch,
-                        "model_state_dict": model.state_dict(),
-                        "optimizer_state_dict": opt.state_dict(),
-                        "max_score": float(max_score),
-                    },
-                    best_path,
-                )
-                logger.info(
-                    f"{epoch}/{total_epochs} -> NEW BEST avg_score:{avg_score:.2f} | sim:{sim_time:.2f}s"
-                )
+                if eval_avg > max_score:
+                    max_score = eval_avg
+                    best_path = os.path.join("nn_checkpoints", f"{run_name}_best.pth")
+                    torch.save(
+                        {
+                            "epoch": epoch,
+                            "model_state_dict": model.state_dict(),
+                            "optimizer_state_dict": opt.state_dict(),
+                            "max_score": float(max_score),
+                        },
+                        best_path,
+                    )
+                    logger.info(
+                        f"{epoch}/{total_epochs} -> NEW BEST eval_avg:{eval_avg:.2f} | sim:{sim_time:.2f}s"
+                    )
 
             now = time.time()
             if epoch % intermediate_save_frequency == 0 or (
@@ -598,15 +620,9 @@ def train_model(
                 )
 
                 eval_str = f", eval:{eval_time:.2f}s" if eval_time > 0 else ""
-                if crisis_mix > 0:
-                    eval_part = (
-                        f", eval_avg:{eval_avg:.2f}" if eval_avg is not None else ""
-                    )
-                    score_str = f"train_avg:{train_avg:.2f}{eval_part}"
-                else:
-                    score_str = f"avg_score:{avg_score:.2f}"
+                eval_part = f", eval_avg:{eval_avg:.2f}" if eval_avg is not None else ""
                 logger.info(
-                    f"{epoch}/{total_epochs} -> {score_str}, max:{max_score:.2f}, loss:{loss:.4f} | "
+                    f"{epoch}/{total_epochs} -> train_avg:{train_avg:.2f}{eval_part}, max:{max_score:.2f}, loss:{loss:.4f} | "
                     f"sim:{sim_time:.2f}s, train:{train_time:.2f}s{eval_str} | "
                     f"elapsed:{elapsed_str}, total:{total_str}, remaining:{remaining_str}"
                 )

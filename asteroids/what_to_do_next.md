@@ -1,12 +1,26 @@
 # What To Do Next
 
-Options and ideas for improving the NN AI beyond its current ~118 avg (100-game benchmark) to beat the heuristic AI (~139 avg).
-
 ## Current status
 
-Best run: `polar2_pg_ent005` (best batch avg 159, 100-game benchmark avg ~118). The "best" metric tracks peak batch-of-32 averages across thousands of batches, so it overstates true performance due to statistical variance. The 100-game benchmark is the real measure.
+Best model: `polar2_crisis_best.pth` — **146.4 avg over 1000 games** (all-time best). Produced by 100% crisis training for ~1300 iterations from `polar2_pg_wave5_exploit_best.pth` (130 avg). Already beats the heuristic AI (~139 avg).
 
-Gap to close: ~21 points vs heuristic (118 vs 139).
+## Crisis Training Strategy: Burst + Recovery
+
+Pure crisis training (100%) made massive improvements fast — best checkpoint at iter 1300 (146.4 avg) before catastrophic forgetting set in around iter 5000. The model didn't collapse until well after 1300 iterations.
+
+**Idea: alternating burst training.**
+
+1. Run 100% crisis training for 100–300 iterations (short burst, well within the safe window before collapse)
+2. Switch to regular (non-crisis) training for some iterations to remind the model how to shoot and play normally
+3. Repeat — each crisis burst teaches more dodging, each normal phase prevents forgetting
+
+This avoids the frame-count dilution problem that killed mixed training (crisis games are ~100 frames vs ~5000 for normal games, so crisis signal gets drowned out in a combined batch). Separate bursts give each signal full gradient strength.
+
+**Open questions:**
+- How many normal-training iterations are needed to "recover" shooting behavior?
+- Does the model retain dodging skills through the normal training phase, or does it forget those too?
+- Could we detect the onset of collapse (e.g., eval score dropping) and auto-switch?
+- What's the right burst length? 100 iters is conservative, 300 might extract more dodging skill per burst.
 
 ## Option 1: Death penalty reward shaping (DONE — limited effect)
 
