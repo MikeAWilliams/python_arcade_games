@@ -26,6 +26,28 @@ pip install arcade
 python game.py
 ```
 
+## Tools
+
+### `explore_tile.py`
+
+Browses the tileset PNG and lets you pick out individual tiles.
+
+- **Left/Right** — page through column groups of the sheet (skips the separator column)
+- **Up/Down** — page through rows
+- **Click** a tile — copies its source-pixel coordinates as `(x, y, w, h)` to the clipboard, ready to paste into `sprite_viewer.py`
+
+The status bar shows the current view offset, the hovered tile's `(col, row)`, and the last-copied coords.
+
+Clipboard support requires `xclip` (or `wl-copy`/`xsel`):
+
+```bash
+sudo apt install xclip
+```
+
+### `sprite_viewer.py`
+
+Visually verifies sprites you've extracted. Edit the `SPRITES` dict at the top of the file with `name: (x, y, w, h)` entries (paste from `explore_tile.py`). Run it and each sprite is drawn scaled with its name and coords.
+
 ## Deactivate venv
 
 ```bash
