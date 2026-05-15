@@ -1,5 +1,19 @@
+import shutil
+import subprocess
+
 import arcade
 from pathlib import Path
+
+
+def copy_to_clipboard(text: str) -> bool:
+    for cmd in (["wl-copy"], ["xclip", "-selection", "clipboard"], ["xsel", "-b", "-i"]):
+        if shutil.which(cmd[0]):
+            try:
+                subprocess.run(cmd, input=text.encode(), check=True)
+                return True
+            except subprocess.SubprocessError:
+                continue
+    return False
 
 WINDOW_TITLE = "Tile Explorer"
 
@@ -35,7 +49,7 @@ def find_sheet() -> str | None:
 class TileExplorer(arcade.Window):
     def __init__(self, sheet_path: str):
         super().__init__(WINDOW_WIDTH, WINDOW_HEIGHT, WINDOW_TITLE)
-        arcade.set_background_color(arcade.color.WHITE)
+        arcade.set_background_color(arcade.color.BLACK)
         self.sheet_path = sheet_path
         self.sheet: arcade.SpriteSheet | None = None
         self.col_offset = 0
@@ -45,6 +59,7 @@ class TileExplorer(arcade.Window):
         self.sprites: arcade.SpriteList = arcade.SpriteList()
         self.hover_col = -1
         self.hover_row = -1
+        self.last_copied = ""
 
     def setup(self):
         self.sheet = arcade.load_spritesheet(self.sheet_path)
@@ -102,6 +117,8 @@ class TileExplorer(arcade.Window):
             if sc < self.sheet_cols and sr < self.sheet_rows:
                 tile_idx = sr * self.sheet_cols + sc
                 status += f"   |   tile {tile_idx}  (col={sc}, row={sr})"
+        if self.last_copied:
+            status += f"   |   copied: {self.last_copied}"
         arcade.draw_text(status, 6, 6, arcade.color.WHITE, 12)
 
     def on_key_press(self, key, modifiers):
@@ -125,6 +142,25 @@ class TileExplorer(arcade.Window):
     def on_mouse_motion(self, x, y, dx, dy):
         self.hover_col = int(x // CELL)
         self.hover_row = int((WINDOW_HEIGHT - y) // CELL)
+
+    def on_mouse_press(self, x, y, button, modifiers):
+        if button != arcade.MOUSE_BUTTON_LEFT:
+            return
+        if not (0 <= self.hover_col < COLS and 0 <= self.hover_row < ROWS):
+            return
+        sc = self.col_offset + self.hover_col
+        sr = self.row_offset + self.hover_row
+        if sc >= self.sheet_cols or sr >= self.sheet_rows:
+            return
+        px = SHEET_GAP + sc * SHEET_STRIDE
+        py = SHEET_GAP + sr * SHEET_STRIDE
+        coords = f"({px}, {py}, {TILE_SIZE}, {TILE_SIZE})"
+        if copy_to_clipboard(coords):
+            self.last_copied = coords
+            print(f"copied: {coords}")
+        else:
+            self.last_copied = f"{coords}  (no clipboard tool)"
+            print(f"no clipboard tool found (install wl-copy/xclip/xsel): {coords}")
 
 
 def main():
