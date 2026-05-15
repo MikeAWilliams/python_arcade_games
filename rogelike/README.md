@@ -26,6 +26,11 @@ pip install arcade
 python game.py
 ```
 
+## Reading
+
+Basic BSP Dungeon generation https://www.roguebasin.com/index.php/Basic_BSP_Dungeon_generation
+BSP in rust https://bfnightly.bracketproductions.com/chapter_25.html
+
 ## Tools
 
 ### `explore_tile.py`
