@@ -14,6 +14,7 @@ SPRITES: dict[str, tuple[int, int, int, int]] = {
     "first": (1, 1, 12, 12),
     "second": (13, 1, 12, 12),
     "third": (157, 118, 12, 12),
+    "kitty": (157, 183, 12, 12),
 }
 
 DISPLAY_SCALE = 4
