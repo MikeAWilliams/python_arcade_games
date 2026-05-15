@@ -1,20 +1,26 @@
 import arcade
 from pathlib import Path
 
-WINDOW_WIDTH = 800
-WINDOW_HEIGHT = 600
 WINDOW_TITLE = "Tile Explorer"
 
 # Urizen tiles are 12x12 — scale them up so they're visible
 TILE_SIZE = 12
+SHEET_GAP = 1  # padding pixels between tiles in the source sheet
+SHEET_STRIDE = TILE_SIZE + SHEET_GAP
 DISPLAY_SCALE = 4
-CELL = TILE_SIZE * DISPLAY_SCALE   # displayed size of each tile in pixels
-MARGIN = 3
+CELL = TILE_SIZE * DISPLAY_SCALE  # displayed size of each tile in pixels
 STATUS_BAR_H = 28
 
-COLS = (WINDOW_WIDTH + MARGIN) // (CELL + MARGIN)
-ROWS = (WINDOW_HEIGHT - STATUS_BAR_H + MARGIN) // (CELL + MARGIN)
-TILES_PER_PAGE = COLS * ROWS
+# Sheet is organized into column groups this wide, with a 1-column separator
+# between groups. One content group fills the window; separators are skipped.
+COL_GROUP = 25
+ROW_GROUP = 16
+GROUP_STRIDE = COL_GROUP + 1  # 27 content cols + 1 separator
+WINDOW_WIDTH = COL_GROUP * CELL
+WINDOW_HEIGHT = ROW_GROUP * CELL
+
+COLS = WINDOW_WIDTH // CELL
+ROWS = (WINDOW_HEIGHT - STATUS_BAR_H) // CELL
 
 
 def find_sheet() -> str | None:
@@ -29,88 +35,104 @@ def find_sheet() -> str | None:
 class TileExplorer(arcade.Window):
     def __init__(self, sheet_path: str):
         super().__init__(WINDOW_WIDTH, WINDOW_HEIGHT, WINDOW_TITLE)
-        arcade.set_background_color(arcade.color.DARK_SLATE_GRAY)
+        arcade.set_background_color(arcade.color.WHITE)
         self.sheet_path = sheet_path
         self.sheet: arcade.SpriteSheet | None = None
-        self.page = 0
-        self.total_tiles = 0
+        self.col_offset = 0
+        self.row_offset = 0
         self.sheet_cols = 0
+        self.sheet_rows = 0
         self.sprites: arcade.SpriteList = arcade.SpriteList()
-        self.hovered_index = -1
+        self.hover_col = -1
+        self.hover_row = -1
 
     def setup(self):
         self.sheet = arcade.load_spritesheet(self.sheet_path)
         w, h = self.sheet.image.size
-        self.sheet_cols = w // TILE_SIZE
-        sheet_rows = h // TILE_SIZE
-        self.total_tiles = self.sheet_cols * sheet_rows
-        print(f"Loaded: {self.sheet_path}  ({self.sheet_cols}x{sheet_rows} tiles, {self.total_tiles} total)")
-        self.load_page()
+        self.sheet_cols = (w + SHEET_GAP) // SHEET_STRIDE
+        self.sheet_rows = (h + SHEET_GAP) // SHEET_STRIDE
+        print(f"Loaded: {self.sheet_path}  ({self.sheet_cols}x{self.sheet_rows} tiles)")
+        self.load_view()
 
-    def load_page(self):
+    def load_view(self):
         assert self.sheet is not None
         self.sprites = arcade.SpriteList()
-        start = self.page * TILES_PER_PAGE
-        for i in range(TILES_PER_PAGE):
-            tile_idx = start + i
-            if tile_idx >= self.total_tiles:
+        for grid_row in range(ROWS):
+            sheet_row = self.row_offset + grid_row
+            if sheet_row >= self.sheet_rows:
                 break
-            sheet_row = tile_idx // self.sheet_cols
-            sheet_col = tile_idx % self.sheet_cols
-            tex = self.sheet.get_texture(
-                arcade.LBWH(sheet_col * TILE_SIZE, sheet_row * TILE_SIZE, TILE_SIZE, TILE_SIZE)
-            )
-            grid_col = i % COLS
-            grid_row = i // COLS
-            sprite = arcade.Sprite(tex, scale=DISPLAY_SCALE)
-            sprite.left = MARGIN + grid_col * (CELL + MARGIN)
-            sprite.top = WINDOW_HEIGHT - STATUS_BAR_H - MARGIN - grid_row * (CELL + MARGIN)
-            self.sprites.append(sprite)
+            for grid_col in range(COLS):
+                sheet_col = self.col_offset + grid_col
+                if sheet_col >= self.sheet_cols:
+                    break
+                tex = self.sheet.get_texture(
+                    arcade.LBWH(
+                        sheet_col * SHEET_STRIDE + SHEET_GAP,
+                        sheet_row * SHEET_STRIDE + SHEET_GAP,
+                        TILE_SIZE,
+                        TILE_SIZE,
+                    )
+                )
+                sprite = arcade.Sprite(tex, scale=DISPLAY_SCALE)
+                sprite.left = grid_col * CELL
+                sprite.top = WINDOW_HEIGHT - grid_row * CELL
+                self.sprites.append(sprite)
 
     def on_draw(self):
         self.clear()
         self.sprites.draw()
 
-        if 0 <= self.hovered_index < len(self.sprites):
-            s = self.sprites[self.hovered_index]
+        if 0 <= self.hover_col < COLS and 0 <= self.hover_row < ROWS:
+            cx = self.hover_col * CELL + CELL / 2
+            cy = WINDOW_HEIGHT - self.hover_row * CELL - CELL / 2
             arcade.draw_rect_outline(
-                arcade.XYWH(s.center_x, s.center_y, CELL + 2, CELL + 2),
+                arcade.XYWH(cx, cy, CELL, CELL),
                 arcade.color.YELLOW,
                 2,
             )
 
-        total_pages = max(1, (self.total_tiles + TILES_PER_PAGE - 1) // TILES_PER_PAGE)
-        status = f"Page {self.page + 1}/{total_pages}   Left/Right arrows to navigate"
-        if 0 <= self.hovered_index < len(self.sprites):
-            tile_idx = self.page * TILES_PER_PAGE + self.hovered_index
-            sc = tile_idx % self.sheet_cols
-            sr = tile_idx // self.sheet_cols
-            status += f"   |   tile {tile_idx}  (col={sc}, row={sr})"
+        status = (
+            f"cols {self.col_offset}-{self.col_offset + COLS - 1}   "
+            f"row {self.row_offset}+   "
+            f"Left/Right: ±{COL_GROUP} cols   Up/Down: ±{ROWS} rows"
+        )
+        if 0 <= self.hover_col < COLS and 0 <= self.hover_row < ROWS:
+            sc = self.col_offset + self.hover_col
+            sr = self.row_offset + self.hover_row
+            if sc < self.sheet_cols and sr < self.sheet_rows:
+                tile_idx = sr * self.sheet_cols + sc
+                status += f"   |   tile {tile_idx}  (col={sc}, row={sr})"
         arcade.draw_text(status, 6, 6, arcade.color.WHITE, 12)
 
     def on_key_press(self, key, modifiers):
-        total_pages = max(1, (self.total_tiles + TILES_PER_PAGE - 1) // TILES_PER_PAGE)
-        if key == arcade.key.RIGHT and self.page < total_pages - 1:
-            self.page += 1
-            self.load_page()
-        elif key == arcade.key.LEFT and self.page > 0:
-            self.page -= 1
-            self.load_page()
+        if key == arcade.key.RIGHT:
+            if self.col_offset + GROUP_STRIDE < self.sheet_cols:
+                self.col_offset += GROUP_STRIDE
+                self.load_view()
+        elif key == arcade.key.LEFT:
+            if self.col_offset - GROUP_STRIDE >= 0:
+                self.col_offset -= GROUP_STRIDE
+                self.load_view()
+        elif key == arcade.key.DOWN:
+            if self.row_offset + ROWS < self.sheet_rows:
+                self.row_offset += ROWS
+                self.load_view()
+        elif key == arcade.key.UP:
+            if self.row_offset - ROWS >= 0:
+                self.row_offset -= ROWS
+                self.load_view()
 
     def on_mouse_motion(self, x, y, dx, dy):
-        grid_col = x // (CELL + MARGIN)
-        grid_row = (WINDOW_HEIGHT - STATUS_BAR_H - y) // (CELL + MARGIN)
-        if grid_row < 0:
-            self.hovered_index = -1
-            return
-        idx = grid_row * COLS + grid_col
-        self.hovered_index = idx if 0 <= idx < len(self.sprites) else -1
+        self.hover_col = int(x // CELL)
+        self.hover_row = int((WINDOW_HEIGHT - y) // CELL)
 
 
 def main():
     sheet = find_sheet()
     if sheet is None:
-        print("No PNG found in assets/ — download the Urizen tileset and place it there.")
+        print(
+            "No PNG found in assets/ — download the Urizen tileset and place it there."
+        )
         return
     window = TileExplorer(sheet)
     window.setup()
