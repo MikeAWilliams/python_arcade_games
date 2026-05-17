@@ -67,14 +67,14 @@ def recursive_generate_rect(parent):
 
 def set_rect_bnd_1(rect, level):
     print("drawing rect", rect)
-    for i in range(rect.i, rect.w):
+    for i in range(rect.i, rect.i + rect.w + 1):
         level[i][rect.j] = 1
         level[i][rect.h + rect.j] = 1
-    for j in range(rect.j, rect.h):
+    for j in range(rect.j, rect.j + rect.h + 1):
         level[rect.i][j] = 1
         level[rect.w + rect.i][j] = 1
     # top rirght
-    level[rect.w][rect.h] = 1
+    level[rect.i + rect.w][rect.j + rect.h] = 1
 
 
 def recursive_set_rect_bdn_1(rect, level):
