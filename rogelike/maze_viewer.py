@@ -8,8 +8,8 @@ SCREEN_TITLE = "Maze Viewer"
 SCREEN_WIDTH = 3840
 SCREEN_HEIGHT = 2160
 RAW_TILE_SIZE = 12
-MAZE_WIDTH = 640 * 2
-MAZE_HEIGHT = 340 * 2
+MAZE_WIDTH = 640 * 1
+MAZE_HEIGHT = 340 * 1
 DISPLAY_SCALE = min(
     SCREEN_WIDTH / (MAZE_WIDTH * RAW_TILE_SIZE),
     SCREEN_HEIGHT / (MAZE_HEIGHT * RAW_TILE_SIZE),
@@ -54,13 +54,10 @@ def recursive_generate_rect(parent):
 
     dim = random.choice(eligible_divide)
     if dim == "w":
-        print("cut w")
         cut = random.randint(MIN_DIM, parent.w - MIN_DIM - 1)
-        print("cut", cut)
         parent.l = Rect(parent.i, parent.j, cut, parent.h)
         parent.r = Rect(parent.i + cut + 1, parent.j, parent.w - cut - 1, parent.h)
     else:
-        print("cut h")
         cut = random.randint(MIN_DIM, parent.h - MIN_DIM - 1)
         parent.l = Rect(parent.i, parent.j, parent.w, cut)
         parent.r = Rect(parent.i, parent.j + cut + 1, parent.w, parent.h - cut - 1)
@@ -71,19 +68,18 @@ def recursive_generate_rect(parent):
         recursive_generate_rect(parent.r)
 
 
-def set_rect_bnd_1(rect, level):
-    print("drawing rect", rect)
-    for i in range(rect.i, rect.i + rect.w + 1):
-        level[i][rect.j] = 1
-        level[i][rect.h + rect.j] = 1
-    for j in range(rect.j, rect.j + rect.h + 1):
-        level[rect.i][j] = 1
-        level[rect.w + rect.i][j] = 1
-    # top rirght
-    level[rect.i + rect.w][rect.j + rect.h] = 1
-
-
+# for debug, set level 0 before you start and use this to draw the rectangles
 def recursive_set_rect_bdn_1(rect, level):
+    def set_rect_bnd_1(rect, level):
+        for i in range(rect.i, rect.i + rect.w + 1):
+            level[i][rect.j] = 1
+            level[i][rect.h + rect.j] = 1
+        for j in range(rect.j, rect.j + rect.h + 1):
+            level[rect.i][j] = 1
+            level[rect.w + rect.i][j] = 1
+        # top rirght
+        level[rect.i + rect.w][rect.j + rect.h] = 1
+
     set_rect_bnd_1(rect, level)
     if rect.l:
         recursive_set_rect_bdn_1(rect.l, level)
