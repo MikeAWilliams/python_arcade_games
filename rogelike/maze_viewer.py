@@ -38,7 +38,8 @@ class Rect:
 
 
 def recursive_generate_rect(parent):
-    MIN_DIM = 5
+    MIN_DIM = 10
+    TARGET_AREA = 1000
 
     eligible_divide = []
     if parent.w >= MIN_DIM * 2 + 1:
@@ -61,8 +62,10 @@ def recursive_generate_rect(parent):
         parent.l = Rect(parent.i, parent.j, parent.w, cut)
         parent.r = Rect(parent.i, parent.j + cut + 1, parent.w, parent.h - cut - 1)
 
-    recursive_generate_rect(parent.l)
-    recursive_generate_rect(parent.r)
+    if (parent.l.w * parent.l.h - TARGET_AREA) > 0:
+        recursive_generate_rect(parent.l)
+    if (parent.r.w * parent.r.h - TARGET_AREA) > 0:
+        recursive_generate_rect(parent.r)
 
 
 def set_rect_bnd_1(rect, level):
