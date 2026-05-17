@@ -39,6 +39,7 @@ class Rect:
 
 def recursive_generate_rect(parent):
     MIN_DIM = 5
+
     eligible_divide = []
     if parent.w >= MIN_DIM * 2 + 1:
         eligible_divide.append("w")
@@ -60,6 +61,9 @@ def recursive_generate_rect(parent):
         parent.l = Rect(parent.i, parent.j, parent.w, cut)
         parent.r = Rect(parent.i, parent.j + cut + 1, parent.w, parent.h - cut - 1)
 
+    recursive_generate_rect(parent.l)
+    recursive_generate_rect(parent.r)
+
 
 def set_rect_bnd_1(rect, level):
     print("drawing rect", rect)
@@ -73,6 +77,14 @@ def set_rect_bnd_1(rect, level):
     level[rect.w][rect.h] = 1
 
 
+def recursive_set_rect_bdn_1(rect, level):
+    set_rect_bnd_1(rect, level)
+    if rect.l:
+        recursive_set_rect_bdn_1(rect.l, level)
+    if rect.r:
+        recursive_set_rect_bdn_1(rect.r, level)
+
+
 # BSP room generation
 def generate_level(width, height, seed=42):
     random.seed(seed)
@@ -84,9 +96,7 @@ def generate_level(width, height, seed=42):
     level = [[0 for _ in range(height)] for _ in range(width)]
 
     # draw each rectangle (which is wrong, but I want to see it)
-    set_rect_bnd_1(root, level)
-    set_rect_bnd_1(root.l, level)
-    set_rect_bnd_1(root.r, level)
+    recursive_set_rect_bdn_1(root, level)
 
     return level
 
