@@ -40,9 +40,9 @@ class Rect:
 def recursive_generate_rect(parent):
     MIN_DIM = 5
     eligible_divide = []
-    if parent.w > MIN_DIM * 2:
+    if parent.w >= MIN_DIM * 2 + 1:
         eligible_divide.append("w")
-    if parent.h > MIN_DIM * 2:
+    if parent.h >= MIN_DIM * 2 + 1:
         eligible_divide.append("h")
     if len(eligible_divide) == 0:
         return
@@ -50,23 +50,34 @@ def recursive_generate_rect(parent):
     dim = random.choice(eligible_divide)
     if dim == "w":
         print("cut w")
-        cut = random.randint(MIN_DIM, parent.w - MIN_DIM)
+        cut = random.randint(MIN_DIM, parent.w - MIN_DIM - 1)
         parent.l = Rect(parent.i, parent.j, cut, parent.h)
-        parent.r = Rect(parent.i + cut, parent.j, parent.w - cut, parent.h)
+        parent.r = Rect(parent.i + cut + 1, parent.j, parent.w - cut - 1, parent.h)
     else:
         print("cut h")
-        cut = random.randint(MIN_DIM, parent.h - MIN_DIM)
+        cut = random.randint(MIN_DIM, parent.h - MIN_DIM - 1)
         parent.l = Rect(parent.i, parent.j, parent.w, cut)
-        parent.r = Rect(parent.i, parent.j + cut, parent.w, parent.h - cut)
+        parent.r = Rect(parent.i, parent.j + cut + 1, parent.w, parent.h - cut - 1)
 
 
 # BSP room generation
 def generate_level(width, height, seed=42):
     random.seed(seed)
-    root = Rect(0, 0, width, height)
+    root = Rect(0, 0, width - 1, height - 1)
     recursive_generate_rect(root)
     # all 1 for wall at first. We will carve out the rooms
-    level = [[1 for _ in range(height)] for _ in range(width)]
+    # level = [[1 for _ in range(height)] for _ in range(width)]
+    # all 0 for now, show nothing at first
+    level = [[0 for _ in range(height)] for _ in range(width)]
+
+    # draw each rectangle (which is wrong, but I want to see it)
+    for i in range(root.i, root.w):
+        level[i][0] = 1
+        level[i][root.h] = 1
+    for j in range(root.j, root.h):
+        level[0][j] = 1
+        level[root.w][j] = 1
+
     return level
 
 
