@@ -30,6 +30,10 @@ def generate_level(width, height, seed=42):
     return level
 
 
+def tex_to_sprite(tex):
+    return arcade.Sprite(tex, DISPLAY_SCALE)
+
+
 class Game(arcade.Window):
     def __init__(self):
         super().__init__(SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_TITLE)
@@ -40,18 +44,18 @@ class Game(arcade.Window):
 
     def setup_level(self):
         level_int = generate_level(VIEW_WIDTH, VIEW_HEIGHT)
+        wall_tex = self.get_texture("stone1")
         for j in range(VIEW_WIDTH):
             for i in range(VIEW_HEIGHT):
                 if level_int[i][j] == 1:
-                    wall = self.get_sprite("stone1")
+                    wall = tex_to_sprite(wall_tex)
                     wall.center_x = j * TILE_SIZE + TILE_SIZE / 2
                     wall.center_y = i * TILE_SIZE + TILE_SIZE / 2
                     self.sprites.append(wall)
 
-    def get_sprite(self, name: str) -> arcade.Texture:
+    def get_texture(self, name: str) -> arcade.Sprite:
         x, y, w, h = SPRITES_COORDS[name]
-        tex = self.sheet.get_texture(arcade.LBWH(x, y, w, h))
-        return arcade.Sprite(tex, scale=DISPLAY_SCALE)
+        return self.sheet.get_texture(arcade.LBWH(x, y, w, h))
 
     def on_update(self, delta_time):
         pass
