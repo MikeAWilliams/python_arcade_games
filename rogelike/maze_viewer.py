@@ -1,5 +1,8 @@
+from __future__ import annotations
+
 import arcade
 import random
+from dataclasses import dataclass, field
 
 SCREEN_TITLE = "Maze Viewer"
 DISPLAY_SCALE = 1
@@ -24,9 +27,46 @@ SPRITES_COORDS: dict[str, tuple[int, int, int, int]] = {
 }
 
 
+@dataclass
+class Rect:
+    i: int
+    j: int
+    w: int
+    h: int
+    l: Rect | None = None
+    r: Rect | None = None
+
+
+def recursive_generate_rect(parent):
+    MIN_DIM = 5
+    eligible_divide = []
+    if parent.w > MIN_DIM * 2:
+        eligible_divide.append("w")
+    if parent.h > MIN_DIM * 2:
+        eligible_divide.append("h")
+    if len(eligible_divide) == 0:
+        return
+
+    dim = random.choice(eligible_divide)
+    if dim == "w":
+        print("cut w")
+        cut = random.randint(MIN_DIM, parent.w - MIN_DIM)
+        parent.l = Rect(parent.i, parent.j, cut, parent.h)
+        parent.r = Rect(parent.i + cut, parent.j, parent.w - cut, parent.h)
+    else:
+        print("cut h")
+        cut = random.randint(MIN_DIM, parent.h - MIN_DIM)
+        parent.l = Rect(parent.i, parent.j, parent.w, cut)
+        parent.r = Rect(parent.i, parent.j + cut, parent.w, parent.h - cut)
+
+
+# BSP room generation
 def generate_level(width, height, seed=42):
     random.seed(seed)
-    level = [[1 for _ in range(width)] for _ in range(height)]
+    root = Rect(0, 0, width, height)
+    recursive_generate_rect(root)
+    # all 1 for wall at first. We will carve out the rooms
+    level = [[1 for _ in range(height)] for _ in range(width)]
     return level
 
 
@@ -45,12 +85,12 @@ class Game(arcade.Window):
     def setup_level(self):
         level_int = generate_level(VIEW_WIDTH, VIEW_HEIGHT)
         wall_tex = self.get_texture("stone1")
-        for j in range(VIEW_WIDTH):
-            for i in range(VIEW_HEIGHT):
+        for i in range(VIEW_WIDTH):
+            for j in range(VIEW_HEIGHT):
                 if level_int[i][j] == 1:
                     wall = tex_to_sprite(wall_tex)
-                    wall.center_x = j * TILE_SIZE + TILE_SIZE / 2
-                    wall.center_y = i * TILE_SIZE + TILE_SIZE / 2
+                    wall.center_x = i * TILE_SIZE + TILE_SIZE / 2
+                    wall.center_y = j * TILE_SIZE + TILE_SIZE / 2
                     self.sprites.append(wall)
 
     def get_texture(self, name: str) -> arcade.Sprite:
