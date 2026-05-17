@@ -42,7 +42,7 @@ class Game(arcade.Window):
         level_int = generate_level(VIEW_WIDTH, VIEW_HEIGHT)
         for j in range(VIEW_WIDTH):
             for i in range(VIEW_HEIGHT):
-                if level_int == 1:
+                if level_int[i][j] == 1:
                     wall = self.get_sprite("stone1")
                     wall.center_x = j * TILE_SIZE + TILE_SIZE / 2
                     wall.center_y = i * TILE_SIZE + TILE_SIZE / 2
