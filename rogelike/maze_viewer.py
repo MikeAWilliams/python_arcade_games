@@ -5,13 +5,16 @@ import random
 from dataclasses import dataclass, field
 
 SCREEN_TITLE = "Maze Viewer"
-DISPLAY_SCALE = 1
+SCREEN_WIDTH = 3840
+SCREEN_HEIGHT = 2160
 RAW_TILE_SIZE = 12
+MAZE_WIDTH = 640 * 2
+MAZE_HEIGHT = 340 * 2
+DISPLAY_SCALE = min(
+    SCREEN_WIDTH / (MAZE_WIDTH * RAW_TILE_SIZE),
+    SCREEN_HEIGHT / (MAZE_HEIGHT * RAW_TILE_SIZE),
+)
 TILE_SIZE = RAW_TILE_SIZE * DISPLAY_SCALE
-VIEW_WIDTH = 320
-VIEW_HEIGHT = 170
-SCREEN_WIDTH = VIEW_WIDTH * TILE_SIZE
-SCREEN_HEIGHT = VIEW_HEIGHT * TILE_SIZE
 
 SHEET_PATH = "assets/urizen_onebit_tileset__v2d0.png"
 
@@ -117,10 +120,10 @@ class Game(arcade.Window):
         self.setup_level()
 
     def setup_level(self):
-        level_int = generate_level(VIEW_WIDTH, VIEW_HEIGHT)
+        level_int = generate_level(MAZE_WIDTH, MAZE_HEIGHT)
         wall_tex = self.get_texture("stone1")
-        for i in range(VIEW_WIDTH):
-            for j in range(VIEW_HEIGHT):
+        for i in range(MAZE_WIDTH):
+            for j in range(MAZE_HEIGHT):
                 if level_int[i][j] == 1:
                     wall = tex_to_sprite(wall_tex)
                     wall.center_x = i * TILE_SIZE + TILE_SIZE / 2
