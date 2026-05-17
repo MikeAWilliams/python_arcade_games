@@ -111,15 +111,15 @@ def generate_random_room_in_leaves(root):
         # this is a leaf
         room_w = root.w - 2
         room_i = root.i + 1
-        if MIN_DIM < root.w - 2:
-            room_w = random.randint(MIN_DIM, root.w - 2)
-            room_i = random.randint(root.i + 1, root.i + root.w - room_w)
+        # if MIN_DIM < root.w - 2:
+        #    room_w = random.randint(MIN_DIM, root.w - 2)
+        #    room_i = random.randint(root.i + 1, root.i + root.w - room_w)
 
         room_h = root.h - 2
         room_j = root.j + 1
-        if MIN_DIM < root.h - 2:
-            room_w = random.randint(MIN_DIM, root.h - 2)
-            room_i = random.randint(root.j + 1, root.j + root.h - room_h)
+        # if MIN_DIM < root.h - 2:
+        #    room_w = random.randint(MIN_DIM, root.h - 2)
+        #    room_i = random.randint(root.j + 1, root.j + root.h - room_h)
 
         root.room = Rect(room_i, room_j, room_w, room_h)
 
