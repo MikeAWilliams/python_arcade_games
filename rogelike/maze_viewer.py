@@ -9,7 +9,7 @@ DISPLAY_SCALE = 1
 RAW_TILE_SIZE = 12
 TILE_SIZE = RAW_TILE_SIZE * DISPLAY_SCALE
 VIEW_WIDTH = 320
-VIEW_HEIGHT = 180
+VIEW_HEIGHT = 170
 SCREEN_WIDTH = VIEW_WIDTH * TILE_SIZE
 SCREEN_HEIGHT = VIEW_HEIGHT * TILE_SIZE
 
@@ -51,6 +51,7 @@ def recursive_generate_rect(parent):
     if dim == "w":
         print("cut w")
         cut = random.randint(MIN_DIM, parent.w - MIN_DIM - 1)
+        print("cut", cut)
         parent.l = Rect(parent.i, parent.j, cut, parent.h)
         parent.r = Rect(parent.i + cut + 1, parent.j, parent.w - cut - 1, parent.h)
     else:
@@ -58,6 +59,18 @@ def recursive_generate_rect(parent):
         cut = random.randint(MIN_DIM, parent.h - MIN_DIM - 1)
         parent.l = Rect(parent.i, parent.j, parent.w, cut)
         parent.r = Rect(parent.i, parent.j + cut + 1, parent.w, parent.h - cut - 1)
+
+
+def set_rect_bnd_1(rect, level):
+    print("drawing rect", rect)
+    for i in range(rect.i, rect.w):
+        level[i][rect.j] = 1
+        level[i][rect.h + rect.j] = 1
+    for j in range(rect.j, rect.h):
+        level[rect.i][j] = 1
+        level[rect.w + rect.i][j] = 1
+    # top rirght
+    level[rect.w][rect.h] = 1
 
 
 # BSP room generation
@@ -71,12 +84,9 @@ def generate_level(width, height, seed=42):
     level = [[0 for _ in range(height)] for _ in range(width)]
 
     # draw each rectangle (which is wrong, but I want to see it)
-    for i in range(root.i, root.w):
-        level[i][0] = 1
-        level[i][root.h] = 1
-    for j in range(root.j, root.h):
-        level[0][j] = 1
-        level[root.w][j] = 1
+    set_rect_bnd_1(root, level)
+    set_rect_bnd_1(root.l, level)
+    set_rect_bnd_1(root.r, level)
 
     return level
 
