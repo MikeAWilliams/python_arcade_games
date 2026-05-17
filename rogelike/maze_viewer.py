@@ -15,6 +15,7 @@ DISPLAY_SCALE = min(
     SCREEN_HEIGHT / (MAZE_HEIGHT * RAW_TILE_SIZE),
 )
 TILE_SIZE = RAW_TILE_SIZE * DISPLAY_SCALE
+MIN_DIM = 10
 
 SHEET_PATH = "assets/urizen_onebit_tileset__v2d0.png"
 
@@ -36,12 +37,12 @@ class Rect:
     j: int
     w: int
     h: int
+    room: Rect | None = None
     l: Rect | None = None
     r: Rect | None = None
 
 
 def recursive_generate_rect(parent):
-    MIN_DIM = 10
     TARGET_AREA = 1000
 
     eligible_divide = []
@@ -87,18 +88,53 @@ def recursive_set_rect_bdn_1(rect, level):
         recursive_set_rect_bdn_1(rect.r, level)
 
 
+def recursive_set_room_2(root, level):
+    if root.l:
+        recursive_set_room_2(root.l, level)
+    if root.r:
+        recursive_set_room_2(root.r, level)
+
+    if root.room:
+        room = root.room
+        for i in range(room.i, room.i + room.w):
+            for j in range(room.j, room.j + room.h):
+                level[i][j] = 2
+
+
+def generate_random_room_in_leaves(root):
+    if root.l:
+        generate_random_room_in_leaves(root.l)
+    if root.r:
+        generate_random_room_in_leaves(root.r)
+
+    if not root.l and not root.r:
+        # this is a leaf
+        room_w = root.w - 2
+        room_i = root.i + 1
+        if MIN_DIM < root.w - 2:
+            room_w = random.randint(MIN_DIM, root.w - 2)
+            room_i = random.randint(root.i + 1, root.i + root.w - room_w)
+
+        room_h = root.h - 2
+        room_j = root.j + 1
+        if MIN_DIM < root.h - 2:
+            room_w = random.randint(MIN_DIM, root.h - 2)
+            room_i = random.randint(root.j + 1, root.j + root.h - room_h)
+
+        root.room = Rect(room_i, room_j, room_w, room_h)
+
+
 # BSP room generation
 def generate_level(width, height, seed=42):
     random.seed(seed)
     root = Rect(0, 0, width - 1, height - 1)
     recursive_generate_rect(root)
-    # all 1 for wall at first. We will carve out the rooms
-    # level = [[1 for _ in range(height)] for _ in range(width)]
-    # all 0 for now, show nothing at first
-    level = [[0 for _ in range(height)] for _ in range(width)]
+    generate_random_room_in_leaves(root)
 
+    level = [[0 for _ in range(height)] for _ in range(width)]
     # draw each rectangle (which is wrong, but I want to see it)
     recursive_set_rect_bdn_1(root, level)
+    recursive_set_room_2(root, level)
 
     return level
 
@@ -118,13 +154,17 @@ class Game(arcade.Window):
     def setup_level(self):
         level_int = generate_level(MAZE_WIDTH, MAZE_HEIGHT)
         wall_tex = self.get_texture("stone1")
+        floor_tex = self.get_texture("floor1")
         for i in range(MAZE_WIDTH):
             for j in range(MAZE_HEIGHT):
-                if level_int[i][j] == 1:
-                    wall = tex_to_sprite(wall_tex)
-                    wall.center_x = i * TILE_SIZE + TILE_SIZE / 2
-                    wall.center_y = j * TILE_SIZE + TILE_SIZE / 2
-                    self.sprites.append(wall)
+                if level_int[i][j] != 0:
+                    if level_int[i][j] == 1:
+                        sprite = tex_to_sprite(wall_tex)
+                    else:
+                        sprite = tex_to_sprite(floor_tex)
+                    sprite.center_x = i * TILE_SIZE + TILE_SIZE / 2
+                    sprite.center_y = j * TILE_SIZE + TILE_SIZE / 2
+                    self.sprites.append(sprite)
 
     def get_texture(self, name: str) -> arcade.Sprite:
         x, y, w, h = SPRITES_COORDS[name]
