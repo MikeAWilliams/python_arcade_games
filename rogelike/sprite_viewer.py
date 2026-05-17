@@ -11,17 +11,21 @@ import arcade
 SHEET_PATH = "assets/urizen_onebit_tileset__v2d0.png"
 
 SPRITES: dict[str, tuple[int, int, int, int]] = {
-    "first": (1, 1, 12, 12),
-    "second": (13, 1, 12, 12),
-    "third": (157, 118, 12, 12),
-    "kitty": (157, 183, 12, 12),
+    "stone1": (1, 27, 12, 12),
+    "stone2": (14, 27, 12, 12),
+    "stonecorner1": (66, 27, 12, 12),
+    "stonecorner2": (79, 27, 12, 12),
+    "stonecorner3": (92, 27, 12, 12),
+    "floor1": (1, 92, 12, 12),
+    "floor2": (14, 92, 12, 12),
+    "floor3": (27, 92, 12, 12),
 }
 
-DISPLAY_SCALE = 4
+DISPLAY_SCALE = 16
 GRID_COLS = 4
 PAD = 12
 LABEL_H = 18
-BG_COLOR = arcade.color.BLACK
+BG_COLOR = arcade.color.WHITE
 
 
 class SpriteViewer(arcade.Window):

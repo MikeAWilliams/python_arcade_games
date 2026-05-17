@@ -1,6 +1,6 @@
 # Roguelike
 
-A roguelike game built with Python arcade. Room generation will eventually be handled by a C++ library called via a C interface.
+A roguelike game built with Python arcade. 
 
 ## Assets
 
