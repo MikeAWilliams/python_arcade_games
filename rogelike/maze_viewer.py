@@ -8,8 +8,10 @@ SCREEN_TITLE = "Maze Viewer"
 SCREEN_WIDTH = 3840
 SCREEN_HEIGHT = 2160
 RAW_TILE_SIZE = 12
-MAZE_WIDTH = 640 * 1
-MAZE_HEIGHT = 340 * 1
+MAZE_WIDTH = 640
+MAZE_WIDTH = 320
+MAZE_HEIGHT = 340
+MAZE_HEIGHT = 120
 DISPLAY_SCALE = min(
     SCREEN_WIDTH / (MAZE_WIDTH * RAW_TILE_SIZE),
     SCREEN_HEIGHT / (MAZE_HEIGHT * RAW_TILE_SIZE),
@@ -88,17 +90,17 @@ def recursive_set_rect_bdn_1(rect, level):
         recursive_set_rect_bdn_1(rect.r, level)
 
 
-def recursive_set_room_2(root, level):
+def recursive_set_room_0(root, level):
     if root.l:
-        recursive_set_room_2(root.l, level)
+        recursive_set_room_0(root.l, level)
     if root.r:
-        recursive_set_room_2(root.r, level)
+        recursive_set_room_0(root.r, level)
 
     if root.room:
         room = root.room
         for i in range(room.i, room.i + room.w):
             for j in range(room.j, room.j + room.h):
-                level[i][j] = 2
+                level[i][j] = 0
 
 
 def generate_random_room_in_leaves(root):
@@ -109,17 +111,17 @@ def generate_random_room_in_leaves(root):
 
     if not root.l and not root.r:
         # this is a leaf
-        room_w = root.w - 2
-        room_i = root.i + 1
-        # if MIN_DIM < root.w - 2:
-        #    room_w = random.randint(MIN_DIM, root.w - 2)
-        #    room_i = random.randint(root.i + 1, root.i + root.w - room_w)
+        room_w = root.w - 3
+        room_i = root.i + 2
+        # if MIN_DIM < root.w - 3:
+        # room_w = random.randint(MIN_DIM, root.w - 3)
+        # room_i = random.randint(root.i + 2, root.i + root.w - room_w)
 
-        room_h = root.h - 2
-        room_j = root.j + 1
+        room_h = root.h - 3
+        room_j = root.j + 2
         # if MIN_DIM < root.h - 2:
-        #    room_w = random.randint(MIN_DIM, root.h - 2)
-        #    room_i = random.randint(root.j + 1, root.j + root.h - room_h)
+        # room_w = random.randint(MIN_DIM, root.h - 3)
+        # room_i = random.randint(root.j + 2, root.j + root.h - room_h)
 
         root.room = Rect(room_i, room_j, room_w, room_h)
 
@@ -131,10 +133,10 @@ def generate_level(width, height, seed=42):
     recursive_generate_rect(root)
     generate_random_room_in_leaves(root)
 
-    level = [[0 for _ in range(height)] for _ in range(width)]
+    level = [[2 for _ in range(height)] for _ in range(width)]
     # draw each rectangle (which is wrong, but I want to see it)
     recursive_set_rect_bdn_1(root, level)
-    recursive_set_room_2(root, level)
+    recursive_set_room_0(root, level)
 
     return level
 
