@@ -151,15 +151,28 @@ def generate_coridors_two_rooms(room1, room2):
     raise NotImplementedError("L-bend")
 
 
+def pick_room_in_subtree(node):
+    if node.room:
+        return node.room
+    if node.l:
+        room = pick_room_in_subtree(node.l)
+        if room:
+            return room
+    if node.r:
+        return pick_room_in_subtree(node.r)
+    return None
+
+
 def generate_coridors(root):
     if root.l and not root.l.room:
         generate_coridors(root.l)
     if root.r and not root.r.room:
         generate_coridors(root.r)
 
-    # simple case of connecting two rooms
-    if root.l and root.l.room and root.r and root.r.room:
-        root.corridors = generate_coridors_two_rooms(root.l.room, root.r.room)
+    if root.l and root.r:
+        lroom = pick_room_in_subtree(root.l)
+        rroom = pick_room_in_subtree(root.r)
+        root.corridors = generate_coridors_two_rooms(lroom, rroom)
 
 
 def generate_random_room_in_leaves(root):
