@@ -72,7 +72,7 @@ def recursive_generate_rect(parent):
 
 
 # for debug, set level 0 before you start and use this to draw the rectangles
-def recursive_set_rect_bdn_1(rect, level):
+def recursive_set_rect_bnd_1(rect, level):
     def set_rect_bnd_1(rect, level):
         for i in range(rect.i, rect.i + rect.w + 1):
             level[i][rect.j] = 1
@@ -85,9 +85,9 @@ def recursive_set_rect_bdn_1(rect, level):
 
     set_rect_bnd_1(rect, level)
     if rect.l:
-        recursive_set_rect_bdn_1(rect.l, level)
+        recursive_set_rect_bnd_1(rect.l, level)
     if rect.r:
-        recursive_set_rect_bdn_1(rect.r, level)
+        recursive_set_rect_bnd_1(rect.r, level)
 
 
 def recursive_set_room_0(root, level):
@@ -135,7 +135,7 @@ def generate_level(width, height, seed=42):
 
     level = [[2 for _ in range(height)] for _ in range(width)]
     # draw each rectangle (which is wrong, but I want to see it)
-    recursive_set_rect_bdn_1(root, level)
+    recursive_set_rect_bnd_1(root, level)
     recursive_set_room_0(root, level)
 
     return level
