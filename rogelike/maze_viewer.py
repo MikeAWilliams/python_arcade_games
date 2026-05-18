@@ -20,6 +20,7 @@ TILE_SIZE = RAW_TILE_SIZE * DISPLAY_SCALE
 MIN_DIM = 10
 PAD = 2
 MIN_LEAF = MIN_DIM + 2 * PAD
+MIN_CORIDOR_WIDTH = 3
 
 SHEET_PATH = "assets/urizen_onebit_tileset__v2d0.png"
 
@@ -42,6 +43,7 @@ class Rect:
     w: int
     h: int
     room: Rect | None = None
+    corridors: list[Rect] = field(default_factory=list)
     l: Rect | None = None
     r: Rect | None = None
 
@@ -92,6 +94,22 @@ def recursive_set_rect_bnd_1(rect, level):
         recursive_set_rect_bnd_1(rect.r, level)
 
 
+def recursive_set_coridor_0(root, level):
+    if root.l:
+        recursive_set_coridor_0(root.l, level)
+    if root.r:
+        recursive_set_coridor_0(root.r, level)
+    if len(root.corridors) > 0:
+        for r in root.corridors:
+            fill_rect_0(r, level)
+
+
+def fill_rect_0(rect, level):
+    for i in range(rect.i, rect.i + rect.w):
+        for j in range(rect.j, rect.j + rect.h):
+            level[i][j] = 0
+
+
 def recursive_set_room_0(root, level):
     if root.l:
         recursive_set_room_0(root.l, level)
@@ -99,10 +117,49 @@ def recursive_set_room_0(root, level):
         recursive_set_room_0(root.r, level)
 
     if root.room:
-        room = root.room
-        for i in range(room.i, room.i + room.w):
-            for j in range(room.j, room.j + room.h):
-                level[i][j] = 0
+        fill_rect_0(root.room, level)
+
+
+def generate_coridors_two_rooms(room1, room2):
+    # Vertical split: rooms side by side — horizontal corridor.
+    if room1.i + room1.w <= room2.i or room2.i + room2.w <= room1.i:
+        if room2.i < room1.i:
+            room1, room2 = room2, room1
+        overlap_start = max(room1.j, room2.j)
+        overlap_end = min(room1.j + room1.h, room2.j + room2.h)
+        overlap = overlap_end - overlap_start
+        if overlap >= MIN_CORIDOR_WIDTH:
+            width = random.randint(MIN_CORIDOR_WIDTH, overlap)
+            j = random.randint(overlap_start, overlap_end - width)
+            start_i = room1.i + room1.w
+            length = room2.i - start_i
+            return [Rect(start_i, j, length, width)]
+        raise NotImplementedError("L-bend")
+
+    # Horizontal split: rooms stacked — vertical corridor.
+    if room2.j < room1.j:
+        room1, room2 = room2, room1
+    overlap_start = max(room1.i, room2.i)
+    overlap_end = min(room1.i + room1.w, room2.i + room2.w)
+    overlap = overlap_end - overlap_start
+    if overlap >= MIN_CORIDOR_WIDTH:
+        width = random.randint(MIN_CORIDOR_WIDTH, overlap)
+        i = random.randint(overlap_start, overlap_end - width)
+        start_j = room1.j + room1.h
+        length = room2.j - start_j
+        return [Rect(i, start_j, width, length)]
+    raise NotImplementedError("L-bend")
+
+
+def generate_coridors(root):
+    if root.l and not root.l.room:
+        generate_coridors(root.l)
+    if root.r and not root.r.room:
+        generate_coridors(root.r)
+
+    # simple case of connecting two rooms
+    if root.l and root.l.room and root.r and root.r.room:
+        root.corridors = generate_coridors_two_rooms(root.l.room, root.r.room)
 
 
 def generate_random_room_in_leaves(root):
@@ -136,11 +193,13 @@ def generate_level(width, height, seed=42):
     root = Rect(0, 0, width - 1, height - 1)
     recursive_generate_rect(root)
     generate_random_room_in_leaves(root)
+    generate_coridors(root)
 
     level = [[2 for _ in range(height)] for _ in range(width)]
     # draw each rectangle (which is wrong, but I want to see it)
     recursive_set_rect_bnd_1(root, level)
     recursive_set_room_0(root, level)
+    recursive_set_coridor_0(root, level)
 
     return level
 
