@@ -84,7 +84,7 @@ def recursive_set_rect_bnd_1(rect, level):
         for j in range(rect.j, rect.j + rect.h + 1):
             level[rect.i][j] = 1
             level[rect.w + rect.i][j] = 1
-        # top rirght
+        # top right
         level[rect.i + rect.w][rect.j + rect.h] = 1
 
     set_rect_bnd_1(rect, level)
@@ -94,13 +94,13 @@ def recursive_set_rect_bnd_1(rect, level):
         recursive_set_rect_bnd_1(rect.r, level)
 
 
-def recursive_set_coridor_0(root, level):
-    if root.l:
-        recursive_set_coridor_0(root.l, level)
-    if root.r:
-        recursive_set_coridor_0(root.r, level)
-    if len(root.corridors) > 0:
-        for r in root.corridors:
+def recursive_set_corridor_0(node, level):
+    if node.l:
+        recursive_set_corridor_0(node.l, level)
+    if node.r:
+        recursive_set_corridor_0(node.r, level)
+    if node.corridors:
+        for r in node.corridors:
             fill_rect_0(r, level)
 
 
@@ -110,17 +110,17 @@ def fill_rect_0(rect, level):
             level[i][j] = 0
 
 
-def recursive_set_room_0(root, level):
-    if root.l:
-        recursive_set_room_0(root.l, level)
-    if root.r:
-        recursive_set_room_0(root.r, level)
+def recursive_set_room_0(node, level):
+    if node.l:
+        recursive_set_room_0(node.l, level)
+    if node.r:
+        recursive_set_room_0(node.r, level)
 
-    if root.room:
-        fill_rect_0(root.room, level)
+    if node.room:
+        fill_rect_0(node.room, level)
 
 
-def generate_coridors_two_rooms(room1, room2):
+def generate_corridors_two_rooms(room1, room2):
     # Vertical split: rooms side by side — horizontal corridor.
     if room1.i + room1.w <= room2.i or room2.i + room2.w <= room1.i:
         if room2.i < room1.i:
@@ -151,53 +151,70 @@ def generate_coridors_two_rooms(room1, room2):
     raise NotImplementedError("L-bend")
 
 
-def pick_room_in_subtree(node):
+def get_all_rooms_in_subtree(node):
+    rooms = []
     if node.room:
-        return node.room
+        rooms.append(node.room)
     if node.l:
-        room = pick_room_in_subtree(node.l)
-        if room:
-            return room
+        rooms.extend(get_all_rooms_in_subtree(node.l))
     if node.r:
-        return pick_room_in_subtree(node.r)
-    return None
+        rooms.extend(get_all_rooms_in_subtree(node.r))
+    return rooms
 
 
-def generate_coridors(root):
-    if root.l and not root.l.room:
-        generate_coridors(root.l)
-    if root.r and not root.r.room:
-        generate_coridors(root.r)
+def closest_pair_of_rooms(rooms_a, rooms_b):
+    best = None
+    best_dist = float("inf")
+    for a in rooms_a:
+        ax = a.i + a.w / 2
+        ay = a.j + a.h / 2
+        for b in rooms_b:
+            bx = b.i + b.w / 2
+            by = b.j + b.h / 2
+            dist = (ax - bx) ** 2 + (ay - by) ** 2
+            if dist < best_dist:
+                best_dist = dist
+                best = (a, b)
+    return best
 
-    if root.l and root.r:
-        lroom = pick_room_in_subtree(root.l)
-        rroom = pick_room_in_subtree(root.r)
-        root.corridors = generate_coridors_two_rooms(lroom, rroom)
+
+def generate_corridors(node):
+    if node.l:
+        generate_corridors(node.l)
+    if node.r:
+        generate_corridors(node.r)
+
+    if node.l and node.r:
+        rooms_l = get_all_rooms_in_subtree(node.l)
+        rooms_r = get_all_rooms_in_subtree(node.r)
+        if rooms_l and rooms_r:
+            room_l, room_r = closest_pair_of_rooms(rooms_l, rooms_r)
+            node.corridors = generate_corridors_two_rooms(room_l, room_r)
 
 
-def generate_random_room_in_leaves(root):
-    if root.l:
-        generate_random_room_in_leaves(root.l)
-    if root.r:
-        generate_random_room_in_leaves(root.r)
+def generate_random_room_in_leaves(node):
+    if node.l:
+        generate_random_room_in_leaves(node.l)
+    if node.r:
+        generate_random_room_in_leaves(node.r)
 
-    if not root.l and not root.r:
+    if not node.l and not node.r:
         # this is a leaf — fill most of it, with small random shrink + offset.
-        # BSP guarantees root.w >= MIN_LEAF, so max_w >= MIN_DIM always.
+        # BSP guarantees node.w >= MIN_LEAF, so max_w >= MIN_DIM always.
         MAX_SHRINK = 4
 
-        max_w = root.w - 2 * PAD
-        max_h = root.h - 2 * PAD
+        max_w = node.w - 2 * PAD
+        max_h = node.h - 2 * PAD
 
         shrink_w = random.randint(0, min(MAX_SHRINK, max_w - MIN_DIM))
         room_w = max_w - shrink_w
-        room_i = root.i + PAD + random.randint(0, shrink_w)
+        room_i = node.i + PAD + random.randint(0, shrink_w)
 
         shrink_h = random.randint(0, min(MAX_SHRINK, max_h - MIN_DIM))
         room_h = max_h - shrink_h
-        room_j = root.j + PAD + random.randint(0, shrink_h)
+        room_j = node.j + PAD + random.randint(0, shrink_h)
 
-        root.room = Rect(room_i, room_j, room_w, room_h)
+        node.room = Rect(room_i, room_j, room_w, room_h)
 
 
 # BSP room generation
@@ -206,13 +223,13 @@ def generate_level(width, height, seed=42):
     root = Rect(0, 0, width - 1, height - 1)
     recursive_generate_rect(root)
     generate_random_room_in_leaves(root)
-    generate_coridors(root)
+    generate_corridors(root)
 
     level = [[2 for _ in range(height)] for _ in range(width)]
     # draw each rectangle (which is wrong, but I want to see it)
     recursive_set_rect_bnd_1(root, level)
     recursive_set_room_0(root, level)
-    recursive_set_coridor_0(root, level)
+    recursive_set_corridor_0(root, level)
 
     return level
 
