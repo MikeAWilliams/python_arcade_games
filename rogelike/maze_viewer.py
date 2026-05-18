@@ -18,6 +18,8 @@ DISPLAY_SCALE = min(
 )
 TILE_SIZE = RAW_TILE_SIZE * DISPLAY_SCALE
 MIN_DIM = 10
+PAD = 2
+MIN_LEAF = MIN_DIM + 2 * PAD
 
 SHEET_PATH = "assets/urizen_onebit_tileset__v2d0.png"
 
@@ -48,20 +50,20 @@ def recursive_generate_rect(parent):
     TARGET_AREA = 1000
 
     eligible_divide = []
-    if parent.w >= MIN_DIM * 2 + 1:
+    if parent.w >= MIN_LEAF * 2 + 1:
         eligible_divide.append("w")
-    if parent.h >= MIN_DIM * 2 + 1:
+    if parent.h >= MIN_LEAF * 2 + 1:
         eligible_divide.append("h")
     if len(eligible_divide) == 0:
         return
 
     dim = random.choice(eligible_divide)
     if dim == "w":
-        cut = random.randint(MIN_DIM, parent.w - MIN_DIM - 1)
+        cut = random.randint(MIN_LEAF, parent.w - MIN_LEAF - 1)
         parent.l = Rect(parent.i, parent.j, cut, parent.h)
         parent.r = Rect(parent.i + cut + 1, parent.j, parent.w - cut - 1, parent.h)
     else:
-        cut = random.randint(MIN_DIM, parent.h - MIN_DIM - 1)
+        cut = random.randint(MIN_LEAF, parent.h - MIN_LEAF - 1)
         parent.l = Rect(parent.i, parent.j, parent.w, cut)
         parent.r = Rect(parent.i, parent.j + cut + 1, parent.w, parent.h - cut - 1)
 
@@ -110,18 +112,20 @@ def generate_random_room_in_leaves(root):
         generate_random_room_in_leaves(root.r)
 
     if not root.l and not root.r:
-        # this is a leaf
-        room_w = root.w - 3
-        room_i = root.i + 2
-        if MIN_DIM < root.w - 3:
-            room_w = random.randint(MIN_DIM, root.w - 3)
-            room_i = random.randint(root.i + 2, root.i + root.w - room_w)
+        # this is a leaf — fill most of it, with small random shrink + offset.
+        # BSP guarantees root.w >= MIN_LEAF, so max_w >= MIN_DIM always.
+        MAX_SHRINK = 4
 
-        room_h = root.h - 3
-        room_j = root.j + 2
-        if MIN_DIM < root.h - 2:
-            room_h = random.randint(MIN_DIM, root.h - 3)
-            room_j = random.randint(root.j + 2, root.j + root.h - room_h)
+        max_w = root.w - 2 * PAD
+        max_h = root.h - 2 * PAD
+
+        shrink_w = random.randint(0, min(MAX_SHRINK, max_w - MIN_DIM))
+        room_w = max_w - shrink_w
+        room_i = root.i + PAD + random.randint(0, shrink_w)
+
+        shrink_h = random.randint(0, min(MAX_SHRINK, max_h - MIN_DIM))
+        room_h = max_h - shrink_h
+        room_j = root.j + PAD + random.randint(0, shrink_h)
 
         root.room = Rect(room_i, room_j, room_w, room_h)
 
