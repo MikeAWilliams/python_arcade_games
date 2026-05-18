@@ -20,7 +20,7 @@ TILE_SIZE = RAW_TILE_SIZE * DISPLAY_SCALE
 MIN_DIM = 10
 PAD = 2
 MIN_LEAF = MIN_DIM + 2 * PAD
-MIN_CORIDOR_WIDTH = 3
+MIN_CORRIDOR_WIDTH = 3
 
 SHEET_PATH = "assets/urizen_onebit_tileset__v2d0.png"
 
@@ -128,9 +128,9 @@ def generate_corridors_two_rooms(room1, room2):
         overlap_start = max(room1.j, room2.j)
         overlap_end = min(room1.j + room1.h, room2.j + room2.h)
         overlap = overlap_end - overlap_start
-        if overlap >= MIN_CORIDOR_WIDTH:
-            width = random.randint(MIN_CORIDOR_WIDTH, overlap)
-            j = random.randint(overlap_start, overlap_end - width)
+        if overlap >= MIN_CORRIDOR_WIDTH + 2:
+            width = random.randint(MIN_CORRIDOR_WIDTH, overlap - 2)
+            j = random.randint(overlap_start + 1, overlap_end - width - 1)
             start_i = room1.i + room1.w
             length = room2.i - start_i
             return [Rect(start_i, j, length, width)]
@@ -142,9 +142,9 @@ def generate_corridors_two_rooms(room1, room2):
     overlap_start = max(room1.i, room2.i)
     overlap_end = min(room1.i + room1.w, room2.i + room2.w)
     overlap = overlap_end - overlap_start
-    if overlap >= MIN_CORIDOR_WIDTH:
-        width = random.randint(MIN_CORIDOR_WIDTH, overlap)
-        i = random.randint(overlap_start, overlap_end - width)
+    if overlap >= MIN_CORRIDOR_WIDTH + 2:
+        width = random.randint(MIN_CORRIDOR_WIDTH, overlap - 2)
+        i = random.randint(overlap_start + 1, overlap_end - width - 1)
         start_j = room1.j + room1.h
         length = room2.j - start_j
         return [Rect(i, start_j, width, length)]
