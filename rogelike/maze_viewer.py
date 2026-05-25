@@ -9,8 +9,8 @@ SCREEN_TITLE = "Maze Viewer"
 SCREEN_WIDTH = 3840
 SCREEN_HEIGHT = 2160
 RAW_TILE_SIZE = 12
-MAZE_WIDTH = 320
-MAZE_HEIGHT = 170
+MAZE_WIDTH = 160
+MAZE_HEIGHT = 85
 DISPLAY_SCALE = min(
     SCREEN_WIDTH / (MAZE_WIDTH * RAW_TILE_SIZE),
     SCREEN_HEIGHT / (MAZE_HEIGHT * RAW_TILE_SIZE),
@@ -36,7 +36,7 @@ def tex_to_sprite(tex):
 
 
 def screen_to_map(screen_x, screen_y):
-    return (screen_x // TILE_SIZE, screen_y // RAW_TILE_SIZE)
+    return (int(screen_x // TILE_SIZE), int(screen_y // TILE_SIZE))
 
 
 class Game(arcade.Window):
@@ -74,7 +74,7 @@ class Game(arcade.Window):
         if button == arcade.MOUSE_BUTTON_LEFT:
             map_x, map_y = screen_to_map(x, y)
             self.astar_flood = astar.astar_flood(
-                self.level_int, astar.Coord(map_x, map_y), True, 9
+                self.level_int, astar.Coord(map_x, map_y), True
             )
 
     def draw_astar_flood(self):
