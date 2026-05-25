@@ -1,5 +1,6 @@
 from dataclasses import dataclass, field
 import math
+from collections import deque
 
 
 @dataclass
@@ -41,7 +42,6 @@ def get_destinations_from_tile(level, tile, allow_diagonal):
 def remove_visitited_destinations(result, destinations):
     to_remove = []
     for d in destinations:
-        print(result[d.y][d.x])
         if result[d.y][d.x] != math.inf:
             to_remove.append(d)
     for r in to_remove:
@@ -55,9 +55,9 @@ def astar_flood(level, destination, allow_diagonal, max_dist=None):
     result = init_astar_flood_solution(len(level[0]), len(level))
     current_tile = destination
     result[current_tile.y][current_tile.x] = 0
-    stack = [current_tile]
+    stack = deque([current_tile])
     while len(stack) > 0:
-        current_tile = stack.pop()
+        current_tile = stack.popleft()
         current_value = result[current_tile.y][current_tile.x] + 1
         if max_dist and current_value > max_dist:
             continue
