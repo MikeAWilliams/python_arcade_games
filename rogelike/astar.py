@@ -55,9 +55,9 @@ def astar_flood(level, destination, allow_diagonal, max_dist=None):
     result = init_astar_flood_solution(len(level[0]), len(level))
     current_tile = destination
     result[current_tile.y][current_tile.x] = 0
-    stack = deque([current_tile])
-    while len(stack) > 0:
-        current_tile = stack.popleft()
+    queue = deque([current_tile])
+    while len(queue) > 0:
+        current_tile = queue.popleft()
         current_value = result[current_tile.y][current_tile.x] + 1
         if max_dist and current_value > max_dist:
             continue
@@ -65,5 +65,5 @@ def astar_flood(level, destination, allow_diagonal, max_dist=None):
         destinations = remove_visitited_destinations(result, destinations)
         for d in destinations:
             result[d.y][d.x] = current_value
-            stack.append(d)
+            queue.append(d)
     return result
