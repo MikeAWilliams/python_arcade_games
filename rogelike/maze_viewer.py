@@ -3,6 +3,7 @@ from __future__ import annotations
 import arcade
 
 from level_gen import generate_level
+import astar
 
 SCREEN_TITLE = "Maze Viewer"
 SCREEN_WIDTH = 3840
@@ -34,28 +35,33 @@ def tex_to_sprite(tex):
     return arcade.Sprite(tex, DISPLAY_SCALE)
 
 
+def screen_to_map(screen_x, screen_y):
+    return (screen_x // TILE_SIZE, screen_y // RAW_TILE_SIZE)
+
+
 class Game(arcade.Window):
     def __init__(self):
         super().__init__(SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_TITLE)
         arcade.set_background_color(arcade.color.BLACK)
         self.sheet = arcade.load_spritesheet(SHEET_PATH)
-        self.sprites = arcade.SpriteList()
+        self.astar_flood = None
+        self.wall_sprites = arcade.SpriteList()
         self.setup_level()
 
     def setup_level(self):
-        level_int = generate_level(MAZE_WIDTH, MAZE_HEIGHT)
+        self.level_int = generate_level(MAZE_WIDTH, MAZE_HEIGHT)
         wall_tex = self.get_texture("stone1")
         floor_tex = self.get_texture("floor1")
         for i in range(MAZE_WIDTH):
             for j in range(MAZE_HEIGHT):
-                if level_int[i][j] != 0:
-                    if level_int[i][j] == 1:
+                if self.level_int[i][j] != 0:
+                    if self.level_int[i][j] == 1:
                         sprite = tex_to_sprite(wall_tex)
                     else:
                         sprite = tex_to_sprite(floor_tex)
                     sprite.center_x = i * TILE_SIZE + TILE_SIZE / 2
                     sprite.center_y = j * TILE_SIZE + TILE_SIZE / 2
-                    self.sprites.append(sprite)
+                    self.wall_sprites.append(sprite)
 
     def get_texture(self, name: str) -> arcade.Sprite:
         x, y, w, h = SPRITES_COORDS[name]
@@ -64,9 +70,36 @@ class Game(arcade.Window):
     def on_update(self, delta_time):
         pass
 
+    def on_mouse_press(self, x, y, button, modifiers):
+        if button == arcade.MOUSE_BUTTON_LEFT:
+            map_x, map_y = screen_to_map(x, y)
+            self.astar_flood = astar.astar_flood(
+                self.level_int, astar.Coord(map_x, map_y), True, 9
+            )
+
+    def draw_astar_flood(self):
+        if self.astar_flood:
+            for x in range(MAZE_WIDTH):
+                for y in range(MAZE_HEIGHT):
+                    if self.level_int[y][x] == 0:
+                        cx = x * TILE_SIZE + TILE_SIZE / 2
+                        cy = y * TILE_SIZE + TILE_SIZE / 2
+                        tile_text = str(self.astar_flood[y][x])
+                        print("tile value", self.astar_flood[y][x], tile_text)
+                        arcade.draw_text(
+                            tile_text,
+                            cx,
+                            cy,
+                            arcade.color.WHITE,
+                            10,
+                            anchor_x="center",
+                            anchor_y="center",
+                        )
+
     def on_draw(self):
         self.clear()
-        self.sprites.draw()
+        self.wall_sprites.draw()
+        self.draw_astar_flood()
 
     def on_key_press(self, key, modifiers):
         pass

@@ -10,6 +10,12 @@ Sprites use the **Urizen 1Bit Tileset** by vurmux (CC0 — no attribution requir
 2. Click **Download Now** — it's pay what you want, so you can enter $0
 3. Extract the downloaded zip and place the contents into an `assets/` folder in this directory
 
+Additional sprites from the **Free Pixel Art Asset Pack (Top-Down Tileset RPG 16x16)** by Anokolisa.
+
+1. Go to https://anokolisa.itch.io/free-pixel-art-asset-pack-topdown-tileset-rpg-16x16-sprites
+2. Click **Download Now** — it's pay what you want, so you can enter $0
+3. Extract the downloaded zip and place the contents into the `assets/` folder
+
 The `assets/` folder is gitignored, so each developer needs to download it separately.
 
 ## Setup
