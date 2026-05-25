@@ -3,7 +3,7 @@ from __future__ import annotations
 import arcade
 
 from level_gen import generate_level
-import astar
+from astar import astar_flood
 
 SCREEN_TITLE = "Maze Viewer"
 SCREEN_WIDTH = 3840
@@ -73,9 +73,7 @@ class Game(arcade.Window):
     def on_mouse_press(self, x, y, button, modifiers):
         if button == arcade.MOUSE_BUTTON_LEFT:
             map_x, map_y = screen_to_map(x, y)
-            self.astar_flood = astar.astar_flood(
-                self.level_int, astar.Coord(map_x, map_y), True
-            )
+            self.astar_flood = astar_flood(self.level_int, map_x, map_y, True, 50)
 
     def draw_astar_flood(self):
         if self.astar_flood:

@@ -49,11 +49,12 @@ def remove_visitited_destinations(result, destinations):
     return destinations
 
 
-def astar_flood(level, destination, allow_diagonal, max_dist=None):
-    if level[destination.y][destination.x] != 0:
+def astar_flood(level, destination_x, destination_y, allow_diagonal, max_dist=None):
+
+    if level[destination_y][destination_x] != 0:
         raise Exception("Invalid astar desination, must target a zero tile")
     result = init_astar_flood_solution(len(level[0]), len(level))
-    current_tile = destination
+    current_tile = Coord(destination_x, destination_y)
     result[current_tile.y][current_tile.x] = 0
     queue = deque([current_tile])
     while len(queue) > 0:
