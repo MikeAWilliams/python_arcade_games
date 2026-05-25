@@ -13,7 +13,8 @@ def init_astar_flood_solution(width, height):
     for y in range(height):
         new_row = []
         for x in range(width):
-            new_row.append(math.inf)
+            # new_row.append(math.inf)
+            new_row.append(0)
         result.append(new_row)
     return result
 

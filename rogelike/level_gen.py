@@ -47,13 +47,13 @@ def recursive_generate_rect(parent, min_leaf, target_area):
 def recursive_set_rect_bnd_1(rect, level):
     def set_rect_bnd_1(rect, level):
         for i in range(rect.i, rect.i + rect.w + 1):
-            level[i][rect.j] = 1
-            level[i][rect.h + rect.j] = 1
+            level[rect.j][i] = 1
+            level[rect.h + rect.j][i] = 1
         for j in range(rect.j, rect.j + rect.h + 1):
-            level[rect.i][j] = 1
-            level[rect.w + rect.i][j] = 1
+            level[j][rect.i] = 1
+            level[j][rect.w + rect.i] = 1
         # top right
-        level[rect.i + rect.w][rect.j + rect.h] = 1
+        level[rect.j + rect.h][rect.i + rect.w] = 1
 
     set_rect_bnd_1(rect, level)
     if rect.l:
@@ -65,7 +65,7 @@ def recursive_set_rect_bnd_1(rect, level):
 def fill_rect_0(rect, level):
     for i in range(rect.i, rect.i + rect.w):
         for j in range(rect.j, rect.j + rect.h):
-            level[i][j] = 0
+            level[j][i] = 0
 
 
 def recursive_set_corridor_0(node, level):
@@ -273,9 +273,7 @@ def generate_level(
     target_area=1000,
 ):
     if min_corridor_width < 3:
-        raise ValueError(
-            f"min_corridor_width must be >= 3, got {min_corridor_width}"
-        )
+        raise ValueError(f"min_corridor_width must be >= 3, got {min_corridor_width}")
     if min_dim < min_corridor_width + 2:
         raise ValueError(
             f"min_dim ({min_dim}) must be >= min_corridor_width + 2 "
@@ -297,7 +295,7 @@ def generate_level(
     generate_random_room_in_leaves(root, min_dim)
     generate_corridors(root, min_corridor_width)
 
-    level = [[2 for _ in range(height)] for _ in range(width)]
+    level = [[2 for _ in range(width)] for _ in range(height)]
     # draw each rectangle (which is wrong, but I want to see it)
     recursive_set_rect_bnd_1(root, level)
     recursive_set_room_0(root, level)

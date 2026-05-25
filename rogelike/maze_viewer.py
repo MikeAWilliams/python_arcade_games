@@ -9,8 +9,8 @@ SCREEN_TITLE = "Maze Viewer"
 SCREEN_WIDTH = 3840
 SCREEN_HEIGHT = 2160
 RAW_TILE_SIZE = 12
-MAZE_WIDTH = 640
-MAZE_HEIGHT = 340
+MAZE_WIDTH = 320
+MAZE_HEIGHT = 170
 DISPLAY_SCALE = min(
     SCREEN_WIDTH / (MAZE_WIDTH * RAW_TILE_SIZE),
     SCREEN_HEIGHT / (MAZE_HEIGHT * RAW_TILE_SIZE),
@@ -54,8 +54,8 @@ class Game(arcade.Window):
         floor_tex = self.get_texture("floor1")
         for i in range(MAZE_WIDTH):
             for j in range(MAZE_HEIGHT):
-                if self.level_int[i][j] != 0:
-                    if self.level_int[i][j] == 1:
+                if self.level_int[j][i] != 0:
+                    if self.level_int[j][i] == 1:
                         sprite = tex_to_sprite(wall_tex)
                     else:
                         sprite = tex_to_sprite(floor_tex)
@@ -85,7 +85,6 @@ class Game(arcade.Window):
                         cx = x * TILE_SIZE + TILE_SIZE / 2
                         cy = y * TILE_SIZE + TILE_SIZE / 2
                         tile_text = str(self.astar_flood[y][x])
-                        print("tile value", self.astar_flood[y][x], tile_text)
                         arcade.draw_text(
                             tile_text,
                             cx,
