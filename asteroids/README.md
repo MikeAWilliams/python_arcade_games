@@ -49,11 +49,64 @@ asteroids/
 
 ## Installation
 
+This project uses [uv](https://docs.astral.sh/uv/) for environment and dependency
+management. Dependencies (including a CUDA-enabled PyTorch) are declared in
+`pyproject.toml` and pinned in `uv.lock`.
+
 ```bash
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
+uv sync
 ```
+
+That's the whole setup. `uv sync` reads `pyproject.toml` + `uv.lock` and:
+
+- Installs the pinned Python interpreter (**3.13**, set in `.python-version`).
+- Installs all dependencies from the lockfile — reproducing an identical
+  environment on any machine.
+- Pulls `torch` from PyTorch's CUDA 12.8 index (`[[tool.uv.index]]` in
+  `pyproject.toml`) so GPU builds match modern NVIDIA cards.
+
+Run anything through the project environment with `uv run`, e.g.
+`uv run python main_arcade.py`. To add a dependency use `uv add <pkg>` (which
+updates `pyproject.toml` and `uv.lock`) — **not** `uv pip install`, which
+installs imperatively and gets wiped the next time `uv sync`/`uv run`
+reconciles the environment against the lockfile.
+
+### Why Python 3.13 (not 3.14)
+
+`arcade==3.3.3` depends on `pymunk==6.9.0`, which has no prebuilt wheel for
+Python 3.14. On 3.14, uv falls back to compiling pymunk from source, which fails
+without Python development headers (`pyconfig.h`) — awkward to provide on
+immutable distros. Pinning to 3.13 (via `.python-version`) means every
+dependency, including pymunk and torch, installs as a prebuilt wheel with no
+compilation.
+
+### Verifying CUDA
+
+`cuda_test.py` is a standalone, write-nothing sanity check for the GPU path. Run
+it after setup (or on any new machine) to confirm PyTorch can actually use the
+GPU:
+
+```bash
+uv run python cuda_test.py
+```
+
+It checks four things in order and prints `PASS` only if all succeed:
+
+1. **Build** — torch version and the CUDA toolkit it was compiled against
+   (expect `cuda build : 12.8`).
+2. **Visibility** — `torch.cuda.is_available()`. Necessary but *not* sufficient:
+   it returns `True` even when the wheel lacks kernels for your GPU.
+3. **Capability** — the GPU's compute capability (e.g. `(12, 0)` for Blackwell
+   / RTX 50-series `sm_120`).
+4. **The real check** — allocates on the GPU and runs a matmul with
+   `torch.cuda.synchronize()`. This forces an actual kernel launch, so a
+   "no kernel image is available for execution on the device" error (missing
+   kernels for your architecture) surfaces *here* rather than silently. A
+   printed result plus non-zero GPU memory usage proves the full round trip.
+
+This last step is the one that matters on newer GPUs: torch can install cleanly
+and report `is_available() == True` while still having no kernels for the card,
+which only a real kernel launch reveals.
 
 ## Usage
 
