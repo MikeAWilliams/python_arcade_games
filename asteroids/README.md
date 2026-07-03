@@ -65,7 +65,6 @@ That's the whole setup. `uv sync` reads `pyproject.toml` + `uv.lock` and:
 - Pulls `torch` from PyTorch's CUDA 12.8 index (`[[tool.uv.index]]` in
   `pyproject.toml`) so GPU builds match modern NVIDIA cards.
 
-
 Run anything through the project environment with `uv run`, e.g.
 `uv run python main_arcade.py`. To add a dependency use `uv add <pkg>` (which
 updates `pyproject.toml` and `uv.lock`) — **not** `uv pip install`, which
