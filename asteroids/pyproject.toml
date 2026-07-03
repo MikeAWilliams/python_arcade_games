@@ -1,0 +1,24 @@
+[project]
+name = "asteroids"
+version = "0.1.0"
+# Pinned below 3.14: arcade->pymunk 6.9.0 has no 3.14 wheel yet, so 3.14
+# would force a source build (gcc) that fails without Python dev headers.
+requires-python = ">=3.13,<3.14"
+dependencies = [
+    "arcade==3.3.3",
+    "numpy",
+    "matplotlib",
+    "torch",
+]
+
+# Pull torch from PyTorch's CUDA 12.8 index so the RTX 5070 Ti (Blackwell,
+# sm_120) gets a build with matching kernels. `explicit = true` means ONLY
+# packages routed here via [tool.uv.sources] use this index; everything else
+# (arcade, numpy, matplotlib) still comes from PyPI.
+[tool.uv.sources]
+torch = [{ index = "pytorch-cu128" }]
+
+[[tool.uv.index]]
+name = "pytorch-cu128"
+url = "https://download.pytorch.org/whl/cu128"
+explicit = true
