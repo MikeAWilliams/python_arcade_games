@@ -20,16 +20,36 @@ The `assets/` folder is gitignored, so each developer needs to download it separ
 
 ## Setup
 
+This project uses [uv](https://docs.astral.sh/uv/) for environment and
+dependency management. Dependencies are declared in `pyproject.toml` and pinned
+in `uv.lock`.
+
 ```bash
-python3 -m venv venv
-source venv/bin/activate
-pip install arcade
+uv sync
 ```
+
+That's the whole setup. `uv sync` installs the pinned Python interpreter
+(**3.13**, set in `.python-version`) and all dependencies from the lockfile,
+reproducing an identical environment on any machine.
+
+To add a dependency use `uv add <pkg>` (which updates `pyproject.toml` and
+`uv.lock`) — **not** `uv pip install`, which installs imperatively and gets
+wiped the next time `uv sync`/`uv run` reconciles the environment against the
+lockfile.
+
+### Why Python 3.13 (not 3.14)
+
+`arcade==3.3.3` depends on `pymunk==6.9.0`, which has no prebuilt wheel for
+Python 3.14. On 3.14, uv falls back to compiling pymunk from source, which fails
+without Python development headers. Pinning to 3.13 (via `.python-version`)
+means every dependency installs as a prebuilt wheel with no compilation.
 
 ## Run
 
+Run anything through the project environment with `uv run`, e.g.
+
 ```bash
-python game.py
+uv run python maze_viewer.py
 ```
 
 ## Reading
@@ -58,9 +78,3 @@ sudo apt install xclip
 ### `sprite_viewer.py`
 
 Visually verifies sprites you've extracted. Edit the `SPRITES` dict at the top of the file with `name: (x, y, w, h)` entries (paste from `explore_tile.py`). Run it and each sprite is drawn scaled with its name and coords.
-
-## Deactivate venv
-
-```bash
-deactivate
-```
