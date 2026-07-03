@@ -1,0 +1,9 @@
+[project]
+name = "rogelike"
+version = "0.1.0"
+# Pinned below 3.14: arcade->pymunk 6.9.0 has no 3.14 wheel yet, so 3.14
+# would force a source build (gcc) that fails without Python dev headers.
+requires-python = ">=3.13,<3.14"
+dependencies = [
+    "arcade==3.3.3",
+]
