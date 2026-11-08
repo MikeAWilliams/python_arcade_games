@@ -4,8 +4,8 @@ from typing import NamedTuple
 
 import arcade
 
-WINDOW_WIDTH = 1280
-WINDOW_HEIGHT = 720
+WINDOW_WIDTH = 3840
+WINDOW_HEIGHT = 2160
 
 
 @dataclass
@@ -28,10 +28,10 @@ class GameView(arcade.View):
     def __init__(self) -> None:
         super().__init__()
         # range is centered on the origin. So range of 4 is -2 - 2
-        self.x_range = 0.005
+        self.x_range = 0.025
         self.y_range = 4
         # sample spacing is number of samples in the full x range
-        self.sample_rate = 1000
+        self.num_samples = 1000
 
         self.waves = [
             WaveParam(4000, 1, 0, arcade.color.GREEN),
@@ -55,9 +55,9 @@ class GameView(arcade.View):
         arcade.draw_lines(point_list, arcade.color.BLUE, 3)
 
     def draw_wave(self) -> None:
-        dx = self.x_range / self.sample_rate
+        dx = self.x_range / self.num_samples
         point_lists = [[] for _ in self.waves]
-        for i in range(self.sample_rate + 1):
+        for i in range(self.num_samples + 1):
             x = -self.x_range / 2 + i * dx
             for index, w in enumerate(self.waves):
                 p = Point(x, w.value_at_t(x))
