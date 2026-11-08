@@ -52,6 +52,7 @@ class GameView(arcade.View):
     def generate_data(self) -> None:
         self.generate_axes()
         self.generate_wave_points()
+        self.generate_audio_sample()
 
     def generate_axes(self) -> None:
         self.axes_points = (
