@@ -28,10 +28,10 @@ class GameView(arcade.View):
     def __init__(self) -> None:
         super().__init__()
         # range is centered on the origin. So range of 4 is -2 - 2
-        self.x_range = 0.2
+        self.x_range = 0.005
         self.y_range = 4
         # sample spacing is number of samples in the full x range
-        self.sample_rate = 16000
+        self.sample_rate = 1000
 
         self.waves = [
             WaveParam(4000, 1, 0, arcade.color.GREEN),
