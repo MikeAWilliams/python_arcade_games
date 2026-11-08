@@ -73,7 +73,7 @@ class GameView(arcade.View):
         # sample spacing is number of samples in the full x range
         self.num_samples = 1000
 
-        self.sum_color = arcade.color.RED
+        self.sum_color = arcade.color.GREEN
 
         self.audio_sample_rate = 44100
         self.audio_volume = 0.4
@@ -86,11 +86,6 @@ class GameView(arcade.View):
         self.update_waves_and_data()
 
     def update_waves_and_data(self):
-        if self.audio_samples:
-            # fade
-            for _ in range(30):
-                self.audio_samples *= 0.8
-                sd.sleep(2)
         sd.stop()
         frequence = midi_num_to_freq(self.mini_number)
         if self.is_piano:
@@ -227,6 +222,9 @@ class GameView(arcade.View):
         if symbol == arcade.key.UP and self.mini_number < 108:
             change = True
             self.mini_number += 1
+        if symbol == arcade.key.P:
+            change = True
+            self.is_piano = not self.is_piano
 
         if change:
             self.update_waves_and_data()
