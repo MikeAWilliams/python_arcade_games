@@ -31,7 +31,7 @@ class GameView(arcade.View):
         self.x_range = 0.2
         self.y_range = 4
         # sample spacing is number of samples in the full x range
-        self.sample_rate = 100
+        self.sample_rate = 1000
 
         self.waves = [
             WaveParam(20, 1, 0, arcade.color.RED),
@@ -44,15 +44,6 @@ class GameView(arcade.View):
             p.y / self.y_range * WINDOW_HEIGHT + WINDOW_HEIGHT / 2,
         )
         return result
-
-    def draw_some_test_points(self) -> None:
-        point_list = (
-            self.graph_to_game(Point(-1, -1)),
-            self.graph_to_game(Point(-1, 1)),
-            self.graph_to_game(Point(1, -1)),
-            self.graph_to_game(Point(1, 1)),
-        )
-        arcade.draw_lines(point_list, arcade.color.BLUE, 3)
 
     def draw_axies(self) -> None:
         point_list = (
@@ -71,13 +62,11 @@ class GameView(arcade.View):
             for index, w in enumerate(self.waves):
                 p = Point(x, w.value_at_t(x))
                 point_lists[index].append(self.graph_to_game(p))
-            x += dx
         for i in range(len(self.waves)):
             arcade.draw_line_strip(point_lists[i], self.waves[i].color)
 
     def on_draw(self) -> bool | None:
         self.draw_axies()
-        self.draw_some_test_points()
         self.draw_wave()
 
     def on_update(self, delta_time: float) -> bool | None:
