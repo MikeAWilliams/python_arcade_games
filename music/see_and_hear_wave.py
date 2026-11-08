@@ -39,6 +39,33 @@ class GameView(arcade.View):
             WaveParam(40, 1, 0, arcade.color.GREEN),
             WaveParam(20, 1, 0, arcade.color.GREEN),
         ]
+        self.generate_data()
+
+    def generate_data(self) -> None:
+        self.generate_axes()
+        self.generate_wave_points()
+
+    def generate_axes(self) -> None:
+        self.axes_points = (
+            (0, WINDOW_HEIGHT / 2),
+            (WINDOW_WIDTH, WINDOW_HEIGHT / 2),
+            (WINDOW_WIDTH / 2, 0),
+            (WINDOW_WIDTH / 2, WINDOW_HEIGHT),
+        )
+
+    def generate_wave_points(self) -> None:
+        dx = self.x_range / self.num_samples
+        self.wave_point_lists = [[] for _ in self.waves]
+        self.wave_sum_list = []
+        for i in range(self.num_samples + 1):
+            x = -self.x_range / 2 + i * dx
+            sum = 0
+            for index, w in enumerate(self.waves):
+                p = Point(x, w.value_at_t(x))
+                sum += p.y
+                self.wave_point_lists[index].append(self.graph_to_game(p))
+            # sum /= len(self.waves)
+            self.wave_sum_list.append(self.graph_to_game(Point(x, sum)))
 
     def graph_to_game(self, p: Point) -> Point:
         result = Point(
@@ -48,30 +75,12 @@ class GameView(arcade.View):
         return result
 
     def draw_axies(self) -> None:
-        point_list = (
-            (0, WINDOW_HEIGHT / 2),
-            (WINDOW_WIDTH, WINDOW_HEIGHT / 2),
-            (WINDOW_WIDTH / 2, 0),
-            (WINDOW_WIDTH / 2, WINDOW_HEIGHT),
-        )
-        arcade.draw_lines(point_list, arcade.color.BLUE, 3)
+        arcade.draw_lines(self.axes_points, arcade.color.BLUE, 3)
 
     def draw_wave(self) -> None:
-        dx = self.x_range / self.num_samples
-        point_lists = [[] for _ in self.waves]
-        sum_list = []
-        for i in range(self.num_samples + 1):
-            x = -self.x_range / 2 + i * dx
-            sum = 0
-            for index, w in enumerate(self.waves):
-                p = Point(x, w.value_at_t(x))
-                sum += p.y
-                point_lists[index].append(self.graph_to_game(p))
-            # sum /= len(self.waves)
-            sum_list.append(self.graph_to_game(Point(x, sum)))
         for i in range(len(self.waves)):
-            arcade.draw_line_strip(point_lists[i], self.waves[i].color)
-        arcade.draw_line_strip(sum_list, self.sum_color)
+            arcade.draw_line_strip(self.wave_point_lists[i], self.waves[i].color)
+        arcade.draw_line_strip(self.wave_sum_list, self.sum_color)
 
     def on_draw(self) -> bool | None:
         self.draw_axies()
