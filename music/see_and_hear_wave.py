@@ -1,3 +1,4 @@
+import colorsys
 import math
 from dataclasses import dataclass
 from typing import NamedTuple
@@ -41,13 +42,70 @@ class GameView(arcade.View):
         self.audio_volume = 0.4
         self.audio_time = 1
 
+        #self.setup_simple_waves()
+        self.setup_piano_waves()
+
+        self.generate_data()
+        sd.play(self.audio_samples, self.audio_sample_rate, loop=True)
+
+    def setup_simple_waves(self) -> None:
         self.waves = [
             # WaveParam(4000, 1, 0, arcade.color.GREEN),
             WaveParam(400, 1, 0, arcade.color.GREEN),
             WaveParam(400, 1, math.pi / 2, arcade.color.GREEN),
         ]
-        self.generate_data()
-        sd.play(self.audio_samples, self.audio_sample_rate, loop=True)
+
+    def setup_piano_waves(
+        self,
+        fundamental: float = 261.63,  # middle C (about 262 Hz)
+        num_harmonics: int = 10,
+        rolloff: float = 1.2,
+        strike_position: float = 1 / 8,
+        inharmonicity: float = 0.0004,
+        snap_to_whole_hz: bool = True,
+    ) -> None:
+        """Build a static approximation of a piano tone out of sine waves.
+
+        A real piano note is a stack of partials (sine waves) near whole-number
+        multiples of the fundamental. Three things make it sound piano-like
+        rather than like an organ or a plain beep:
+
+        fundamental      pitch of the note in Hz.
+        num_harmonics    how many partials to stack. More = brighter, but the
+                         high ones are quiet anyway.
+        rolloff          partial n has amplitude 1 / n**rolloff. Higher = duller
+                         (more like a soft felt hammer); lower = brighter/buzzier.
+        strike_position  where the hammer hits the string as a fraction of its
+                         length (pianos use roughly 1/7 to 1/9). A string can't
+                         vibrate with a node where it is struck, so harmonic n
+                         is scaled by |sin(pi * n * strike_position)|; with 1/8
+                         the 8th harmonic vanishes entirely.
+        inharmonicity    stiff piano strings make partials slightly sharp:
+                         f_n = n * f0 * sqrt(1 + B * n**2). B is about 0.0001
+                         to 0.001 for real pianos. 0 gives perfect harmonics.
+        snap_to_whole_hz round each frequency to a whole number of Hz. The audio
+                         buffer is looped and is audio_time seconds long, so
+                         whole-Hz partials (with a whole-second buffer) finish
+                         a complete cycle and loop without a click.
+
+        Not modelled: the decaying envelope (attack then fade) of a real
+        key press. This tone is a steady sustained loop, so it is the *timbre*
+        that is piano-ish, not the dynamics.
+        """
+        self.waves = []
+        for n in range(1, num_harmonics + 1):
+            freq = n * fundamental * math.sqrt(1 + inharmonicity * n * n)
+            if snap_to_whole_hz:
+                freq = round(freq)
+
+            amplitude = (1 / n**rolloff) * abs(math.sin(math.pi * n * strike_position))
+            if amplitude < 1e-3:
+                continue  # an (almost) absent harmonic; nothing to draw or hear
+
+            # spread hues around the colour wheel so each partial is distinct
+            r, g, b = colorsys.hsv_to_rgb((n - 1) / num_harmonics, 0.8, 1.0)
+            color = arcade.types.Color(int(r * 255), int(g * 255), int(b * 255), 255)
+            self.waves.append(WaveParam(freq, amplitude, 0, color))
 
     def generate_data(self) -> None:
         self.generate_axes()
