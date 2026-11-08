@@ -80,9 +80,9 @@ class GameView(arcade.View):
         self.audio_time = 1
 
         # 21 is A0, adding one goes up one semitone
-        self.mini_number = 21
+        self.mini_number = 60
         # if true use piano_waves
-        self.is_piano = False
+        self.is_piano = True
         self.update_waves_and_data()
 
     def update_waves_and_data(self):
