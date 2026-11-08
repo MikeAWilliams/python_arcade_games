@@ -51,7 +51,9 @@ class GameView(arcade.View):
     def setup_simple_waves(self) -> None:
         self.waves = [
             # WaveParam(4000, 1, 0, arcade.color.GREEN),
-            WaveParam(261, 1, 0, arcade.color.GREEN),
+            WaveParam(20, 1, 0, arcade.color.GREEN),
+            # WaveParam(4000, 1, 0, arcade.color.GREEN),
+            # WaveParam(261, 1, 0, arcade.color.GREEN),
             # WaveParam(261, 1, math.pi / 2, arcade.color.GREEN),
         ]
 
