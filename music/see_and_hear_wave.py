@@ -3,6 +3,8 @@ from dataclasses import dataclass
 from typing import NamedTuple
 
 import arcade
+import numpy as np
+import sounddevice as sd
 
 WINDOW_WIDTH = 3840
 WINDOW_HEIGHT = 2160
@@ -34,12 +36,18 @@ class GameView(arcade.View):
         self.num_samples = 1000
 
         self.sum_color = arcade.color.RED
+
+        self.audio_sample_rate = 44100
+        self.audio_volume = 0.4
+        self.audio_time = 1
+
         self.waves = [
             # WaveParam(4000, 1, 0, arcade.color.GREEN),
-            WaveParam(40, 1, 0, arcade.color.GREEN),
-            WaveParam(20, 1, 0, arcade.color.GREEN),
+            WaveParam(400, 1, 0, arcade.color.GREEN),
+            WaveParam(450, 1, 0, arcade.color.GREEN),
         ]
         self.generate_data()
+        sd.play(self.audio_samples, self.audio_sample_rate, loop=True)
 
     def generate_data(self) -> None:
         self.generate_axes()
@@ -67,6 +75,20 @@ class GameView(arcade.View):
             # sum /= len(self.waves)
             self.wave_sum_list.append(self.graph_to_game(Point(x, sum)))
 
+    def generate_audio_sample(self) -> None:
+        t = (
+            np.arange(int(self.audio_sample_rate * self.audio_time))
+            / self.audio_sample_rate
+        )
+
+        total = np.zeros_like(t)
+        for w in self.waves:
+            total += w.amplitude * np.sin(2 * np.pi * w.frequency * t + w.phase)
+        peak = np.max(np.abs(total))
+        if peak > 0:
+            total /= peak  # normalise so the sum never clips
+        self.audio_samples = (total * self.audio_volume).astype(np.float32)
+
     def graph_to_game(self, p: Point) -> Point:
         result = Point(
             p.x / self.x_range * WINDOW_WIDTH + WINDOW_WIDTH / 2,
@@ -83,6 +105,7 @@ class GameView(arcade.View):
         arcade.draw_line_strip(self.wave_sum_list, self.sum_color)
 
     def on_draw(self) -> bool | None:
+        self.clear()
         self.draw_axies()
         self.draw_wave()
 
