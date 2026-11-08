@@ -82,7 +82,7 @@ class GameView(arcade.View):
         # 21 is A0, adding one goes up one semitone
         self.mini_number = 60
         # if true use piano_waves
-        self.is_piano = True
+        self.is_piano = False
         self.update_waves_and_data()
 
     def update_waves_and_data(self):
@@ -122,10 +122,9 @@ class GameView(arcade.View):
                        partials below the Nyquist limit (half the sample rate),
                        where they would alias into the wrong pitch.
 
-        Each frequency is rounded to a whole number of Hz. The audio buffer
-        loops and is a whole number of seconds long, so whole-Hz partials finish
-        a complete cycle and loop without a click. (The pitch error is largest
-        on the lowest notes: 27.5 Hz becomes 28 Hz.)
+        Every partial is a whole-number multiple of the fundamental, so the
+        audio buffer (sized by loop_sample_count to hold whole fundamental
+        cycles) also holds whole cycles of every partial and loops cleanly.
 
         Not modelled: the attack and decay of a real key press. This is a
         steady sustained loop, so only the timbre is piano-ish.
@@ -133,7 +132,7 @@ class GameView(arcade.View):
         num_harmonics = max(1, int(max_frequency // fundamental))
         self.waves = []
         for n in range(1, num_harmonics + 1):
-            freq = round(n * fundamental)
+            freq = n * fundamental
             amplitude = 1 / n**rolloff
 
             # spread hues around the colour wheel so each partial is distinct
@@ -167,11 +166,25 @@ class GameView(arcade.View):
             # sum /= len(self.waves)
             self.wave_sum_list.append(self.graph_to_game(Point(x, sum)))
 
+    def loop_sample_count(self, fundamental: float) -> int:
+        """Pick a buffer length (in samples) that holds a whole number of
+        fundamental cycles, so the looped audio has no click at the seam.
+
+        A cycle is rarely a whole number of samples, so try cycle counts near
+        audio_time seconds' worth and keep the one that lands closest to a
+        whole sample.
+        """
+        samples_per_cycle = self.audio_sample_rate / fundamental
+        target_cycles = max(1, round(fundamental * self.audio_time))
+        cycles = np.arange(max(1, target_cycles // 2), target_cycles * 3 // 2 + 1)
+        lengths = cycles * samples_per_cycle
+        best = cycles[np.argmin(np.abs(lengths - np.round(lengths)))]
+        return round(best * samples_per_cycle)
+
     def generate_audio_sample(self) -> None:
-        t = (
-            np.arange(int(self.audio_sample_rate * self.audio_time))
-            / self.audio_sample_rate
-        )
+        # waves[0] is the fundamental; every other wave is a multiple of it
+        num_samples = self.loop_sample_count(self.waves[0].frequency)
+        t = np.arange(num_samples) / self.audio_sample_rate
 
         total = np.zeros_like(t)
         for w in self.waves:
