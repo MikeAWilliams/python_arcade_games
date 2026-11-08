@@ -86,10 +86,11 @@ class GameView(arcade.View):
         self.update_waves_and_data()
 
     def update_waves_and_data(self):
-        # fade
-        for _ in range(30):
-            self.audio_samples *= 0.8
-            sd.sleep(2)
+        if self.audio_samples:
+            # fade
+            for _ in range(30):
+                self.audio_samples *= 0.8
+                sd.sleep(2)
         sd.stop()
         frequence = midi_num_to_freq(self.mini_number)
         if self.is_piano:
