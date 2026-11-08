@@ -33,8 +33,8 @@ class GameView(arcade.View):
 
     def graph_to_game(self, p: Point) -> Point:
         result = Point(
-            p.x / self.x_reange * WINDOW_WIDTH + WINDOW_WIDTH,
-            p.y / self.y_range * WINDOW_HEIGHT + WINDOW_HEIGHT,
+            p.x / self.x_reange * WINDOW_WIDTH + WINDOW_WIDTH / 2,
+            p.y / self.y_range * WINDOW_HEIGHT + WINDOW_HEIGHT / 2,
         )
         print(result.x, result.y)
         return result
