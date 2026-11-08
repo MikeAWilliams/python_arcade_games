@@ -28,16 +28,16 @@ class GameView(arcade.View):
     def __init__(self) -> None:
         super().__init__()
         # range is centered on the origin. So range of 4 is -2 - 2
-        self.x_reange = 4
+        self.x_range = 4
         self.y_range = 4
-        # sample spacing is 2pi/sampe_rate
+        # sample spacing is number of samples in the full x range
         self.sample_rate = 100
 
         self.wave = WaveParam(1, 1, 0, arcade.color.RED)
 
     def graph_to_game(self, p: Point) -> Point:
         result = Point(
-            p.x / self.x_reange * WINDOW_WIDTH + WINDOW_WIDTH / 2,
+            p.x / self.x_range * WINDOW_WIDTH + WINDOW_WIDTH / 2,
             p.y / self.y_range * WINDOW_HEIGHT + WINDOW_HEIGHT / 2,
         )
         return result
@@ -61,11 +61,10 @@ class GameView(arcade.View):
         arcade.draw_lines(point_list, arcade.color.BLUE, 3)
 
     def draw_wave(self) -> None:
-        dx = self.x_reange / self.sample_rate
-        max = self.x_reange / 2
+        dx = self.x_range / self.sample_rate
         point_list = []
-        x = -self.x_reange / 2
-        while x <= max:
+        for i in range(self.sample_rate + 1):
+            x = -self.x_range / 2 + i * dx
             p = Point(x, self.wave.value_at_t(x))
             # print(p.x, p.y)
             point_list.append(self.graph_to_game(p))
