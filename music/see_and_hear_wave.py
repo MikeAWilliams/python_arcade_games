@@ -42,8 +42,8 @@ class GameView(arcade.View):
         self.audio_volume = 0.4
         self.audio_time = 1
 
-        self.setup_simple_waves()
-        # self.setup_piano_waves()
+        # self.setup_simple_waves()
+        self.setup_piano_waves(rolloff=2.5)
 
         self.generate_data()
         sd.play(self.audio_samples, self.audio_sample_rate, loop=True)
