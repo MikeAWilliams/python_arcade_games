@@ -44,7 +44,7 @@ class GameView(arcade.View):
         self.waves = [
             # WaveParam(4000, 1, 0, arcade.color.GREEN),
             WaveParam(400, 1, 0, arcade.color.GREEN),
-            WaveParam(450, 1, 0, arcade.color.GREEN),
+            WaveParam(400, 1, math.pi / 2, arcade.color.GREEN),
         ]
         self.generate_data()
         sd.play(self.audio_samples, self.audio_sample_rate, loop=True)
