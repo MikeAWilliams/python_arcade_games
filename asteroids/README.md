@@ -243,6 +243,8 @@ All artifacts saved to `nn_checkpoints/`:
 
 #### Policy Gradient Training Runs
 
+> **Reading this table:** "Best" values are maxima over 32-game batches or 100-game evals and overstate the true score by 15–50 points (per-game σ ≈ 65). Only the 1000-game figures are reliable. Re-benchmarks over 960 games: `polar2_pg_ent005_best` 107.6, `polar2_pg_ent005_dp01_best` 115.4, `polar2_pg_wave5_exploit_best` 134.1, `polar2_crisis_best` 150.4 (480 games), heuristic 137.9 (480 games). See `training_review.md` for the analysis and the revised training plan.
+
 | Run name | Model | Log file | Result | Notes |
 |----------|-------|----------|--------|-------|
 | `polar_pg` | polar | `polar_pg_policy_gradient.log` | Avg ~120, max ~140 | First successful PG run. Learned to aim and shoot. Converged to stationary turret strategy (left/right turn + shoot, no movement). Explosive score jump around iter 29k. |

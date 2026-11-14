@@ -1,5 +1,7 @@
 # Proposed Changes to Polar NN State Vector
 
+> **Status (2026-11-13):** implemented as `asteroids/ai/polar2_nn.py` with 40 inputs (4 global + 4 × 9), not the 31 computed below. Known problems with the implemented encoding and the proposed polar3 fixes (empty-slot padding reads as an imminent head-on impact, TTI scaling, radial-only TTI, angle wrap behind the ship, missing radius) are in `training_review.md` §2.4.
+
 ## Current State (39 inputs)
 
 Global (3): player speed magnitude, shot cooldown, asteroid count

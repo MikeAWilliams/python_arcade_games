@@ -4,7 +4,84 @@
 
 Best model: `polar2_crisis_best.pth` — **146.4 avg over 1000 games** (all-time best). Produced by 100% crisis training for ~1300 iterations from `polar2_pg_wave5_exploit_best.pth` (130 avg). Already beats the heuristic AI (~139 avg).
 
+## Revised plan (2026-11-13 review)
+
+This is the plain-language summary. The detailed measurements and reasoning are in `training_review.md`. Where the older sections below disagree with this, this wins; each older section has a "Review note" saying what changed.
+
+### 1. The training barely cares if the ship dies
+
+During training, each action is scored by the kills that came after it. The trainer discounts future kills with `gamma=0.99` per frame, so a kill counts less the further away it is:
+
+| Kill happens this far in the future | How much it counts |
+|---|---|
+| 1 second (60 frames) | 55% |
+| 2 seconds | 30% |
+| 5 seconds | 5% |
+| 10 seconds | almost 0% |
+
+So the network effectively only looks about 2 seconds ahead. For dying, that means:
+
+- **What dying really costs:** every point you would have scored for the rest of the game, often 100 or more.
+- **What the network thinks dying costs:** only the kills it would have made in the next couple of seconds, about 2.5 kills.
+
+To the network, dying is a small loss. Getting a kill a bit sooner is worth about as much as not dying. So it learned to keep turning and shooting and not bother dodging.
+
+Checked on the best model (`polar2_crisis_best.pth`): in most of its deaths, the asteroid that killed it was clearly on a collision course for more than ¾ of a second beforehand. The ship had time to move, but it kept aiming instead (it thrust only about 12% of the time in those moments). It can see the danger; it was never taught that danger matters. Only about 4% of deaths came from a freshly split asteroid, so close-range splits are not the main problem.
+
+### 2. Many of the "best" scores were luck
+
+Scores vary a lot from game to game: one game scores 60 and the next scores 220. Because of that:
+
+- An average of 32 games can be about 11 points off just by chance.
+- An average of 100 games can be about 6 points off.
+- The training script saves whichever average was highest. Over thousands of tries, that is the luckiest result, not the best model.
+
+Re-running the saved "best" models for about 1000 games each:
+
+| Model | Recorded score | Actual score |
+|---|---|---|
+| `polar2_pg_ent005_best` | 159 | ~108 |
+| `polar2_pg_ent005_dp01_best` | 163 | ~115 |
+| `polar2_pg_wave5_exploit_best` | ~130 | ~134 |
+| `polar2_crisis_best` | 146 | ~150 |
+| Heuristic AI | ~139 | ~138 |
+
+So some experiments looked like they helped, or looked like they gave an early boost (such as the crisis runs), when the numbers were just noise. Only the 1000-game benchmarks are reliable.
+
+### 3. What to do instead
+
+**Add a second network, a "critic".** Its only job is to answer, at every moment: "how many more points will I score from here?"
+
+- While the ship is safe, the critic says something like "about 25 more."
+- When the ship dies, the real answer is suddenly 0.
+- That gap between 25 and 0 is a big negative surprise. It lands on the moments just before the death, which is exactly where the ship should have dodged.
+
+This gives the network the "dying is expensive" lesson that the death-penalty experiments were trying to add by hand. Together with it, set `gamma` to 0.999 so the network looks about 17 seconds ahead instead of 2. The reward should be just +1 per kill, with no survival bonus or death penalty. The standard method that combines these is called PPO, and it is what most modern game-playing AIs use.
+
+**Measure properly.** Judge each model on about 1000 games, using the same random seeds every time so models are compared on the same games. Stop saving the "best" based on short runs.
+
+### Later ideas (after the two above)
+
+- **Decide every 3 frames instead of every frame.** Shorter games for the trainer to learn from, and no more accelerate/decelerate flicker.
+- **Practise from near-death moments instead of crisis mode.** Save the game a few seconds before each death and restart some training games from those saved moments, scored the same way as normal games.
+- **Improve the inputs (a "polar3" model).** For example, empty asteroid slots are currently filled with zeros, which look like "an asteroid is touching you, dead ahead". Details in `training_review.md` §2.4.
+- **Try evolution strategies** as a cross-check. It optimises total game score directly, so it cannot be fooled by the 2-second problem.
+
+### Stop doing
+
+- Clamp-to-zero normalization (it removes the only "that was bad" signal, including the frames before death).
+- More crisis-mix ratios or burst/recovery schedules.
+- Hand-tuned death penalties and survival bonuses (the critic replaces them).
+- Copying the heuristic's dodging (it now scores lower than the network).
+- Trusting a single 100-game eval or a batch "best".
+
+---
+
+*Everything below is the earlier plan, kept for history.*
+
 ## Reward normalization creates a "charge" incentive
+
+> **Review note:** the charge incentive is real but the cause is the 1.67 s discount horizon, not the sign of the normalised advantages. Clamp-to-zero would remove the only negative signal (including the frames before death) and bias the gradient; do not try it. See `training_review.md` §2.1.
 
 The `discounted_rewards()` normalization (mean-subtract then divide by std) makes frames between kills have negative advantage. The model learns to minimize time between kills → charge at asteroids. This may not be optimal — keeping distance and shooting from range could score higher by avoiding deaths from close-range splits.
 
@@ -19,6 +96,8 @@ Note: an earlier idea (subtract min instead of clamping) didn't work — only on
 **Open question:** The current best model has thousands of iterations of charging behavior baked into its weights. Resuming from it with clamped normalization might not undo the charge — the model may need to be trained from scratch (or from an early checkpoint before charging was learned) to develop a distance-keeping play style.
 
 ## Crisis Training — All Mix Ratios Collapse
+
+> **Review note:** the "+15-20 in the first 200-400 iterations" is the expected maximum of a few noisy 100-game evals (mix10's best of 144.95 was at iteration 0, before any update, on a 134-average model). The collapse is real. Its likely cause is mechanical: crisis frames get their own full-size Adam step from a few hundred noisy samples and dominate the shared second-moment estimate, so every ratio behaves like ~100% crisis; and failed crisis games are discarded, so no deaths are ever learned from. See `training_review.md` §2.3 and §4.4.
 
 Tested with reward noise fix (skip zero-reward crisis games, no survival bonus for crisis): 100%, 97%, 90%, 50%, 10% crisis mix all show the same pattern — initial eval gain of +15-20 points in first 200-400 iterations, then steady collapse. The initial gain is real dodging skill transferring to normal gameplay. Then the crisis gradient overwhelms the shooting policy.
 
@@ -51,6 +130,8 @@ Add a decaying negative reward to the last N frames before death to give the age
 **Results so far:**
 - `-0.5` over 60 frames (`ent005_dp`): No improvement at all over 15k iterations. Cumulative penalty (~-15) overwhelmed the +1 kill rewards, drowning out the scoring signal.
 - `-0.1` over 60 frames (`ent005_dp01`): Marginal improvement — two new bests (160, 163) after 12k iterations. Some subtle dodging observed visually. But 100-game benchmark didn't improve meaningfully.
+
+> **Review note:** re-benchmarked over 960 games, `ent005_dp01_best` is 115.4 ± 2.0 against 107.6 ± 1.9 for its parent, so the −0.1 penalty gave a small real gain; the 160/163 "bests" were 32-game batch maxima. A learned critic with `gamma=0.999` replaces this hack. The split physics below is right, but only 4% of the best model's deaths are from an asteroid created in the previous 60 frames.
 
 **Why it may not work:** The per-game normalization in `discounted_rewards` already makes end-of-life frames the lowest-advantage frames. Adding explicit penalty makes them *more* negative but doesn't fundamentally change the gradient direction. The model was already being told "your last frames were your worst."
 
@@ -88,6 +169,8 @@ frames to dodge it. Close-range splits are physically unavoidable.
 
 **Status:** Not started. Strongest theoretical case for closing the gap.
 
+> **Review note:** still worth doing, as part of polar3 and in closed form (closest point of approach, no tick loop), but it is not the main blocker: 45 frames before death the killer's existing TTI input was already under 2 s in 98% of deaths. See `training_review.md` §2.4.
+
 The heuristic's evasion advantage comes from explicit tick-by-tick collision prediction (lines 322-365 of heuristic.py). It projects both player and asteroid positions forward for 49 ticks and checks geometric overlap. This catches oblique approaches — asteroids crossing the player's path from the side.
 
 Polar2's time-to-impact (TTI) only captures the *radial* component of closing speed. An asteroid approaching at an oblique angle has low radial closing speed, so TTI reads as safe, but the heuristic's projection catches it as a collision. These oblique hits may be a significant fraction of deaths.
@@ -119,7 +202,9 @@ Training pipeline already exists in `training/cross_entropy.py`. Heuristic gamep
 
 **Hybrid approach:** Cross-entropy to get close to heuristic performance (especially learning the dodge behavior), then PG fine-tuning to push beyond it. This avoids starting PG from scratch without dodge knowledge.
 
-### Option 3b: Selective cross-entropy on dodge frames only — PREFERRED, DO THIS NEXT
+### Option 3b: Selective cross-entropy on dodge frames only — ~~PREFERRED, DO THIS NEXT~~ demoted
+
+> **Review note:** the heuristic now scores below the NN (137.9 vs 150.4), and 57% of the heuristic's own deaths had ≥ 45 frames of warning while it was already thrusting. It is a weak dodge teacher. Fix the objective first.
 
 The NN's shooting policy is already strong (~130 avg), possibly better than the heuristic's. What's missing is dodge behavior — the NN doesn't know what to do when a collision is imminent. Full cross-entropy would overwrite the good shooting policy and hit the class imbalance problem.
 
